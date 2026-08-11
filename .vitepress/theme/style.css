@@ -1,0 +1,933 @@
+/**
+ * The look of this site follows the Tailwind Plus "Syntax" template: Lexend at weight 400 for every
+ * heading and label, the brand blue on slate neutrals, a sidebar whose active item is a dot on a rail, and
+ * code blocks that stay dark on a white page.
+ *
+ * Everything here is an override of the VitePress default theme. Where a rule carries `!important` it is
+ * fighting a *scoped* style in a default-theme component — those carry a `[data-v-…]` attribute that adds
+ * specificity no plain selector of ours can outrank. Nothing else uses it.
+ */
+
+/* ------------------------------------------------------------------ fonts */
+
+/* Lexend, self-hosted. `ss01` is the single-storey alternate set, and it is the whole reason this is a
+   local file rather than a CDN link: the Google-served build does not expose the feature. It cannot be
+   switched on here — `font-feature-settings` is not a @font-face descriptor — so it is stated on the rules
+   that apply the family, beside `font-family` every time. */
+@font-face {
+  font-family: 'Lexend';
+  src: url('./fonts/lexend.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --eco-font-display: 'Lexend', 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+  /* One radius for every box on the site — cards, code blocks, callouts, inputs, buttons. Pills, dots and
+     the race track state their own shape, which is a different question. */
+  --eco-radius: 5px;
+}
+
+/* ----------------------------------------------------------------- palette */
+
+/* Tailwind slate plus the brand ramp, mapped onto VitePress's own variables so every default-theme
+   component follows without being named individually. */
+:root {
+  --eco-slate-50: #f8fafc;
+  --eco-slate-100: #f1f5f9;
+  --eco-slate-200: #e2e8f0;
+  --eco-slate-300: #cbd5e1;
+  --eco-slate-400: #94a3b8;
+  --eco-slate-500: #64748b;
+  --eco-slate-600: #475569;
+  --eco-slate-700: #334155;
+  --eco-slate-800: #1e293b;
+  --eco-slate-900: #0f172a;
+
+  /* The brand blue. #008efc is the one stated colour; the rest of the ramp is that value mixed toward
+     white and toward black, so a tint or a shade of the accent is never a second opinion about the hue. */
+  --eco-brand-50: #e6f4ff;
+  --eco-brand-200: #99d2fe;
+  --eco-brand-300: #66bbfd;
+  --eco-brand-400: #33a5fd;
+  --eco-brand-500: #008efc;
+  --eco-brand-600: #0072ca;
+  --eco-brand-700: #005597;
+  --eco-brand-800: #003965;
+  --eco-brand-900: #002b4c;
+
+  --eco-amber-50: #fffbeb;
+  --eco-amber-400: #fbbf24;
+  --eco-amber-500: #f59e0b;
+  --eco-amber-800: #92400e;
+  --eco-amber-900: #78350f;
+
+  --eco-indigo-200: #c7d2fe;
+  --eco-indigo-400: #818cf8;
+  --eco-cyan-400: #22d3ee;
+
+  --vp-c-brand-1: var(--eco-brand-500);
+  --vp-c-brand-2: var(--eco-brand-400);
+  --vp-c-brand-3: var(--eco-brand-300);
+  --vp-c-brand-soft: rgb(0 142 252 / 0.14);
+
+  --vp-c-bg: #ffffff;
+  --vp-c-bg-alt: var(--eco-slate-50);
+  --vp-c-bg-soft: var(--eco-slate-50);
+  --vp-c-bg-elv: #ffffff;
+
+  --vp-c-text-1: var(--eco-slate-900);
+  --vp-c-text-2: var(--eco-slate-500);
+  --vp-c-text-3: var(--eco-slate-400);
+
+  --vp-c-divider: var(--eco-slate-200);
+  --vp-c-gutter: var(--eco-slate-200);
+  --vp-c-border: var(--eco-slate-200);
+
+  /* Dark in both modes — see the sidebar section. */
+  --vp-sidebar-bg-color: var(--eco-slate-900);
+  --vp-nav-bg-color: #ffffff;
+
+  --vp-code-block-bg: var(--eco-slate-900);
+  --vp-code-block-color: var(--eco-slate-50);
+  --vp-code-color: var(--eco-slate-700);
+
+  /* Round, the way the template's buttons are — but on the brand itself rather than a tint of it, because
+     this is the loudest surface on the site and the one that should be saying the colour. White text, so
+     the hover and active states go *down* the ramp rather than up: lightening the fill under a white
+     label is the one direction that makes it harder to read. */
+  --vp-button-brand-bg: var(--eco-brand-500);
+  --vp-button-brand-text: #ffffff;
+  --vp-button-brand-border: transparent;
+  --vp-button-brand-hover-bg: var(--eco-brand-600);
+  --vp-button-brand-hover-text: #ffffff;
+  --vp-button-brand-hover-border: transparent;
+  --vp-button-brand-active-bg: var(--eco-brand-700);
+  --vp-button-brand-active-text: #ffffff;
+
+  --vp-button-alt-bg: var(--eco-slate-800);
+  --vp-button-alt-text: #ffffff;
+  --vp-button-alt-border: transparent;
+  --vp-button-alt-hover-bg: var(--eco-slate-700);
+  --vp-button-alt-hover-text: #ffffff;
+  --vp-button-alt-hover-border: transparent;
+  --vp-button-alt-active-bg: var(--eco-slate-700);
+  --vp-button-alt-active-text: var(--eco-slate-400);
+}
+
+.dark {
+  --vp-c-bg: var(--eco-slate-900);
+  --vp-c-bg-alt: var(--eco-slate-900);
+  --vp-c-bg-soft: rgb(30 41 59 / 0.6);
+  --vp-c-bg-elv: var(--eco-slate-800);
+
+  --vp-c-text-1: #ffffff;
+  --vp-c-text-2: var(--eco-slate-400);
+  --vp-c-text-3: var(--eco-slate-500);
+
+  --vp-c-divider: var(--eco-slate-800);
+  --vp-c-gutter: var(--eco-slate-800);
+  --vp-c-border: var(--eco-slate-800);
+
+  --vp-nav-bg-color: rgb(15 23 42 / 0.75);
+
+  --vp-code-block-bg: rgb(30 41 59 / 0.6);
+  --vp-code-color: var(--eco-slate-300);
+}
+
+/* --------------------------------------------------------------- typography */
+
+/* The template's scale: a 2rem line height on body copy is most of why its pages read as airy. */
+.vp-doc {
+  font-size: 16px;
+  line-height: 2rem;
+}
+
+.vp-doc p,
+.vp-doc ul,
+.vp-doc ol {
+  line-height: 2rem;
+}
+
+.vp-doc li + li {
+  margin-top: 0.25rem;
+}
+
+/* Headings are Lexend at weight 400 throughout — this is the single most recognisable thing about the
+   design, and VitePress ships all of them at 600/700. */
+.vp-doc h1,
+.vp-doc h2,
+.vp-doc h3,
+.vp-doc h4,
+.vp-doc h5,
+.vp-doc h6,
+.VPSidebarItem.level-0 > .item .text,
+.VPDocAsideOutline .outline-title,
+.VPDocFooter .desc,
+.custom-block-title,
+.VPNavBarTitle .title {
+  font-family: var(--eco-font-display);
+  font-weight: 400;
+  font-feature-settings: 'ss01';
+  letter-spacing: -0.02em;
+}
+
+.vp-doc h1 {
+  font-size: 2rem;
+  line-height: 2.5rem;
+  margin-bottom: 2.25rem;
+}
+
+/* The eyebrow (see components/DocEyebrow.vue) sits directly above the title, so the title loses its own
+   top margin and the pair reads as one block. */
+.eco-eyebrow + .vp-doc h1,
+.VPDoc .eco-eyebrow + div .vp-doc h1 {
+  margin-top: 0;
+}
+
+.vp-doc h2 {
+  font-size: 1.5rem;
+  line-height: 2.25rem;
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--vp-c-divider);
+}
+
+.vp-doc h3 {
+  font-size: 1.25rem;
+  line-height: 2rem;
+  margin-top: 2.5rem;
+}
+
+.vp-doc h4 {
+  font-size: 1rem;
+  margin-top: 2rem;
+}
+
+/* --------------------------------------------------------------------- nav */
+
+/* The template paints one full-width header rather than VitePress's split of a transparent bar over the
+   sidebar plus a filled strip over the content, so the surface moves onto .VPNavBar itself. */
+.VPNavBar {
+  background-color: var(--vp-nav-bg-color) !important;
+  box-shadow: 0 4px 6px -1px rgb(15 23 42 / 0.05), 0 2px 4px -2px rgb(15 23 42 / 0.05);
+}
+
+.VPNavBar .content-body,
+.VPNavBar .title {
+  background-color: transparent !important;
+}
+
+/* Both halves of it: `.divider-line` is the hairline, and `.divider` around it is filled with the gutter
+   colour of its own accord in light mode — which over the dark landing page is a white rule across the
+   whole width, the one thing left of the header's light treatment. */
+.VPNavBar .divider,
+.VPNavBar .divider-line {
+  background-color: transparent !important;
+}
+
+/* The rule VitePress draws under the wordmark, where the header meets the sidebar. The template's header
+   is one unbroken surface. */
+.VPNavBar .title {
+  border-bottom: none !important;
+}
+
+/* The sidebar is painted from the very top of the page and the header's wordmark column sits transparently
+   on it, so in light mode that column has to be filled or the wordmark is slate on slate. Light only: in
+   dark mode the two surfaces are the same colour and the header is meant to be see-through at the top. */
+html:not(.dark) .VPNavBar .title {
+  background-color: #ffffff !important;
+}
+
+/* Dark mode is transparent until the page scrolls, then a blurred slate — `.top` is a class VitePress
+   already maintains for us. The hero behind it is dark in both modes, so this only ever reveals the hero. */
+.dark .VPNavBar.top {
+  background-color: transparent !important;
+  box-shadow: none;
+}
+
+.dark .VPNavBar:not(.top) {
+  background-color: rgb(15 23 42 / 0.95) !important;
+  box-shadow: none;
+}
+
+@supports (backdrop-filter: blur(0)) {
+  .dark .VPNavBar:not(.top) {
+    background-color: rgb(15 23 42 / 0.75) !important;
+    backdrop-filter: blur(4px);
+  }
+}
+
+.VPNavBarTitle .title {
+  font-size: 1.125rem;
+  letter-spacing: -0.01em;
+  gap: 0.625rem;
+}
+
+/* The mark is drawn in the brand blue itself, so it needs no per-mode treatment — only room. */
+.VPNavBarTitle .logo {
+  height: 1.75rem;
+  width: 1.75rem;
+  margin-right: 0;
+}
+
+.VPNavBarMenuLink,
+.VPNavBarMenuGroup .VPMenuLink {
+  font-weight: 500;
+}
+
+/* Search box: a ring rather than a filled pill. */
+.DocSearch-Button,
+.VPNavBarSearchButton,
+button#local-search-btn,
+.VPLocalSearchBox .search-bar {
+  border-radius: var(--eco-radius);
+}
+
+#local-search button {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--eco-slate-200);
+  border-radius: var(--eco-radius);
+  color: var(--eco-slate-500);
+}
+
+.dark #local-search button {
+  background: rgb(30 41 59 / 0.75);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.05);
+  color: var(--eco-slate-400);
+}
+
+/* ----------------------------------------------------------------- sidebar */
+
+/* The left navigation is dark in **both** colour modes, so everything below states one set of colours
+   rather than a light pair and a dark pair. In light mode it is the same slate the hero band is, which is
+   what keeps the two reading as one surface down the left of the page. */
+.VPSidebar {
+  background-color: var(--eco-slate-900);
+}
+
+/* The rule fades in over the first few centimetres rather than butting into the header, which is what
+   stops it reading as a second, shorter header border. Desktop only: the mobile drawer is a panel. */
+@media (min-width: 960px) {
+  .VPSidebar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 1px;
+    background: linear-gradient(to bottom, rgb(30 41 59 / 0), var(--eco-slate-800) 3rem);
+    pointer-events: none;
+  }
+}
+
+@media (min-width: 960px) {
+  .VPSidebar {
+    padding-top: 2rem;
+  }
+}
+
+/* The template separates groups with space alone. */
+.VPSidebar .group + .group {
+  border-top: none;
+  padding-top: 0;
+}
+
+.VPSidebarItem.level-0 {
+  padding-bottom: 2.25rem;
+}
+
+.VPSidebarItem.level-0 > .item .text {
+  font-size: 0.875rem;
+  font-weight: 400 !important;
+  color: #ffffff !important;
+}
+
+/* The 2px rail the dots sit on. */
+.VPSidebarItem.level-0 > .items {
+  border-left: 2px solid var(--eco-slate-800);
+  padding-left: 0;
+  margin-top: 0.75rem;
+}
+
+.VPSidebarItem.level-1 > .item {
+  padding-left: 0.875rem;
+}
+
+.VPSidebarItem.level-1 > .item > .link .text {
+  font-size: 0.875rem;
+  font-weight: 400 !important;
+  color: var(--eco-slate-400) !important;
+  padding: 0.375rem 0;
+}
+
+/* The dot. Hidden by default, grey on hover, brand blue when the page is the current one — which is the whole of
+   the active treatment: VitePress's own indicator bar is suppressed below. */
+.VPSidebarItem.level-1 > .item > .link::before {
+  content: '';
+  position: absolute;
+  left: -0.25rem;
+  top: 50%;
+  width: 0.375rem;
+  height: 0.375rem;
+  transform: translateY(-50%);
+  border-radius: 9999px;
+  background-color: var(--eco-slate-700);
+  opacity: 0;
+  transition: opacity 0.15s;
+  pointer-events: none;
+}
+
+.VPSidebarItem.level-1 > .item > .link:hover::before {
+  opacity: 1;
+}
+
+.VPSidebarItem.level-1.is-active > .item > .link::before {
+  background-color: var(--eco-brand-500);
+  opacity: 1;
+}
+
+.VPSidebarItem.level-1.is-active > .item > .link .text {
+  color: var(--eco-brand-500) !important;
+  font-weight: 600 !important;
+}
+
+.VPSidebarItem.level-1 > .item > .link:hover .text {
+  color: var(--eco-slate-300) !important;
+}
+
+.VPSidebarItem .indicator {
+  display: none !important;
+}
+
+/* --------------------------------------------------------------- doc content */
+
+/* Links are underlined with an inset box-shadow rather than text-decoration, which is what gives the
+   template its thick underline that sits clear of the descenders. */
+.vp-doc a {
+  text-decoration: none;
+  font-weight: 600;
+  color: inherit;
+  box-shadow:
+    inset 0 -2px 0 0 var(--vp-c-bg),
+    inset 0 -6px 0 0 var(--eco-brand-300);
+  transition: box-shadow 0.15s;
+}
+
+.vp-doc a:hover {
+  box-shadow:
+    inset 0 -2px 0 0 var(--vp-c-bg),
+    inset 0 -8px 0 0 var(--eco-brand-300);
+}
+
+.dark .vp-doc a {
+  color: var(--eco-brand-400);
+  box-shadow:
+    inset 0 -2px 0 0 var(--vp-c-bg),
+    inset 0 -4px 0 0 var(--eco-brand-800);
+}
+
+.dark .vp-doc a:hover {
+  box-shadow:
+    inset 0 -2px 0 0 var(--vp-c-bg),
+    inset 0 -6px 0 0 var(--eco-brand-800);
+}
+
+/* Headings own their anchors; an underline under one would be noise. */
+.vp-doc a.header-anchor,
+.vp-doc h1 a,
+.vp-doc h2 a,
+.vp-doc h3 a,
+.vp-doc h4 a {
+  box-shadow: none;
+}
+
+.vp-doc p {
+  color: var(--vp-c-text-1);
+}
+
+.dark .vp-doc p,
+.dark .vp-doc li {
+  color: var(--eco-slate-400);
+}
+
+.vp-doc :not(pre) > code {
+  background-color: transparent;
+  padding: 0;
+  font-size: 0.875em;
+  font-weight: 600;
+  color: var(--vp-code-color);
+}
+
+/* The template inherits Tailwind Typography's literal backticks around inline code. That is the one thing
+   here deliberately not copied: these pages mention `echoc`, `array<T>` and a type name in almost every
+   sentence, and at that density the backticks read as markdown that failed to render. */
+
+.vp-doc table {
+  display: table;
+  width: 100%;
+  font-size: 0.875rem;
+  line-height: 1.5rem;
+}
+
+.vp-doc th {
+  font-family: var(--eco-font-display);
+  font-weight: 400;
+  font-feature-settings: 'ss01';
+  text-align: left;
+  color: var(--vp-c-text-1);
+  background-color: transparent;
+  border: none;
+  border-bottom: 1px solid var(--vp-c-divider);
+}
+
+.vp-doc td {
+  border: none;
+  border-bottom: 1px solid var(--vp-c-divider);
+}
+
+/* No zebra striping — the template's tables are ruled, not banded. */
+.vp-doc tr,
+.vp-doc tr:nth-child(2n) {
+  background-color: transparent;
+  border: none;
+}
+
+.vp-doc hr {
+  border-top-color: var(--vp-c-divider);
+}
+
+.vp-doc blockquote {
+  border-left: 2px solid var(--eco-slate-200);
+  color: var(--vp-c-text-2);
+}
+
+.dark .vp-doc blockquote {
+  border-left-color: var(--eco-slate-800);
+}
+
+/* --------------------------------------------------------------- code blocks */
+
+/* Dark in both modes. Light gets a shadow, dark gets a hairline ring — the template's way of keeping a
+   dark block from disappearing into a dark page. */
+.vp-doc div[class*='language-'],
+.vp-block {
+  border-radius: var(--eco-radius);
+  box-shadow: 0 10px 15px -3px rgb(15 23 42 / 0.1), 0 4px 6px -4px rgb(15 23 42 / 0.1);
+}
+
+.dark .vp-doc div[class*='language-'],
+.dark .vp-block {
+  box-shadow: inset 0 0 0 1px rgb(203 213 225 / 0.1);
+}
+
+@media (min-width: 640px) {
+  .vp-doc div[class*='language-'] {
+    border-radius: var(--eco-radius);
+  }
+}
+
+.vp-doc [class*='language-'] code {
+  color: var(--vp-code-block-color);
+}
+
+/* The template's code blocks carry no language badge; only the hero window is labelled, and it is labelled
+   with a filename. */
+.vp-doc [class*='language-'] > span.lang {
+  display: none;
+}
+
+.vp-doc [class*='language-'] > button.copy {
+  background-color: rgb(30 41 59 / 0.8);
+  border-color: rgb(203 213 225 / 0.1);
+}
+
+/* ---------------------------------------------------------------- callouts */
+
+/* The template's Callout: a large radius, no left border, an icon in the gutter. Light is tinted by kind;
+   dark is one slate surface with a hairline ring for every kind, which is what the template does. */
+.vp-doc .custom-block {
+  position: relative;
+  border: none;
+  border-radius: var(--eco-radius);
+  padding: 1.5rem 1.5rem 1.5rem 4.25rem;
+  margin: 2rem 0;
+  font-size: 0.875rem;
+  line-height: 1.5rem;
+}
+
+.vp-doc .custom-block::before {
+  content: '';
+  position: absolute;
+  top: 1.5rem;
+  left: 1.5rem;
+  width: 2rem;
+  height: 2rem;
+  background-repeat: no-repeat;
+  background-size: 2rem 2rem;
+}
+
+.vp-doc .custom-block .custom-block-title {
+  font-size: 1.25rem;
+  line-height: 2rem;
+  margin-bottom: 0.5rem;
+  text-transform: none;
+}
+
+.vp-doc .custom-block p {
+  color: inherit;
+}
+
+.vp-doc .custom-block a {
+  color: inherit;
+  font-weight: 600;
+}
+
+/* tip / info — brand blue, with a lightbulb. */
+.vp-doc .custom-block.tip,
+.vp-doc .custom-block.info,
+.vp-doc .custom-block.note,
+.vp-doc .custom-block.details {
+  background-color: var(--eco-brand-50);
+  color: var(--eco-brand-800);
+}
+
+.vp-doc .custom-block.tip .custom-block-title,
+.vp-doc .custom-block.info .custom-block-title,
+.vp-doc .custom-block.note .custom-block-title,
+.vp-doc .custom-block.details summary {
+  color: var(--eco-brand-900);
+}
+
+.vp-doc .custom-block.tip::before,
+.vp-doc .custom-block.info::before,
+.vp-doc .custom-block.note::before,
+.vp-doc .custom-block.details::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='none'%3E%3Ccircle cx='16' cy='16' r='16' fill='%23008efc'/%3E%3Cpath d='M16 8a6 6 0 0 0-3.6 10.8c.5.4.8 1 .9 1.6l.1.6h5.2l.1-.6c.1-.6.4-1.2.9-1.6A6 6 0 0 0 16 8Z' fill='%23fff'/%3E%3Cpath d='M13.5 23.5h5M14 25.75h4' stroke='%23fff' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+/* warning / danger — amber, with a triangle. */
+.vp-doc .custom-block.warning,
+.vp-doc .custom-block.danger,
+.vp-doc .custom-block.caution,
+.vp-doc .custom-block.important {
+  background-color: var(--eco-amber-50);
+  color: var(--eco-amber-800);
+}
+
+.vp-doc .custom-block.warning .custom-block-title,
+.vp-doc .custom-block.danger .custom-block-title,
+.vp-doc .custom-block.caution .custom-block-title,
+.vp-doc .custom-block.important .custom-block-title {
+  color: var(--eco-amber-900);
+}
+
+.vp-doc .custom-block.warning::before,
+.vp-doc .custom-block.danger::before,
+.vp-doc .custom-block.caution::before,
+.vp-doc .custom-block.important::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='none'%3E%3Ccircle cx='16' cy='16' r='16' fill='%23f59e0b'/%3E%3Cpath d='M16 9.5 25 25H7l9-15.5Z' fill='%23fff'/%3E%3Cpath d='M16 15v4' stroke='%23f59e0b' stroke-width='2' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='22' r='1.15' fill='%23f59e0b'/%3E%3C/svg%3E");
+}
+
+.dark .vp-doc .custom-block {
+  background-color: rgb(30 41 59 / 0.6) !important;
+  box-shadow: inset 0 0 0 1px rgb(203 213 225 / 0.1);
+  color: var(--eco-slate-300) !important;
+}
+
+.dark .vp-doc .custom-block.tip .custom-block-title,
+.dark .vp-doc .custom-block.info .custom-block-title,
+.dark .vp-doc .custom-block.note .custom-block-title {
+  color: var(--eco-brand-400) !important;
+}
+
+.dark .vp-doc .custom-block.warning .custom-block-title,
+.dark .vp-doc .custom-block.danger .custom-block-title,
+.dark .vp-doc .custom-block.caution .custom-block-title,
+.dark .vp-doc .custom-block.important .custom-block-title {
+  color: var(--eco-amber-500) !important;
+}
+
+.dark .vp-doc .custom-block a {
+  color: var(--eco-brand-400);
+}
+
+/* A code block inside a callout keeps its own surface, so it must not inherit the callout's. */
+.vp-doc .custom-block div[class*='language-'] {
+  background-color: var(--vp-code-block-bg);
+}
+
+/* ---------------------------------------------------------------- outline */
+
+.VPDocAsideOutline .outline-title {
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--vp-c-text-1);
+}
+
+.VPDocAsideOutline .outline-link {
+  font-size: 0.875rem;
+  line-height: 1.5rem;
+  font-weight: 400;
+  color: var(--eco-slate-500);
+}
+
+.dark .VPDocAsideOutline .outline-link {
+  color: var(--eco-slate-400);
+}
+
+.VPDocAsideOutline .outline-link:hover {
+  color: var(--eco-slate-700);
+}
+
+.dark .VPDocAsideOutline .outline-link:hover {
+  color: var(--eco-slate-300);
+}
+
+.VPDocAsideOutline .outline-link.active {
+  color: var(--eco-brand-500);
+}
+
+.VPDocAsideOutline .outline-marker {
+  display: none;
+}
+
+.VPDocAsideOutline .content {
+  border-left: none;
+  padding-left: 0;
+}
+
+/* ------------------------------------------------------- footer, prev / next */
+
+.VPDocFooter .edit-link-button {
+  color: var(--eco-brand-500);
+  font-weight: 600;
+}
+
+.VPDocFooter .prev-next {
+  border-top: 1px solid var(--vp-c-divider);
+  padding-top: 1.5rem;
+  margin-top: 3rem;
+  gap: 2rem;
+}
+
+.VPDocFooter .pager-link {
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  background-color: transparent;
+}
+
+.VPDocFooter .pager-link:hover {
+  border: none;
+}
+
+.VPDocFooter .desc {
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--vp-c-text-1);
+}
+
+.VPDocFooter .title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--eco-slate-500);
+}
+
+.dark .VPDocFooter .title {
+  color: var(--eco-slate-400);
+}
+
+.VPDocFooter .pager-link:hover .title {
+  color: var(--eco-slate-600);
+}
+
+.dark .VPDocFooter .pager-link:hover .title {
+  color: var(--eco-slate-300);
+}
+
+.VPFooter {
+  border-top: 1px solid var(--vp-c-divider);
+}
+
+.VPFooter .message {
+  font-size: 0.875rem;
+  color: var(--vp-c-text-2);
+}
+
+/* ----------------------------------------------------------------- landing */
+
+/* The front page is a landing page rather than a document: `layout: page` in index.md, one component in
+   theme/components/landing/, and this section. It replaced the block that dressed up VitePress's own
+   `layout: home` — there is no VPHero or VPFeature on the site any more.
+
+   The page is dark in **both** colour modes, which is the rule the sidebar already follows, so everything
+   below states one set of colours rather than a light pair and a dark pair. The palette is declared on the
+   page class instead of `:root` so nothing outside the landing page can reach it by accident. */
+.Layout.eco-landing {
+  --eco-ink-ground: #06080c;
+  --eco-ink-band: #080b11;
+  --eco-ink-surface: #0a0e15;
+  --eco-ink-sunken: #070a10;
+
+  --eco-ink-line: rgb(255 255 255 / 0.09);
+  --eco-ink-line-soft: rgb(255 255 255 / 0.07);
+  --eco-ink-line-strong: rgb(255 255 255 / 0.14);
+
+  --eco-ink-bright: #e6edf5;
+  --eco-ink-code: #c6d2e0;
+  --eco-ink-muted: #9aa8ba;
+  --eco-ink-dim: #6f7d8f;
+  --eco-ink-dimmer: #5f6e80;
+  --eco-ink-faint: #3d4c5e;
+  --eco-ink-faintest: #4d5a6b;
+
+  /* Two accents the slate ramp has no answer for: the shell prompt / "this is fine" green, and the colour a
+     diagnostic is printed in. */
+  --eco-ink-green: oklch(0.82 0.19 140);
+  --eco-ink-rose: #ff92a8;
+
+  background-color: var(--eco-ink-ground);
+  color: var(--eco-ink-bright);
+}
+
+/* `layout: page` gives VPContent full width already; all it needs is the ground behind it, because the
+   sections paint their own bands and the gaps between them would otherwise show light-mode white. */
+.eco-landing .VPContent {
+  background-color: var(--eco-ink-ground);
+}
+
+/* The nav bar's light-mode treatment fills the wordmark column white, which over a dark landing page is a
+   white block in the corner. On this page the header takes its dark treatment in both modes — the same
+   thing the sidebar does, for the same reason. */
+.eco-landing .VPNavBar.top {
+  background-color: transparent !important;
+  box-shadow: none;
+}
+
+.eco-landing .VPNavBar:not(.top) {
+  background-color: rgb(6 8 12 / 0.95) !important;
+  box-shadow: none;
+  border-bottom: 1px solid var(--eco-ink-line-soft);
+}
+
+@supports (backdrop-filter: blur(0)) {
+  .eco-landing .VPNavBar:not(.top) {
+    background-color: rgb(6 8 12 / 0.78) !important;
+    backdrop-filter: blur(14px);
+  }
+}
+
+html:not(.dark) .eco-landing .VPNavBar .title {
+  background-color: transparent !important;
+}
+
+html:not(.dark) .eco-landing .VPNavBarTitle .title,
+html:not(.dark) .eco-landing .VPNavBarMenuLink,
+html:not(.dark) .eco-landing .VPSocialLink {
+  color: var(--eco-ink-bright);
+}
+
+html:not(.dark) .eco-landing .VPNavBarMenuLink:hover {
+  color: #fff;
+}
+
+html:not(.dark) .eco-landing #local-search button {
+  background: rgb(255 255 255 / 0.04);
+  box-shadow: inset 0 0 0 1px var(--eco-ink-line);
+  color: var(--eco-ink-dim);
+}
+
+/* Links inside the landing copy. The doc pages underline with an inset box-shadow; here the surfaces are
+   busier and a plain brand-coloured link reads better against them. */
+.eco-landing a {
+  color: var(--eco-brand-400);
+}
+
+.eco-landing a:hover {
+  color: #9ad4ff;
+}
+
+/* --------------------------------------------------- landing code snippets */
+
+/* Every window's `<pre>`. It is styled here rather than in CodeWindow.vue because the snippet has to be
+   authored inside a `<pre>` in the *consuming* template — Vue only preserves whitespace inside a `<pre>` it
+   can see, and slot content authored elsewhere arrives condensed onto one line. */
+.eco-landing pre.eco-code {
+  margin: 0;
+  padding: 1.375rem 1.5rem;
+  background: transparent;
+  font-family: var(--vp-font-family-mono);
+  font-size: 0.875rem;
+  line-height: 1.9;
+  color: var(--eco-ink-code);
+  white-space: pre;
+  overflow-x: auto;
+}
+
+/* The PHP block in the contrast section is not Echo and is deliberately not coloured — it is the "before". */
+.eco-landing pre.eco-code.is-foreign {
+  color: #8b98a8;
+  font-size: 0.84375rem;
+  line-height: 1.85;
+}
+
+@media (max-width: 640px) {
+  .eco-landing pre.eco-code {
+    padding: 1.125rem 1rem;
+    font-size: 0.8125rem;
+  }
+}
+
+/* The token colours, one set for every window on the page. These are the colours theme/shiki-echo.ts gives a
+   real fenced block, so a snippet on the front page and the same snippet on a doc page look alike.
+
+   `.f` is a separate class from `.t` even though this palette gives them one colour: the design these came
+   from colours functions apart from types, and keeping the distinction in the markup means adopting that is
+   editing the four values below rather than every snippet. */
+.eco-landing pre.eco-code .k {
+  color: #cbd5e1;
+}
+
+.eco-landing pre.eco-code .t,
+.eco-landing pre.eco-code .f {
+  color: #f472b6;
+}
+
+.eco-landing pre.eco-code .s {
+  color: #66bbfd;
+}
+
+.eco-landing pre.eco-code .c {
+  color: #94a3b8;
+}
+
+.eco-landing pre.eco-code .p {
+  color: #64748b;
+}
+
+/* Not a token: the annotation on the line a snippet is showing you gets refused. */
+.eco-landing pre.eco-code .x {
+  color: var(--eco-ink-rose);
+}
+
+/* Inline code inside landing prose. The doc pages wrap it in literal backticks; a marketing page does not
+   want those, and it has no surface of its own here either. */
+.eco-landing code {
+  font-family: var(--vp-font-family-mono);
+  font-size: 0.9em;
+  background: none;
+  padding: 0;
+  color: inherit;
+}
+
+.eco-landing code::before,
+.eco-landing code::after {
+  content: none;
+}
+
+.eco-landing code.bright {
+  color: var(--eco-ink-bright);
+}

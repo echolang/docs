@@ -1,0 +1,6 @@
+node_modules/
+.vitepress/cache/
+.vitepress/dist/
+
+# scratch .eco files used to verify a snippet actually compiles
+.scratch/
