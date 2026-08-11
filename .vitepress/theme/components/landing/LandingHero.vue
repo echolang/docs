@@ -38,23 +38,25 @@ import CodeWindow from './CodeWindow.vue'
         <div class="glow glow-indigo" aria-hidden="true" />
 
         <CodeWindow title="hello.eco" tone="brand" dots>
-          <pre class="eco-code"><span class="k">struct</span> <span class="t">Point</span>
+          <pre class="eco-code"><span class="k">function</span> <span class="f">total</span><span class="p">(</span><span class="k">const array</span><span class="p">&lt;</span><span class="k">int32</span><span class="p">&gt;&amp;</span> $prices<span class="p">)</span> : <span class="k">int32</span>
 <span class="p">{</span>
-    <span class="k">float64</span> $x<span class="p">;</span>
-    <span class="k">float64</span> $y<span class="p">;</span>
+    <span class="k">int32</span> $sum <span class="p">=</span> <span class="s">0</span><span class="p">;</span>
 
-    <span class="k">const function</span> <span class="f">len</span><span class="p">()</span> : <span class="k">float64</span>
-    <span class="p">{</span>
-        <span class="k">return</span> <span class="f">std::math::sqrt</span><span class="p">(</span>$this-&gt;x * $this-&gt;x + $this-&gt;y * $this-&gt;y<span class="p">);</span>
+    <span class="k">foreach</span> <span class="p">(</span>$prices <span class="k">as</span> $price<span class="p">)</span> <span class="p">{</span>
+        $sum <span class="p">=</span> $sum + $price<span class="p">;</span>
     <span class="p">}</span>
+
+    <span class="k">return</span> $sum<span class="p">;</span>
 <span class="p">}</span>
 
-<span class="k">echo</span> <span class="t">Point</span><span class="p">(</span><span class="s">3.0</span><span class="p">,</span> <span class="s">4.0</span><span class="p">)</span>-&gt;<span class="f">len</span><span class="p">();</span></pre>
+$cart <span class="p">=</span> <span class="p">[</span><span class="s">10</span><span class="p">,</span> <span class="s">20</span><span class="p">,</span> <span class="s">12</span><span class="p">];</span>
+
+<span class="k">echo</span> <span class="f">total</span><span class="p">(</span>$cart<span class="p">);</span></pre>
 
           <template #footer>
             <span class="prompt">$</span>
             <span>echoc run hello.eco</span>
-            <span class="result">5.000000</span>
+            <span class="result">42</span>
             <span class="caret" aria-hidden="true" />
           </template>
         </CodeWindow>

@@ -204,11 +204,11 @@ An array is an object, so the operations live on it: `count`, `push`, `pop`, `re
 ```echo
 map<string, int32> $ages = map<string, int32>();
 $ages['mario'] = 34;
-$ages->set('anna', 29);
+$ages->set('ray', 29);
 
 echo $ages->count();        // 2
 echo $ages['mario'];        // 34
-echo $ages->has('anna');    // 1
+echo $ages->has('ray');     // 1
 ```
 
 There is no map literal yet, so you construct it and fill it.
@@ -399,7 +399,8 @@ A function signature cannot quietly eat something you thought you still had. Eve
 yours is spelled out, in your own source.
 
 Most of the time you do not want to give the thing away, you just want the function to look at it. That is a
-borrow, written `&`:
+borrow, written `&` on the parameter. The call site says nothing — a borrow takes nothing, so it does not
+need announcing the way `mv` does:
 
 ```echo
 function total(const array<int32>& $xs) : int32
@@ -412,7 +413,7 @@ function total(const array<int32>& $xs) : int32
 }
 
 array<int32> $nums = [1, 2, 3];
-echo total(&$nums);         // 6
+echo total($nums);          // 6
 echo $nums->count();        // 3, still yours
 ```
 
@@ -425,7 +426,7 @@ function fill(array<int32>& $out) : void
     $out->push(9);
 }
 
-fill(&$nums);
+fill($nums);
 echo $nums->count();        // 4
 ```
 

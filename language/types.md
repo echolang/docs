@@ -68,13 +68,17 @@ $a = 25;        // int32
 $b = 0.5;       // float64
 $c = true;      // bool
 $d = "hi";      // string
-$e = 0xFF;      // int32, and it is 255
+$e = 0xFF;      // uint8, and it is 255
 $f = 3.14f;     // float32, and that is the f talking
 ```
 
 An untyped integer literal is an `int32`. An untyped float literal is a `float64`. Note that those two do
 not agree about width, which is deliberate: an integer that needs more than 32 bits is unusual, and a float
 that wants less precision than a `float64` is a decision you should have to write down.
+
+A hex literal is the exception, and not a deliberate one. It takes an unsigned type sized to the number of
+digits you wrote, so `0xFF` is a `uint8` and `0x00FF` is a `uint16` despite being the same number.
+[Primitive types](/reference/primitive-types) has the width table and the range check it skips.
 
 Writing it down usually means putting the type in front:
 

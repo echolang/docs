@@ -83,7 +83,7 @@ That is what borrows are for.
 ## Borrowing instead of copying
 
 Put `&` on the parameter type and the function gets access to the caller's value instead of a copy. The call
-site has to say `&` too:
+site says nothing, because a borrow takes nothing: the compiler takes the address for you.
 
 ```echo
 function total(const array<int32>& $xs) : int32
@@ -98,7 +98,7 @@ function total(const array<int32>& $xs) : int32
 }
 
 array<int32> $nums = [1, 2, 3];
-echo total(&$nums);     // 6
+echo total($nums);      // 6
 echo $nums->count();    // 3, still yours
 ```
 
@@ -112,15 +112,17 @@ function fill(array<int32>& $out) : void
 }
 
 array<int32> $nums = [1, 2, 3];
-fill(&$nums);
+fill($nums);
 echo $nums->count();    // 4
 ```
 
-Two rules worth knowing up front:
+Three rules worth knowing up front:
 
 - A borrow is **never null**. That is the difference between `T&` and `ptr<T>`.
 - `const T&` and `T&` are different types, so `f(const Foo&)` and `f(Foo&)` are two different overloads and
   the compiler picks the more specific one for a mutable argument.
+- Writing `total(&$nums)` explicitly is the same call. A `ptr<T>` parameter is the one that does *not* borrow
+  for you, because it may be null and that should look different at the call.
 
 [Pointers and references](/memory/pointers) has the rest.
 

@@ -33,7 +33,8 @@ compatible with it. Underneath, Echo is much closer to Swift, Rust or C++ than t
 - generics, interfaces, operator overloading
 - manual control over allocation when you want it
 
-Paste a PHP file into `echoc` and you get a wall of diagnostics. That is working as intended.
+So a PHP file is not a head start. It is a list of things to rewrite, and the compiler will read it back to
+you one line at a time.
 
 ## Who it is for
 
@@ -44,8 +45,8 @@ But if you want a pitch:
 Echo is for people who write in a high-level dynamic language, are comfortable there, and occasionally want
 the thing they wrote to be fast without learning an entirely new set of ideas at the same time as an entirely new syntax.
 
-The syntax is the bridge. The type system, ownership and memory model are the part that is actually new, and
-the documentation is arranged so you meet them one at a time rather than all at once.
+The syntax is the bridge. The type system, ownership and memory model are what you actually have to learn,
+and the documentation is arranged so you meet them one at a time rather than all at once.
 
 ## What running code looks like
 
@@ -65,7 +66,7 @@ release build, so the checks are dropped and the optimizer runs.
 
 ## Let's be honest for a moment
 
-Echo is a personal project. It is not production ready and I am not pretending otherwise.
+Echo is a hobby. It is not production ready and I am not pretending otherwise.
 
 There is tons of stuff that is missing. There are holes in the type system, the standard library is tiny, the compiler probably has bugs..
 

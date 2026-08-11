@@ -1,20 +1,383 @@
 # Arrays
 
-<!-- STUB -->
+If you are coming from PHP, this is the type most likely to surprise you: **an Echo `array<T>` is a
+growable, contiguous buffer of exactly one type.** It is not a hash map, it is not heterogeneous, and the
+only thing it shares with a PHP array is the name and the brackets.
 
-::: warning Not written yet
-This page is an outline. The feature it describes works; the documentation for it does not.
-:::
+```echo
+array<int32> $numbers = [1, 2, 3];
+$numbers[] = 4;
 
-Planned sections:
+echo $numbers->count();     // 4
+echo $numbers[0];           // 1
+```
 
-- `array<T>` holds one type, contiguously, and grows
-- Creating one: the constructor, an array literal, `arr::with_capacity`
-- The two bracket forms: reading an element, and `$a[] = $v` to append
-- The full surface: `count`, `capacity`, `push`, `pop`, `remove`, `swap_remove`, `at`, `get`, `clear`, `truncate`, `extend`
-- Reserving, growth, and the pointers that growth invalidates
-- `push_slot()` for appending without a copy
-- Ownership: what an array does with an element that owns something
-- Taking a `slice<T>` of one with `sub()`
-- Iterating, mutably and read-only
-- What it costs
+That is the whole thing for the common case. The rest of this page is what an array does with your memory,
+which is the part worth knowing before you write anything large.
+
+## Four ways to make one
+
+The constructor, with the element type written out:
+
+```echo
+array<int32> $numbers = array<int32>();
+$numbers[] = 7;
+echo $numbers->count();     // 1
+```
+
+A declaration with no initializer, which default-constructs and allocates nothing:
+
+```echo
+array<int32> $numbers;
+$numbers[] = 7;
+echo $numbers->count();     // 1
+```
+
+A literal, which takes its type from where it is going:
+
+```echo
+array<float64> $ratios = [0.5, 1.5];
+echo $ratios[1];            // 1.500000
+```
+
+Or `arr::with_capacity`, when you already know how many elements are coming:
+
+```echo
+array<int32> $numbers = arr::with_capacity<int32>(64);
+
+echo $numbers->count();     // 0
+echo $numbers->capacity();  // 64
+```
+
+Note what is *not* on that list: there is no `array<int32>(5)`. A single number could mean "five slots" or
+"one element", and I would rather not guess. `arr::with_capacity` says which one you meant.
+
+## A literal takes its type from its destination
+
+Write the type and the elements are checked against it:
+
+```echo
+array<int32> $mixed = [1, 2, "three"];
+// error: Invalid type conversion: cannot assign 'string' to 'int32'
+```
+
+Leave the type out and the **first** element decides:
+
+```echo
+$names = ["Mario", "Ray", "Ronon"];         // array<string>
+$numbers = [1, 2, 3];                       // array<int32>
+
+echo $names[2];         // Ronon
+echo $numbers->count(); // 3
+```
+
+An empty literal has nothing to go on, so it needs a destination that says:
+
+```echo
+$empty = [];
+// error: an empty array literal has nothing to go on
+```
+
+```echo
+array<int32> $empty = [];   // fine
+echo $empty->count();       // 0
+```
+
+## The two brackets do different jobs
+
+`$a[$i]` names an existing element. `$a[]` names the slot one past the end, so assigning to it appends:
+
+```echo
+array<int32> $numbers = [1, 2];
+
+$numbers[] = 3;         // append
+$numbers[0] = 99;       // overwrite
+
+echo $numbers[0];       // 99
+echo $numbers->count(); // 3
+```
+
+Both are ordinary declared operators, told apart by **arity alone**, and you can declare the same pair for
+your own type. [Operators](/language/operators) has the mechanics.
+
+Since `$a[]` names a slot that does not hold anything yet, reading it is refused rather than returning
+garbage:
+
+```echo
+array<int32> $numbers = [1, 2];
+echo $numbers[];
+// error: names the slot after the last one, so there is nothing there to read
+```
+
+## The methods and the brackets are the same code
+
+`push` is `$this[] = $value` and `at` is `&$this[$index]`. That is not a coincidence to remember, it is
+literally how they are written, so the two spellings can never drift apart:
+
+```echo
+array<int32> $numbers = array<int32>();
+
+$numbers->push(1);              // same as $numbers[] = 1
+
+int32& $slot = $numbers->at(0); // same as &$numbers[0]
+$slot = 5;
+
+echo $numbers[0];               // 5
+```
+
+The full surface, off `stdlib/core/array.eco`:
+
+<!-- verify: skip -->
+```echo
+const function count() : usize
+const function capacity() : usize
+const function is_empty() : bool
+
+function reserve(usize $count) : void
+function reserve_exact(usize $count) : void
+function shrink_to_fit() : void
+
+function push(T $value) : void
+function push_slot() : T&
+function extend(const array<T>& $other) : void
+function extend_from_within(usize $start, usize $count) : void
+
+function pop() : T
+function remove(usize $index) : T
+function swap_remove(usize $index) : T
+function truncate(usize $count) : void
+function clear() : void
+
+const function get(usize $index) : T
+function at(usize $index) : T&
+const function at(usize $index) : const T&
+
+function sub() : slice<T>
+function sub(usize $from, usize $count) : slice<T>
+const function clone() : array<T>
+```
+
+Every index is a `usize`, and every one of them is bounds-checked with `assert`. `echoc build` drops those
+checks, which is the same bargain C's `assert` makes. See [Errors and panics](/language/errors-and-panics).
+
+## Growth is doubling, with a floor
+
+`reserve` doubles the capacity, and doubling from zero is zero, so the first allocation gets a floor
+instead. The floor depends on the element size, because the smaller the element the more of them fit in the
+smallest block an allocator hands out at all:
+
+```echo
+array<usize> $words;
+array<uint8> $bytes;
+
+$words[] = 1;
+$bytes[] = 1;
+
+echo $words->capacity();    // 4
+echo $bytes->capacity();    // 8
+```
+
+A request *above* the floor is honoured exactly, which is what keeps `reserve`'s promise that calling it up
+front is the one allocation for the whole loop:
+
+```echo
+array<usize> $big;
+$big->reserve(1000);
+echo $big->capacity();      // 1000
+```
+
+`reserve_exact` skips both the doubling and the floor, for when you want a small buffer sized to the byte:
+
+```echo
+array<usize> $tight;
+$tight->reserve_exact(3);
+echo $tight->capacity();    // 3
+```
+
+## Growth invalidates every borrow into the array
+
+This is the rule that bites, and nothing enforces it. There is no borrow checker. When an array grows it
+may move its buffer, and every `slice<T>` and every `&$a[$i]` you were holding points at the old one:
+
+<!-- verify: skip -->
+```echo
+int32& $first = $a->at(0);
+
+$a[] = 999;         // may reallocate
+
+$first = 1;         // the borrow may now point at freed memory
+```
+
+Reserve up front and the problem goes away, because there is no reallocation left to trip over.
+[Pointers and references](/memory/pointers) covers what a borrow is and how long it is good for.
+
+## push_slot appends without building a value first
+
+Sometimes you want to write into the new element rather than construct one and copy it in. `push_slot()`
+hands back a borrow of the fresh slot, and `&$a[]` is the same thing spelled with brackets:
+
+```echo
+struct Point
+{
+    int32 $x;
+    int32 $y;
+}
+
+array<Point> $points = array<Point>();
+
+Point& $slot = &$points[];
+$slot->x = 1;
+
+$points->push_slot()->y = 2;
+
+echo $points->count();      // 2
+echo $points[0]->x;         // 1
+echo $points[1]->y;         // 2
+```
+
+Neither form *reads* the slot, which is why both are legal where `echo $a[]` is not.
+
+## An array owns its elements
+
+If `T` owns something, the array owns it too, and it ends when the array does:
+
+```echo
+{
+    array<string> $words = [];
+
+    $words[] = '';
+    $words[0]->append('hello');
+
+    echo $words[0];             // hello
+}   // the buffer and the string are both freed right here
+```
+
+Copying an array copies the elements. For a `string` that means one more reference to the same buffer, not
+a duplicated allocation:
+
+```echo
+array<int32> $a = [1, 2, 3];
+array<int32> $b = $a;
+
+$b[0] = 99;
+
+echo $a[0];     // 1
+echo $b[0];     // 99
+```
+
+`$b = $a` and `$a->clone()` are the same copy, one inferred and one said out loud. If you want to hand the
+buffer over instead of duplicating it, that is a move:
+
+```echo
+array<int32> $a = [1, 2, 3];
+array<int32> $b = mv $a;
+
+echo $b->count();   // 3
+```
+
+[Ownership and moving](/memory/ownership) is the full story.
+
+## The removal methods are not interchangeable
+
+`pop()` **hands the element over** rather than copying it. The array stops owning it at the same moment
+the caller starts:
+
+```echo
+array<string> $words = [];
+$words[] = '';
+$words[0]->append('popped');
+
+string $out = $words->pop();
+
+echo $out;              // popped
+echo $words->count();   // 0
+```
+
+`remove($i)` keeps the order and shifts everything after it down. `swap_remove($i)` does **not** keep the
+order: it relocates the last element into the hole, which is why it is the cheap one:
+
+```echo
+array<string> $letters = [];
+$letters[] = 'x';
+$letters[] = 'y';
+$letters[] = 'z';
+
+echo $letters->swap_remove(0);  // x
+echo $letters[0];               // z
+echo $letters->count();         // 2
+```
+
+`truncate($n)` drops everything past `$n`, destroying what it drops. `clear()` is `truncate(0)`: the
+elements go, the buffer stays, and the array is immediately usable again. That is the reason to clear
+rather than reassign.
+
+```echo
+array<int32> $numbers = [1, 2, 3, 4];
+
+$numbers->truncate(2);
+echo $numbers->count();     // 2
+
+$numbers->clear();
+echo $numbers->count();     // 0
+echo $numbers->capacity();  // 4
+```
+
+## An array cannot extend itself
+
+`extend` borrows its source and writes into its receiver, and those two accesses cannot name one array:
+
+```echo
+array<int32> $a = [1, 2];
+$a->extend($a);
+// error: This names the same storage as another argument of the same call
+```
+
+Say which range you meant instead, and it is unambiguous:
+
+```echo
+array<int32> $a = [1, 2, 3];
+
+$a->extend_from_within(0, $a->count());     // double it
+
+echo $a->count();   // 6
+echo $a[3];         // 1
+```
+
+For two different arrays, `extend` is fine, and `arr::merge` is the version that builds a third:
+
+```echo
+array<int32> $a = [1, 2, 3];
+array<int32> $b = [4, 5];
+
+array<int32> $merged = arr::merge($a, $b);
+
+echo $merged->count();      // 5
+echo $merged->capacity();   // 5
+echo $a->count();           // 3
+```
+
+`merge` reserves the total up front, so the whole result is one allocation, and both inputs are `const`
+borrows so neither is consumed.
+
+## Two things that compile and are wrong
+
+Both of these are real, both are silent, and both are on [the list](/reference/limitations).
+
+**An element append skips the literal precision check.** Everywhere else Echo checks a literal against the
+type it is going into. Here it does not:
+
+<!-- verify: skip -->
+```echo
+array<int32> $ints = [];
+$ints[] = 2.5;      // stores 2, says nothing
+```
+
+**An array literal inside a field-wise constructor loses its elements.** `Bag([7, 9])` and then reading it
+back is a use-after-destruction at every optimization level, with no diagnostic. Build the array first and
+pass it in.
+
+## Next
+
+- [Slices](/collections/slices) for handing out a window onto an array without copying it.
+- [Iteration](/collections/iteration) for `foreach`, and for the copy it does not make you pay for.
+- [Ownership and moving](/memory/ownership) for what happens when `T` owns something.

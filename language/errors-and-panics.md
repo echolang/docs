@@ -158,7 +158,7 @@ function charge(int32& $meter) : bool
     return true;
 }
 
-assert(charge(&$drawn));
+assert(charge($drawn));
 echo $drawn;
 ```
 

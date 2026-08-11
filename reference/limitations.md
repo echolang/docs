@@ -23,7 +23,7 @@ formatting, and no way to declare C variadics in an `extern` block.
 
 **Multiple return values.** Documented in old notes, not implemented. Return a struct.
 
-**Enums.** `enum` is a lexer keyword with nothing behind it. There is no implementation and no test coverage.
+**Enums.** `enum` is a lexer keyword with nothing behind it.
 
 **Fixed-size arrays.** `FixedArray<T, N>` is a design rather than a feature. Type parameters are types, and
 `N` is a value, so there is currently no way to spell it.
@@ -75,6 +75,20 @@ a `usize` one.
 
 **An integer literal at a `bool` destination is silently false.** `bool $b = 1;` gives you `false`.
 
+**A hex literal skips the range check entirely.** Every other literal is checked against its destination.
+A hex one never looks at the destination at all, so it truncates instead of being refused:
+
+```echo
+uint8 $x = 0xFFFF;
+echo $x;                // 255, and nothing was said
+
+int8 $y = 0xFF;
+echo $y;                // -1
+```
+
+The same values written in decimal are both clean compile errors. The width a hex literal takes on its own
+is also chosen by digit count rather than by value, so `0xFF` is a `uint8` and `0x00FF` is a `uint16`.
+
 **`++` and `--` evaluate their target twice.** `$arr[0]++` runs the element operator twice, and on a
 call-rooted target the increment is silently lost.
 
@@ -99,6 +113,7 @@ A crash is at least loud. These are the ones I know about:
 - A typo'd namespaced generic call in a constructor argument.
 - `foreach ($arr->iterate() as $x)`, passing an explicit cursor.
 - Binary literals (`0b1010`) fall off the end of the parser.
+- `void $x;` hangs the compiler. Nothing refuses a `void` variable, and laying one out never finishes.
 
 ## Correct code that is rejected
 
@@ -106,8 +121,20 @@ A crash is at least loud. These are the ones I know about:
 read-only borrow loop is the obvious thing to write:
 
 ```echo
+struct Item
+{
+    int32 $id;
+
+    const function trace() : void
+    {
+        echo $this->id;
+    }
+}
+
+array<Item> $items = [Item(1), Item(2)];
+
 foreach ($items as const &$item) {
-    $item->trace();     // does not compile
+    $item->trace();     // error: cannot implicitly convert 'const Item&&' to 'const Item&'
 }
 ```
 
@@ -127,6 +154,11 @@ what blocks small-buffer optimisation.
 **`mv` on a field or element.** `$x = mv $doc->body;` is refused. `mv` moves a whole variable only.
 
 **`#[implicit]` on a method of a generic type.** Refused at the declaration.
+
+**A binary `-` written without spaces.** `-` glues to a following digit, so `1-2` is two integer literals in
+a row and you get `unexpected '-2' - two expressions with no operator between them.` `1 - 2` is fine. Same
+lexer rule that makes `-3` a literal rather than a negation, so it is a trade rather than an oversight, but
+the diagnostic gives you no hint that spacing is the answer.
 
 ## Standard library
 

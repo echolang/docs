@@ -168,7 +168,7 @@ function total(const array<int32>& $xs) : int32
     return $sum;
 }
 
-echo total(&$nums);         // 6, and $nums is still yours
+echo total($nums);          // 6, and $nums is still yours
 ```
 
 If you have written Rust, this is that, with a friendlier default and slightly fewer rules. If you have not,

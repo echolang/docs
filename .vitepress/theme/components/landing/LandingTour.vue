@@ -44,9 +44,9 @@ onBeforeUnmount(() => window.removeEventListener('scroll', onScroll))
   <section id="tour" class="tour">
     <div class="intro">
       <p class="eyebrow">the whirlwind version</p>
-      <h2>Six ideas, one snippet each.</h2>
+      <h2>The language in six snippets.</h2>
       <p class="lede">
-        Keep scrolling. Each one makes sense given the one before it, and by the end you can read Echo code.
+        Most of this reads like PHP. The parts that do not are the point.
       </p>
     </div>
 

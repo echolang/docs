@@ -103,7 +103,7 @@ There is no string interpolation and no `sprintf`, which is why we are appending
 ## Arrays
 
 ```echo
-array<string> $people = ["Mario", "Anna", "Sam"];
+array<string> $people = ["Mario", "Ray", "Ronon"];
 
 foreach ($people as $person) {
     greet($person);
@@ -114,8 +114,8 @@ echo $people->count();
 
 ```
 Hello, Mario!
-Hello, Anna!
-Hello, Sam!
+Hello, Ray!
+Hello, Ronon!
 3
 ```
 
@@ -142,7 +142,7 @@ function greet(string $who) : void
     echo $line;
 }
 
-array<string> $people = ["Mario", "Anna", "Sam"];
+array<string> $people = ["Mario", "Ray", "Ronon"];
 
 foreach ($people as $person) {
     greet($person);
@@ -155,8 +155,8 @@ echoc run hello.eco
 
 ```
 Hello, Mario!
-Hello, Anna!
-Hello, Sam!
+Hello, Ray!
+Hello, Ronon!
 ```
 
 ## Making a binary
@@ -171,8 +171,8 @@ echoc build -o hello hello.eco
 
 ```
 Hello, Mario!
-Hello, Anna!
-Hello, Sam!
+Hello, Ray!
+Hello, Ronon!
 ```
 
 `hello` is a native binary. Copy it to another machine of the same platform and it runs, with no Echo

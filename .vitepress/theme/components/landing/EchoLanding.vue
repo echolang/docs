@@ -33,8 +33,6 @@ onBeforeUnmount(() => window.removeEventListener('scroll', onScroll))
 const gaps = [
   'holes in the type system',
   'a tiny standard library',
-  'no use statement yet',
-  'no map literals',
   'the compiler probably has bugs',
 ]
 </script>
@@ -53,8 +51,8 @@ const gaps = [
           <p class="eyebrow">the first question everybody asks</p>
           <h2>It will not run<br />your PHP.</h2>
           <p class="says">
-            Echo borrows PHP's syntax because that syntax is comfortable and widely known, not because it is
-            trying to be compatible with it. It never will be.
+            Echo borrows PHP's syntax because you can already read it, not because it is trying to be
+            compatible with it. It never will be.
           </p>
           <p class="says">
             Paste a PHP file into <code>echoc</code> and you get a wall of diagnostics. That is working as
@@ -74,10 +72,10 @@ foreach ($things as $t) {
           <p class="arrow">↓&nbsp;&nbsp;echoc build legacy.php</p>
 
           <div class="errors">
-            <p>error: array elements must share a single type</p>
-            <p>error: 'gettype' is not a declared function</p>
-            <p>error: 'null' is not assignable to a non-nullable type</p>
-            <p class="errors-foot">3 errors, and we are on line two</p>
+            <p>The function 'gettype' could not be found</p>
+            <p>Invalid type conversion: cannot assign 'int32' to 'string'</p>
+            <p>cannot assign null to 'string' - add '?' to its type if it may be absent</p>
+            <p class="errors-foot">4 errors, nothing was compiled. Three of them are on line one.</p>
           </div>
         </div>
       </div>
@@ -88,11 +86,11 @@ foreach ($things as $t) {
     <!-- Ownership -->
     <section id="memory" class="memory">
       <div class="memory-inner">
-        <p class="eyebrow green">the part that is actually new</p>
+        <p class="eyebrow green">the part you cannot skim</p>
         <h2 class="wide">Every value has exactly one owner.</h2>
         <p class="says wide">
           When the owner goes out of scope, the value is destroyed. You can hand ownership to somebody else,
-          and that is called a move. Here is the part I like: the call site has to say
+          and that is called a move. Here is the part I like: the call site has to agree to the
           <code class="bright">mv</code> too.
         </p>
 
@@ -104,7 +102,7 @@ foreach ($things as $t) {
 <span class="p">}</span>
 
 <span class="k">echo</span> <span class="f">consume</span><span class="p">(</span><span class="k">mv</span> $nums<span class="p">);</span>     <span class="c">// 3</span>
-<span class="k">echo</span> $nums-&gt;<span class="f">count</span><span class="p">();</span>        <span class="x">// error: '$nums' has been moved out of</span></pre>
+<span class="k">echo</span> $nums-&gt;<span class="f">count</span><span class="p">();</span>        <span class="x">// error: '$nums' has been moved out of.</span></pre>
           </CodeWindow>
 
           <CodeWindow title="JUST LET IT LOOK" tone="green">
@@ -113,7 +111,7 @@ foreach ($things as $t) {
     <span class="c">// a read-only borrow</span>
 <span class="p">}</span>
 
-<span class="k">echo</span> <span class="f">total</span><span class="p">(&amp;</span>$nums<span class="p">);</span>         <span class="c">// 6</span>
+<span class="k">echo</span> <span class="f">total</span><span class="p">(</span>$nums<span class="p">);</span>          <span class="c">// 6</span>
 <span class="k">echo</span> $nums-&gt;<span class="f">count</span><span class="p">();</span>        <span class="c">// 3, still yours</span></pre>
           </CodeWindow>
         </div>
@@ -129,23 +127,23 @@ foreach ($things as $t) {
     <!-- Two commands -->
     <section class="commands">
       <div class="commands-inner">
-        <h2 class="tight">Two commands, and they do genuinely different things</h2>
+        <h2 class="tight">Run it, or ship it</h2>
 
         <div class="pair">
           <div class="command is-primary">
             <p class="line"><span class="prompt">$ </span>echoc run hello.eco</p>
             <p class="says">
-              The fast feedback loop. Compiled in memory, executed immediately, nothing written next to your
-              source. Debug build by default, so <code class="bright">assert</code> and the runtime checks
-              stay in.
+              Straight to output. The program is built in memory and executed, and your directory looks
+              exactly the way it did before. Debug by default, so <code class="bright">assert</code> and the
+              runtime checks are still watching you.
             </p>
           </div>
 
           <div class="command">
             <p class="line"><span class="prompt">$ </span>echoc build -o hello hello.eco</p>
             <p class="says">
-              The real thing. An executable you can copy to another machine. Release build by default, so the
-              checks are dropped and the optimizer runs.
+              A binary you can hand to somebody. Release by default: the checks come out, the optimizer goes
+              in, and there is nothing to install on the far end.
             </p>
           </div>
         </div>
@@ -159,7 +157,7 @@ foreach ($things as $t) {
       <div class="honest-inner">
         <p class="eyebrow muted">let's be honest for a moment</p>
         <h2 class="centred">
-          Echo is a personal project. It is not production ready and I am not pretending otherwise.
+          Echo is a hobby. Please do not run your payroll on it.
         </h2>
 
         <ul class="gaps">
@@ -167,9 +165,9 @@ foreach ($things as $t) {
         </ul>
 
         <p class="says centred-says">
-          None of that is hidden. I would rather you bounce off this page than off a compiler error six hours
-          in — there is a
-          <a href="/reference/limitations">running list of what does not exist yet</a>, kept honest on purpose.
+          None of it is hidden and none of it is a surprise to me. The
+          <a href="/reference/limitations">full list of what is missing, broken, or quietly wrong</a> is a
+          page of this documentation, and it is the one page I keep most current.
         </p>
       </div>
     </section>
