@@ -1,0 +1,867 @@
+{
+	"information_for_contributors": [
+		"DO NOT EDIT HERE. This file is a copy of syntaxes/eco.tmLanguage.json in echolang/echolang-vscode,",
+		"which is the source of truth. Change it there, then copy the file over and re-add the two keys this",
+		"copy adds: this notice and the \"aliases\" list below.",
+		"",
+		"It lives here because the docs and the extension are separate repositories and the docs have no build",
+		"step that could fetch it. Shiki reads it through markdown.languages in config.mts.",
+		"",
+		"--- from the source of truth ---",
+		"The Echo TextMate grammar. Derived from the compiler rather than guessed:",
+		"  - every token           echo/include/Token.h",
+		"  - keyword vs contextual echo/src/Lexer.cpp, echo/docs/reference/keywords.md",
+		"  - primitives            echo/docs/reference/primitive-types.md",
+		"  - attributes            echo/docs/reference/attributes.md",
+		"Pattern order in the top-level list is load-bearing. #attributes precedes #operators so '#[' is not",
+		"eaten a character at a time, #keywords precedes #function-calls so 'if (' is not a call, and the hex",
+		"rule precedes the decimal one. Reordering without reading those three reasons will break something.",
+		"The one place this grammar guesses is casing: PascalCase means a type and SCREAMING_CASE means a",
+		"constant. Echo's own stdlib writes lowercase struct names, so those arrive as plain identifiers."
+	],
+	"name": "echo",
+	"aliases": [
+		"eco"
+	],
+	"scopeName": "source.echo",
+	"fileTypes": [
+		"eco",
+		"echo"
+	],
+	"patterns": [
+		{
+			"include": "#comments"
+		},
+		{
+			"include": "#attributes"
+		},
+		{
+			"include": "#strings"
+		},
+		{
+			"include": "#declarations"
+		},
+		{
+			"include": "#keywords"
+		},
+		{
+			"include": "#types"
+		},
+		{
+			"include": "#constants"
+		},
+		{
+			"include": "#variables"
+		},
+		{
+			"include": "#member-access"
+		},
+		{
+			"include": "#namespaces"
+		},
+		{
+			"include": "#function-calls"
+		},
+		{
+			"comment": "Deliberately after #function-calls, not inside #namespaces: 'mem::size_of' has to reach the builtin rule first, and this only catches the qualified names nothing else claimed.",
+			"include": "#namespaced-symbol"
+		},
+		{
+			"comment": "Also after #function-calls, and for the same reason - 'mem::size_of<int32>()' is a builtin, not a type.",
+			"include": "#generic-type-usage"
+		},
+		{
+			"include": "#declared-type-usage"
+		},
+		{
+			"include": "#operators"
+		},
+		{
+			"include": "#punctuation"
+		}
+	],
+	"repository": {
+		"comments": {
+			"patterns": [
+				{
+					"comment": "There is no doc-comment form in the language, but stdlib/core/ writes '/** */' throughout, so it gets its own scope by convention.",
+					"name": "comment.block.documentation.eco",
+					"begin": "/\\*\\*(?!/)",
+					"end": "\\*/",
+					"beginCaptures": {
+						"0": {
+							"name": "punctuation.definition.comment.begin.eco"
+						}
+					},
+					"endCaptures": {
+						"0": {
+							"name": "punctuation.definition.comment.end.eco"
+						}
+					}
+				},
+				{
+					"name": "comment.block.eco",
+					"begin": "/\\*",
+					"end": "\\*/",
+					"beginCaptures": {
+						"0": {
+							"name": "punctuation.definition.comment.begin.eco"
+						}
+					},
+					"endCaptures": {
+						"0": {
+							"name": "punctuation.definition.comment.end.eco"
+						}
+					}
+				},
+				{
+					"name": "comment.line.double-slash.eco",
+					"begin": "//",
+					"end": "$",
+					"beginCaptures": {
+						"0": {
+							"name": "punctuation.definition.comment.eco"
+						}
+					}
+				}
+			]
+		},
+		"attributes": {
+			"patterns": [
+				{
+					"include": "#conditional-directives"
+				},
+				{
+					"include": "#attribute"
+				}
+			]
+		},
+		"conditional-directives": {
+			"comment": "'#[if:]', '#[elif:]', '#[else]' and '#[end]' are deliberately NOT attributes - a token filter consumes them between lexing and the first parse pass, which is why they work at any nesting depth. See docs/reference/attributes.md.",
+			"patterns": [
+				{
+					"name": "meta.preprocessor.conditional.eco",
+					"begin": "(#\\[)\\s*(if|elif)\\s*(:)",
+					"end": "(\\])",
+					"beginCaptures": {
+						"1": {
+							"name": "punctuation.definition.directive.begin.eco"
+						},
+						"2": {
+							"name": "keyword.control.directive.conditional.eco"
+						},
+						"3": {
+							"name": "punctuation.separator.key-value.eco"
+						}
+					},
+					"endCaptures": {
+						"1": {
+							"name": "punctuation.definition.directive.end.eco"
+						}
+					},
+					"patterns": [
+						{
+							"include": "#condition"
+						}
+					]
+				},
+				{
+					"name": "meta.preprocessor.conditional.eco",
+					"match": "(#\\[)\\s*(else|end)\\s*(\\])",
+					"captures": {
+						"1": {
+							"name": "punctuation.definition.directive.begin.eco"
+						},
+						"2": {
+							"name": "keyword.control.directive.conditional.eco"
+						},
+						"3": {
+							"name": "punctuation.definition.directive.end.eco"
+						}
+					}
+				}
+			]
+		},
+		"condition": {
+			"comment": "An axis vocabulary is closed and a --define flag is open, which is why the two are scoped differently: 'os == darwn' is an error, 'TRACE' undefined is merely false.",
+			"patterns": [
+				{
+					"name": "variable.language.axis.eco",
+					"match": "\\b(os|arch)\\b"
+				},
+				{
+					"name": "constant.language.platform.eco",
+					"match": "\\b(darwin|linux|windows|arm64|x86_64)\\b"
+				},
+				{
+					"name": "keyword.operator.logical.eco",
+					"match": "==|!=|&&|\\|\\||!"
+				},
+				{
+					"name": "punctuation.section.parens.eco",
+					"match": "[()]"
+				},
+				{
+					"name": "entity.name.constant.flag.eco",
+					"match": "\\b[A-Za-z_][A-Za-z0-9_]*\\b"
+				}
+			]
+		},
+		"attribute": {
+			"patterns": [
+				{
+					"comment": "The name vocabulary is closed - six declaration attributes and seven manifest ones - so an unknown name is a compile error and is scoped as one.",
+					"name": "meta.attribute.eco",
+					"begin": "(#\\[)\\s*(?:(inline|implicit|intrinsic|builtin|core|unique|module|version|depends|sources|link|cc|build_dir)\\b|([A-Za-z_][A-Za-z0-9_]*))",
+					"end": "\\]",
+					"beginCaptures": {
+						"1": {
+							"name": "punctuation.definition.attribute.begin.eco"
+						},
+						"2": {
+							"name": "entity.other.attribute-name.eco"
+						},
+						"3": {
+							"name": "invalid.illegal.unknown-attribute.eco"
+						}
+					},
+					"endCaptures": {
+						"0": {
+							"name": "punctuation.definition.attribute.end.eco"
+						}
+					},
+					"patterns": [
+						{
+							"include": "#attribute-value"
+						}
+					]
+				}
+			]
+		},
+		"attribute-value": {
+			"comment": "One value grammar for every attribute: value := name atom | atom, over string, int, float, bool, name, list and record. A bare name means itself and is never a constant, a type or a variable.",
+			"patterns": [
+				{
+					"include": "#comments"
+				},
+				{
+					"include": "#strings"
+				},
+				{
+					"comment": "A list and a record are their own begin/end blocks so that the enclosing attribute's ']' is not closed by a nested one - '#[sources: [\"a\", \"b\"]]' has two closers and only the outer one ends the attribute.",
+					"include": "#attribute-list"
+				},
+				{
+					"include": "#attribute-record"
+				},
+				{
+					"comment": "A record key is 'name: value'. Matched before the tag names so a record may legally use one of them as a key.",
+					"match": "([A-Za-z_][A-Za-z0-9_]*)\\s*(:)",
+					"captures": {
+						"1": {
+							"name": "support.type.property-name.eco"
+						},
+						"2": {
+							"name": "punctuation.separator.key-value.eco"
+						}
+					}
+				},
+				{
+					"comment": "Tagged values: link schemes, cc kinds and dependency kinds.",
+					"name": "entity.name.tag.eco",
+					"match": "\\b(lib|framework|search|object|sources|include|define|flag|path|git)\\b"
+				},
+				{
+					"name": "constant.language.boolean.eco",
+					"match": "\\b(true|false)\\b"
+				},
+				{
+					"name": "constant.numeric.float.eco",
+					"match": "\\b\\d+\\.\\d+\\b"
+				},
+				{
+					"name": "constant.numeric.integer.eco",
+					"match": "\\b\\d+\\b"
+				},
+				{
+					"name": "constant.other.attribute-value.eco",
+					"match": "\\b[A-Za-z_][A-Za-z0-9_]*\\b"
+				},
+				{
+					"name": "punctuation.separator.comma.eco",
+					"match": ","
+				},
+				{
+					"name": "punctuation.separator.key-value.eco",
+					"match": ":"
+				}
+			]
+		},
+		"attribute-list": {
+			"comment": "list := '[' ( value ( ',' value )* ','? )? ']'",
+			"begin": "\\[",
+			"end": "\\]",
+			"beginCaptures": {
+				"0": {
+					"name": "punctuation.section.attribute.list.begin.eco"
+				}
+			},
+			"endCaptures": {
+				"0": {
+					"name": "punctuation.section.attribute.list.end.eco"
+				}
+			},
+			"patterns": [
+				{
+					"include": "#attribute-value"
+				}
+			]
+		},
+		"attribute-record": {
+			"comment": "record := '{' ( name ':' value ( ',' name ':' value )* ','? )? '}'. Record keys keep the order they were written in.",
+			"begin": "\\{",
+			"end": "\\}",
+			"beginCaptures": {
+				"0": {
+					"name": "punctuation.section.attribute.record.begin.eco"
+				}
+			},
+			"endCaptures": {
+				"0": {
+					"name": "punctuation.section.attribute.record.end.eco"
+				}
+			},
+			"patterns": [
+				{
+					"include": "#attribute-value"
+				}
+			]
+		},
+		"strings": {
+			"comment": "The lexer accepts both quote characters (LexerFunction::StringLiteral::must_match). There is no interpolation and no formatting anywhere in the language.",
+			"patterns": [
+				{
+					"name": "string.quoted.double.eco",
+					"begin": "\"",
+					"end": "\"",
+					"beginCaptures": {
+						"0": {
+							"name": "punctuation.definition.string.begin.eco"
+						}
+					},
+					"endCaptures": {
+						"0": {
+							"name": "punctuation.definition.string.end.eco"
+						}
+					},
+					"patterns": [
+						{
+							"name": "constant.character.escape.eco",
+							"match": "\\\\."
+						}
+					]
+				},
+				{
+					"name": "string.quoted.single.eco",
+					"begin": "'",
+					"end": "'",
+					"beginCaptures": {
+						"0": {
+							"name": "punctuation.definition.string.begin.eco"
+						}
+					},
+					"endCaptures": {
+						"0": {
+							"name": "punctuation.definition.string.end.eco"
+						}
+					},
+					"patterns": [
+						{
+							"name": "constant.character.escape.eco",
+							"match": "\\\\."
+						}
+					]
+				}
+			]
+		},
+		"declarations": {
+			"patterns": [
+				{
+					"comment": "The optional 'as' tail is an extern block renaming a raw C symbol: 'function malloc as raw_alloc(...)'.",
+					"match": "\\b(function)\\s+([A-Za-z_][A-Za-z0-9_]*)(?:\\s+(as)\\s+([A-Za-z_][A-Za-z0-9_]*))?",
+					"captures": {
+						"1": {
+							"name": "storage.type.function.eco"
+						},
+						"2": {
+							"name": "entity.name.function.eco"
+						},
+						"3": {
+							"name": "keyword.control.as.eco"
+						},
+						"4": {
+							"name": "entity.name.function.eco"
+						}
+					}
+				},
+				{
+					"match": "\\b(struct|class|interface)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+					"captures": {
+						"1": {
+							"name": "storage.type.class.eco"
+						},
+						"2": {
+							"name": "entity.name.type.eco"
+						}
+					}
+				},
+				{
+					"comment": "'constructor' is a contextual identifier rather than a reserved word - a struct may have a property called 'constructor' - so it is only recognised in front of a parameter list. 'destructor' is genuinely reserved and is matched here for symmetry.",
+					"name": "storage.type.function.constructor.eco",
+					"match": "\\b(constructor|destructor)\\b(?=\\s*\\()"
+				},
+				{
+					"comment": "The precedence clause of an operator declaration: 'operator(45, left)'. 'left' and 'right' are contextual and mean nothing anywhere else.",
+					"match": "\\b(operator)\\s*(\\()\\s*(\\d+)\\s*(,)\\s*(left|right)\\s*(\\))",
+					"captures": {
+						"1": {
+							"name": "storage.type.function.operator.eco"
+						},
+						"2": {
+							"name": "punctuation.section.parens.eco"
+						},
+						"3": {
+							"name": "constant.numeric.integer.eco"
+						},
+						"4": {
+							"name": "punctuation.separator.comma.eco"
+						},
+						"5": {
+							"name": "keyword.other.associativity.eco"
+						},
+						"6": {
+							"name": "punctuation.section.parens.eco"
+						}
+					}
+				},
+				{
+					"match": "\\b(namespace)\\s+([A-Za-z_][A-Za-z0-9_:]*)",
+					"captures": {
+						"1": {
+							"name": "keyword.other.namespace.eco"
+						},
+						"2": {
+							"name": "entity.name.namespace.eco"
+						}
+					}
+				},
+				{
+					"name": "keyword.other.extern.eco",
+					"match": "\\b(extern)\\b(?=\\s*\\{)"
+				},
+				{
+					"comment": "An associated type inside an interface body: 'type Iter : Stepper<V>;'. Contextual, like 'constructor'.",
+					"match": "^\\s*(type)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+					"captures": {
+						"1": {
+							"name": "storage.type.eco"
+						},
+						"2": {
+							"name": "entity.name.type.eco"
+						}
+					}
+				}
+			]
+		},
+		"keywords": {
+			"comment": "The thirty-one reserved words, split by role. Matching is whole-word in the lexer too, which is why 'forward', 'classify' and 'nullable' are ordinary identifiers.",
+			"patterns": [
+				{
+					"name": "keyword.control.conditional.eco",
+					"match": "\\b(if|else|guard)\\b"
+				},
+				{
+					"name": "keyword.control.loop.eco",
+					"match": "\\b(while|foreach|for|break|continue)\\b"
+				},
+				{
+					"name": "keyword.control.flow.eco",
+					"match": "\\b(return)\\b"
+				},
+				{
+					"name": "keyword.control.as.eco",
+					"match": "\\b(as)\\b"
+				},
+				{
+					"comment": "'echo' is a statement, not a function. It is the only output construct in the language.",
+					"name": "keyword.other.echo.eco",
+					"match": "\\b(echo)\\b"
+				},
+				{
+					"name": "keyword.control.unsafe.eco",
+					"match": "\\b(unsafe)\\b"
+				},
+				{
+					"comment": "Leaving the modifier off is 'internal', not public.",
+					"name": "storage.modifier.eco",
+					"match": "\\b(public|private|internal|const)\\b"
+				},
+				{
+					"name": "keyword.operator.word.eco",
+					"match": "\\b(mv|strong|instanceof)\\b"
+				},
+				{
+					"comment": "The declaration keywords that did not reach a named-declaration rule above - a closure literal's 'function', an 'operator' carrying type parameters, an 'extern' with its brace on the next line. Split the same way as those rules so one keyword never lands in two different scope families.",
+					"name": "storage.type.function.eco",
+					"match": "\\b(function|operator|destructor)\\b"
+				},
+				{
+					"comment": "'enum' is reserved and no parser accepts it. Scoped as a storage keyword rather than invalid, because it is held for a feature that is coming.",
+					"name": "storage.type.class.eco",
+					"match": "\\b(struct|class|interface|enum)\\b"
+				},
+				{
+					"name": "keyword.other.extern.eco",
+					"match": "\\b(extern)\\b"
+				},
+				{
+					"name": "keyword.other.namespace.eco",
+					"match": "\\b(namespace)\\b"
+				}
+			]
+		},
+		"types": {
+			"patterns": [
+				{
+					"comment": "Fourteen primitives and exactly three aliases - 'int' is int32 on every platform, 'uint' is uint32, 'float' is float32. There is no 'double' and no 128-bit anything.",
+					"name": "support.type.primitive.eco",
+					"match": "\\b(int8|int16|int32|int64|uint8|uint16|uint32|uint64|usize|isize|float32|float64|bool|void|int|uint|float)\\b"
+				},
+				{
+					"name": "support.type.eco",
+					"match": "\\b(ptr|weak)\\b"
+				},
+				{
+					"comment": "Generic constraint aliases. Recognised after a ':' only, which in practice is always a constraint position.",
+					"match": "(:)\\s*(numeric|integer|signed|unsigned|floating)\\b",
+					"captures": {
+						"1": {
+							"name": "punctuation.separator.constraint.eco"
+						},
+						"2": {
+							"name": "support.type.constraint.eco"
+						}
+					}
+				},
+				{
+					"comment": "Not compiler types: these are structs in stdlib/core/ and with --no-stdlib they do not exist. Hence support.class rather than storage.type.",
+					"name": "support.class.eco",
+					"match": "\\b(string)\\b"
+				},
+				{
+					"comment": "Same, but these only read as types when they carry type arguments, so requiring the '<' keeps an ordinary identifier called 'map' or 'range' alone.",
+					"name": "support.class.eco",
+					"match": "\\b(array|map|slice|range|buffer|iterator|iterable|const_iterable|keyed)\\b(?=\\s*<)"
+				},
+				{
+					"comment": "Casing heuristic. Covers 'Point' and 'Stargate' as well as the type parameters 'T', 'K' and 'V'. The lookahead hands an all-capitals name to the constant rule instead, and the two are exact complements: '(?![A-Z0-9_]+\\b)' here, '[A-Z][A-Z0-9_]+' there. Without it 'MAX' would arrive as a type and the constant rule would never fire, since #types is scanned first.",
+					"name": "entity.name.type.eco",
+					"match": "\\b[A-Z](?![A-Z0-9_]+\\b)[A-Za-z0-9_]*\\b"
+				}
+			]
+		},
+		"constants": {
+			"patterns": [
+				{
+					"comment": "Binary literals are NOT a feature. There is no BinaryLiteral lexer function, so '0b1010' reads as the integer 0 followed by an identifier 'b1010' and the parser gives up on it. Flagged rather than coloured, because the resulting error names the wrong thing.",
+					"name": "invalid.illegal.numeric.binary.eco",
+					"match": "\\b0[bB][01_]+\\b"
+				},
+				{
+					"comment": "A hex literal takes an unsigned type sized to the digit count, so 0xFF is a uint8 and 0x00FF is a uint16.",
+					"name": "constant.numeric.hex.eco",
+					"match": "\\b0[xX][0-9a-fA-F]+\\b"
+				},
+				{
+					"comment": "Written so that '0 .. 3' and '0..3' stay an integer, two dots and an integer. The numeric reader declines to eat a dot followed by another dot, and so does this.",
+					"name": "constant.numeric.float.eco",
+					"match": "\\b\\d+\\.\\d+(?!\\.)(f)?\\b",
+					"captures": {
+						"1": {
+							"name": "storage.type.number.float32.eco"
+						}
+					}
+				},
+				{
+					"comment": "The 'f' is part of the literal, not a type in front of it: '3.14' and '3.14f' are two different literals.",
+					"name": "constant.numeric.float.eco",
+					"match": "\\b\\d+(f)\\b",
+					"captures": {
+						"1": {
+							"name": "storage.type.number.float32.eco"
+						}
+					}
+				},
+				{
+					"name": "constant.numeric.integer.eco",
+					"match": "\\b\\d+\\b"
+				},
+				{
+					"name": "constant.language.boolean.eco",
+					"match": "\\b(true|false)\\b"
+				},
+				{
+					"name": "constant.language.null.eco",
+					"match": "\\b(null)\\b"
+				},
+				{
+					"comment": "A constant has no '$' - that missing dollar is the whole difference between a constant and a const variable. Casing heuristic: two or more capitals, so 'MAX' and 'ECO_SHIM_BASE' match while the type parameter 'T' and the type 'Point' do not. Complement of the entity.name.type rule in #types.",
+					"name": "variable.other.constant.eco",
+					"match": "\\b[A-Z][A-Z0-9_]+\\b"
+				}
+			]
+		},
+		"variables": {
+			"patterns": [
+				{
+					"match": "(\\$)(this)\\b",
+					"name": "variable.language.this.eco",
+					"captures": {
+						"1": {
+							"name": "punctuation.definition.variable.eco"
+						}
+					}
+				},
+				{
+					"comment": "A variable always carries its '$', which is why no reserved word can collide with one.",
+					"match": "(\\$)([A-Za-z_][A-Za-z0-9_]*)",
+					"name": "variable.other.eco",
+					"captures": {
+						"1": {
+							"name": "punctuation.definition.variable.eco"
+						}
+					}
+				}
+			]
+		},
+		"member-access": {
+			"comment": "Members are reached with '->', always, including your own. '?->' stops at a null.",
+			"patterns": [
+				{
+					"match": "(\\?->|->)\\s*([A-Za-z_][A-Za-z0-9_]*)\\s*(?=\\()",
+					"captures": {
+						"1": {
+							"name": "keyword.operator.accessor.eco"
+						},
+						"2": {
+							"name": "entity.name.function.member.eco"
+						}
+					}
+				},
+				{
+					"match": "(\\?->|->)\\s*([A-Za-z_][A-Za-z0-9_]*)",
+					"captures": {
+						"1": {
+							"name": "keyword.operator.accessor.eco"
+						},
+						"2": {
+							"name": "variable.other.property.eco"
+						}
+					}
+				}
+			]
+		},
+		"namespaces": {
+			"patterns": [
+				{
+					"comment": "'self::NAME' reaches a constant on the enclosing type. 'self' is contextual and an ordinary identifier anywhere else.",
+					"match": "\\b(self)\\s*(::)",
+					"captures": {
+						"1": {
+							"name": "variable.language.self.eco"
+						},
+						"2": {
+							"name": "punctuation.separator.namespace.eco"
+						}
+					}
+				},
+				{
+					"match": "\\b([A-Za-z_][A-Za-z0-9_]*)\\s*(::)",
+					"captures": {
+						"1": {
+							"name": "entity.name.namespace.eco"
+						},
+						"2": {
+							"name": "punctuation.separator.namespace.eco"
+						}
+					}
+				}
+			]
+		},
+		"function-calls": {
+			"patterns": [
+				{
+					"comment": "The nineteen names the compiler answers at the call site with no symbol emitted - the '#[builtin:]' vocabulary. Nothing reserves them, so they can be shadowed.",
+					"name": "support.function.builtin.eco",
+					"match": "\\b(size_of|align_of|is_trivially_copyable|needs_destruction|take|init|die|assert|ref_count|weak_count|dprint|alloc_bytes|realloc_bytes|free_bytes|live_allocations|process_argc|process_argv|process_envp|exit)\\b"
+				},
+				{
+					"comment": "The optional angle-bracket group is the type-argument list of an explicit instantiation: 'mem::size_of<int32>()'.",
+					"name": "entity.name.function.call.eco",
+					"match": "\\b[A-Za-z_][A-Za-z0-9_]*\\b(?=\\s*(?:<[^<>()]*>\\s*)?\\()"
+				}
+			]
+		},
+		"declared-type-usage": {
+			"comment": "The other half of the snake_case problem: 'local_buf $owner;' and 'point? $p' name a type that no casing rule will recognise and that carries no type arguments either. What identifies it is the position - a name directly in front of a '$variable' is a type, because that is what a declaration looks like.\n\nThe anchor is the part that matters, and it is not decoration. A custom infix word operator has the identical shape - '$a avg $b' is also a name, a space and a variable - so without it every declared word operator in the language would be tinted as a type. Restricting to the places a declaration can begin keeps them apart, at the cost of missing a type that follows a visibility modifier on the same line.\n\nTwo details, both of which were bugs first:\n\n'(?<=[(,])' is a lookbehind rather than a consumed character, so the '(' or ',' is still there for #punctuation to scope. It also makes this rule start at the same offset as the #types rule for a parameter like 'int32 $a', and a tie on offset goes to whichever pattern is listed first - which is #types. That is the whole reason a primitive keeps its own scope in the first parameter position.\n\nThe '^\\s*' alternative has no such protection: it starts at column zero and therefore outranks every rule that would match the word itself further along the line. Hence the exclusion list - without it an indented 'echo $x;' would have 'echo' coloured as a type, and so would every reserved word and primitive at the head of a line.",
+			"patterns": [
+				{
+					"match": "(?:^\\s*|(?<=[(,])\\s*)(?!(?:int8|int16|int32|int64|uint8|uint16|uint32|uint64|usize|isize|float32|float64|bool|void|int|uint|float|string|ptr|weak|const|public|private|internal|echo|return|mv|strong|instanceof|unsafe|guard|if|else|while|for|foreach|break|continue|as|function|struct|class|interface|enum|extern|operator|constructor|destructor|namespace|type|self|true|false|null)\\b)([a-z_][A-Za-z0-9_]*)(?=\\s*\\??\\s*&?\\s*\\$)",
+					"captures": {
+						"1": {
+							"name": "entity.name.type.eco"
+						}
+					}
+				}
+			]
+		},
+		"generic-type-usage": {
+			"comment": "Echo's own stdlib writes struct names in snake_case - 'slice_iterator<T>', 'ordered_map<K, V>' - so the PascalCase heuristic in #types never sees them. Carrying type arguments is the other thing that makes a name a type, and it is unambiguous here: a bare lowercase identifier in front of a '<' cannot be a variable (those carry a '$'), a constant (those are capitals) or a call (that needs a '(').",
+			"patterns": [
+				{
+					"name": "entity.name.type.eco",
+					"match": "\\b[a-z_][A-Za-z0-9_]*\\b(?=\\s*<)"
+				}
+			]
+		},
+		"namespaced-symbol": {
+			"comment": "A name reached through '::' that no earlier rule named - not a builtin, not a call, not a library type, not a constant. Without this it would be the one qualified name in a file with no scope at all.",
+			"patterns": [
+				{
+					"name": "entity.name.symbol.eco",
+					"match": "(?<=::)[A-Za-z_][A-Za-z0-9_]*"
+				}
+			]
+		},
+		"operators": {
+			"comment": "Longest first, so the multi-character tokens win. '..' and '..=' are in here for readability even though they are ordinary operator declarations in stdlib/core/range.eco rather than tokens.",
+			"patterns": [
+				{
+					"name": "keyword.operator.accessor.optional.eco",
+					"match": "\\?->"
+				},
+				{
+					"comment": "':$' names the pointer itself rather than what it points at, and it is one token - which is also why '#[name: $value]' needs the space after the colon.",
+					"name": "keyword.operator.pointer-of.eco",
+					"match": ":\\$"
+				},
+				{
+					"name": "keyword.operator.null-coalesce.eco",
+					"match": "\\?\\?"
+				},
+				{
+					"name": "keyword.operator.range.eco",
+					"match": "\\.\\.=|\\.\\."
+				},
+				{
+					"name": "keyword.operator.accessor.eco",
+					"match": "->"
+				},
+				{
+					"name": "keyword.operator.key-value.eco",
+					"match": "=>"
+				},
+				{
+					"name": "punctuation.separator.namespace.eco",
+					"match": "::"
+				},
+				{
+					"name": "keyword.operator.arithmetic.eco",
+					"match": "\\*\\*"
+				},
+				{
+					"name": "keyword.operator.bitwise.eco",
+					"match": "<<|>>"
+				},
+				{
+					"name": "keyword.operator.logical.eco",
+					"match": "&&|\\|\\|"
+				},
+				{
+					"name": "keyword.operator.comparison.eco",
+					"match": "==|!=|<=|>="
+				},
+				{
+					"name": "keyword.operator.arithmetic.eco",
+					"match": "\\+\\+|--"
+				},
+				{
+					"comment": "Whitespace decides what '&' means, and this is the lexer's exact rule: a reference when the very next character is '$' or alphanumeric, bitwise and otherwise. A digit counts, which is why '$mask &1' is not what it looks like.",
+					"name": "keyword.operator.reference.eco",
+					"match": "&(?=[\\$A-Za-z0-9_])"
+				},
+				{
+					"name": "keyword.operator.assignment.eco",
+					"match": "="
+				},
+				{
+					"name": "keyword.operator.arithmetic.eco",
+					"match": "[+\\-*/%]"
+				},
+				{
+					"name": "keyword.operator.logical.eco",
+					"match": "!"
+				},
+				{
+					"comment": "The nullable suffix, as in 'int32?'. There is no ternary operator in Echo.",
+					"name": "keyword.operator.nullable.eco",
+					"match": "\\?"
+				},
+				{
+					"name": "keyword.operator.bitwise.eco",
+					"match": "[&|^]"
+				},
+				{
+					"name": "keyword.operator.comparison.eco",
+					"match": "[<>]"
+				}
+			]
+		},
+		"punctuation": {
+			"patterns": [
+				{
+					"name": "punctuation.terminator.statement.eco",
+					"match": ";"
+				},
+				{
+					"name": "punctuation.separator.comma.eco",
+					"match": ","
+				},
+				{
+					"name": "punctuation.accessor.dot.eco",
+					"match": "\\."
+				},
+				{
+					"name": "punctuation.separator.colon.eco",
+					"match": ":"
+				},
+				{
+					"name": "punctuation.section.braces.eco",
+					"match": "[{}]"
+				},
+				{
+					"name": "punctuation.section.brackets.eco",
+					"match": "[\\[\\]]"
+				},
+				{
+					"name": "punctuation.section.parens.eco",
+					"match": "[()]"
+				},
+				{
+					"name": "punctuation.definition.hash.eco",
+					"match": "#"
+				}
+			]
+		}
+	}
+}

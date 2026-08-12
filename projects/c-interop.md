@@ -98,8 +98,10 @@ echo $p->length();      // 5.000000
 ```
 
 The standard library does exactly this. `stdlib/std/env/libc.eco` holds every C symbol `std::env` is built
-out of, and nothing else, with a `c_` prefix saying "not for outside use" because there are no visibility
-modifiers yet.
+out of, and nothing else. An `extern` block takes the same visibility modifier a declaration does, and that
+one doesn't say `public`, so none of it crosses the module boundary. The `c_` prefix is for the reader
+*inside* the module, where that boundary isn't visible in the code in front of them.
+See [Visibility](/language/visibility).
 
 Wrap `#[if:]` around a whole block when a symbol only exists on one platform.
 [Conditional compilation](/projects/conditional-compilation) has that case in full, and it is the reason the
@@ -327,10 +329,58 @@ ecobuild/cc/
 
 So if you ever cache something on top of these, key on the content digest and not on the path.
 
-## What you cannot declare
+## Calling a C variadic function
 
-**Variadics.** There is no `...` in a signature, which means `printf` cannot be declared at all. Wrap it in a
-C shim with a fixed signature, which is what `#[cc:]` is for. On [the list](/reference/limitations).
+`printf`, `snprintf`, `open`, `fcntl`: a lot of C's surface takes an argument list that does not end.
+Echo has no `...` in its own grammar, so the tail is spelled as the last parameter's **type**:
+
+```echo
+extern {
+    function snprintf as c_snprintf(
+        ptr<uint8> $out, usize $size, ptr<const uint8> $format, variadic_args $args) : int32;
+}
+
+ptr<uint8> $buffer = mem::alloc<uint8>(64);
+string $format = '%d chevrons, %.1f seconds';
+
+int32 $written = c_snprintf($buffer, 64, $format->c_str(), [7, 2.5]);
+
+echo str::view_of_c_str($buffer);        // 7 chevrons, 2.5 seconds
+echo $written;                           // 23
+
+mem::free($buffer);
+```
+
+Four parameters, four arguments. The brackets are what C receives as its variadic tail, and the call still
+has exactly the arity its declaration states. That is the whole reason it is spelled this way rather than
+with an ellipsis: you can read a call site's arity without going to look at the declaration.
+
+**The list has to be written right there.** That is not a style rule I am imposing on you. A C variadic call
+decides where each argument goes from its type *at the call site*, so a collection assembled at runtime could
+not be unpacked without building a `va_list` by hand, which is not portable. An empty list is fine and means
+no varargs at all.
+
+**Each element is promoted the way C promotes an argument with no parameter to match it.** A `float`
+becomes a `float64`, and anything narrower than 32 bits becomes an `int32` or a `uint32`. The compiler does
+that, not your declaration, which is also where a C compiler does it. You never write the widening
+yourself and you cannot get it wrong.
+
+What may be in the list is primitives and pointers. A struct is refused, because how C's variadic
+convention unpacks one is platform specific. A `string` is a struct, so pass its `->c_str()`:
+
+```echo
+extern {
+    function printf as c_printf(ptr<const uint8> $format, variadic_args $args) : int32;
+}
+
+string $format = 'hello, %s';
+string $name = 'Ronon';
+
+c_printf($format->c_str(), [$name->c_str()]);
+```
+
+`variadic_args` is legal in exactly one place: the last parameter of an `extern` declaration, with at
+least one parameter before it. Everywhere else is a compile error naming the position.
 
 ## Next
 

@@ -15,12 +15,12 @@ and the same parser your own code goes through.
 That is a complete project. Run `echoc run` in that directory and it finds the manifest, expands the pattern
 and compiles what it matched. The rest of this page is what happens when one module is not enough.
 
-## Seven attributes, and most days you write three
+## Eight attributes, and most days you write three
 
-A manifest has exactly seven attributes. Misspell one and you get the list back:
+A manifest has exactly eight attributes. Misspell one and you get the list back:
 
 ```
-module.eco:2: unknown manifest attribute 'source', expected one of: module, version, depends, sources, link, cc, build_dir
+module.eco:2: unknown manifest attribute 'source', expected one of: module, version, depends, sources, target, link, cc, build_dir
 ```
 
 | | |
@@ -29,6 +29,7 @@ module.eco:2: unknown manifest attribute 'source', expected one of: module, vers
 | `#[version: "0.1.0"]` | recorded, and part of the build fingerprint |
 | `#[sources: "src/*.eco"]` | the files this module is made of |
 | `#[depends: "../geometry"]` | another module, by path |
+| `#[target: exe { ... }]` | a program this module produces. See [More than one program](#more-than-one-program) |
 | `#[link: lib "m"]` | a native library this module needs. See [Linking](/projects/linking) |
 | `#[cc: sources "c/*.c"]` | C sources that ship beside the Echo. See [C interop](/projects/c-interop) |
 | `#[build_dir: "target"]` | where artifacts go instead of `ecobuild` |
@@ -84,6 +85,93 @@ module.eco: the sources pattern 'lib/*.eco' matched no files.
 
 The point of a pattern is that adding `src/circle.eco` needs no edit here. Adding a *directory* does, which is
 the right way round: a new directory is a decision and a new file usually is not.
+
+## More than one program
+
+A module is one program by default: run `echoc run` in it and the top level of every file it is made of runs,
+in filename order. That is fine right up until you want two of them, and then it is not fine at all. The tool
+and the server that share its guts. The app and the benchmark that measures it. Splitting those into two
+modules to get two binaries means inventing a third one to hold what they share, which is a lot of manifest
+for a problem you did not have.
+
+`#[target:]` is how a manifest says so. It names one of the module's own files as the entry point:
+
+<!-- verify: skip -->
+```echo
+#[module: "clock"]
+
+#[sources: "src/*.eco"]
+
+#[target: exe { name: "clock", entry: "src/clock_main.eco" }]
+#[target: exe { name: "serve", entry: "src/serve_main.eco" }]
+```
+
+```bash
+echoc build                  # both of them
+echoc build --target clock   # just the one
+echoc run --target serve
+```
+
+**The entry file is the program, and everything else in the module is shared.** Building `clock` runs the
+top level of `clock_main.eco` and nothing of `serve_main.eco`; building `serve` is the other way round. Every
+other file (`canvas.eco`, `face.eco`, whatever else `src/*.eco` matched) contributes its functions, its types
+and its constants to both.
+
+That is the same rule a library module follows: only the program's own file root becomes `main`. A target is
+just a manifest saying which file that is.
+
+Note the entry has to be a file the module is already made of. It is shared code's neighbour, not a stranger
+beside it:
+
+```
+module.eco:6: 'elsewhere.eco' is target 'tool's entry but is not one of this module's sources - a target's entry has to be a file the module is made of.
+```
+
+### Shared files hold declarations, not code
+
+Once a module declares targets, top-level code in a file that is *no* target's entry has nowhere to run. So
+it is refused rather than quietly dropped:
+
+```
+[error] Top Level Code Outside An Entry
+
+  'clock' declares targets, so 'canvas.eco' is shared by all of them and the code at its top level would never run. Only a target's entry file becomes a program.
+
+  14 |  $shared = canvas(80, 24);
+     |  ^^^^^^^
+
+  help: move it into the entry file of the target it belongs to, or into a function this one calls. Declarations are what a shared file is for, and every target already sees all of them
+```
+
+The other target's entry file is not this mistake. Its code belongs to that program, and not running when
+you build this one is the whole point.
+
+### Where the binaries go
+
+Each target writes a binary named after itself, into the module's build directory:
+
+```
+clock/
+  module.eco
+  src/...
+  ecobuild/
+    CACHEDIR.TAG
+    clock          <- one per target
+    serve
+```
+
+So `.gitignore` still needs the one `ecobuild/` line however many programs you grow, and `echoc clean`
+reaches them. `-o` overrides for a single target and is refused when several are being built, because one
+path cannot name two files:
+
+```bash
+echoc build --target clock -o /usr/local/bin/clock
+```
+
+One trade worth knowing: each target is compiled on its own, so the code they share is compiled once per
+target. Their `#[depends:]` libraries are cached and shared between them, the module's own sources are not.
+For two programs over one `src/` that is a rounding error. If it ever stops being one, the shared half wants to
+be its own module, which is the thing `#[depends:]` was for all along.
 
 ## A dependency is a directory on disk
 

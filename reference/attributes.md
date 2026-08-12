@@ -179,7 +179,7 @@ implementation comes from instead of having a body". The fourth way is an `exter
 
 ## Manifest attributes
 
-Seven names, legal in a `module.eco` and nowhere useful else. [Modules](/projects/modules) is the chapter;
+Eight names, legal in a `module.eco` and nowhere useful else. [Modules](/projects/modules) is the chapter;
 this is the value shapes.
 
 | Attribute | Value | Repeats | Notes |
@@ -188,6 +188,7 @@ this is the value shapes.
 | `#[version: "0.1.0"]` | string | no | recorded, folded into the build fingerprint, resolves against nothing |
 | `#[sources: "src/*.eco"]` | string or list | yes | relative to the manifest. A pattern matching nothing is an error |
 | `#[depends: ...]` | string, `path "..."`, `git { }`, or a list | yes | a path to a manifest file, or to a directory holding one |
+| `#[target: <tag> { }]` | tagged record, or a list | yes | tags: `exe`. Fields `name` and `entry`, both required; `entry` must be one of this module's own `sources` |
 | `#[link: <tag> "..."]` | tagged | yes | tags: `lib`, `framework`, `search`, `object` |
 | `#[cc: <tag> ...]` | tagged | yes | tags: `sources`, `include`, `define`, `flag` |
 | `#[build_dir: "target"]` | string | no | where artifacts go. Refused if it names the manifest's own directory or an ancestor |
@@ -235,7 +236,7 @@ I would like the first case to be an error too. It is not today, and if you find
 ## When the name is wrong
 
 ```
-unknown attribute 'bultin', expected one of: inline, implicit, intrinsic, builtin, core, unique, module, version, depends, sources, link, cc, build_dir
+unknown attribute 'bultin', expected one of: inline, implicit, intrinsic, builtin, core, unique, module, version, depends, sources, target, link, cc, build_dir
 ```
 
 The attribute is then skipped and the declaration after it still parses, which is the point: the error you
@@ -248,7 +249,7 @@ actually needed usually follows immediately.
 A manifest says it differently, because its list is different:
 
 ```
-module.eco:4: unknown manifest attribute 'source', expected one of: module, version, depends, sources, link, cc, build_dir
+module.eco:4: unknown manifest attribute 'source', expected one of: module, version, depends, sources, target, link, cc, build_dir
 ```
 
 ## When the shape is wrong

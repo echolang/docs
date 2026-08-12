@@ -57,8 +57,10 @@ counted**, so two strings holding the same text usually hold one buffer between 
 freed once when the last of them goes.
 
 That is the whole reason copying a `string` is cheap, and it is the only thing about `str::buf` you need. It
-is not a type to build yourself: `string` maintains invariants on it that nothing outside checks, and there
-are no visibility modifiers yet to stop you breaking them ([the list](/reference/limitations) again).
+is not a type to build yourself. It has to be `public`, because `string` holds one as a property and anyone
+holding a `string` can already name the type, so hiding it would be incoherent. What is actually enforced is
+the shape: every mutator is `private` on `string`'s side, so no caller reaches one through the owner it holds.
+Constructing a `buf` directly is left to you not to do. See [Visibility](/language/visibility).
 
 You will meet the name in two places: in a debugger, and in `mem::ref_count<str::buf>` if you want to see
 the sharing for yourself.
@@ -115,22 +117,123 @@ variables. That is why [std::env](/stdlib/env) hands back views rather than stri
 Note: `string::view` has a `$size` **property** rather than a `size()` method, so it is `$v->size` with no
 parentheses. `string` has the method. That inconsistency is real and will catch you once.
 
+## `str::from` turns a value into text
+
+```echo
+echo str::from(42);         // 42
+echo str::from(-42);        // -42
+echo str::from(true);       // true
+echo str::from(1.5);        // 1.5
+```
+
+It is an **overload set**, not an interface, and I did not get to choose that: a primitive cannot declare a
+conformance, so no interface could ever cover `int32`. It is the same reason `hash::of` is one.
+
+Which means your own type joins it by declaring one function, in `namespace str`, anywhere in your own
+module:
+
+```echo
+struct Chevron
+{
+    int32 $number;
+    bool $locked;
+}
+
+namespace str;
+
+public function from(const Chevron& $c) : string
+{
+    if ($c->locked) {
+        return "chevron {$c->number} locked";
+    }
+
+    return "chevron {$c->number} open";
+}
+
+// and from there, this works
+$c = Chevron(7, true);
+echo "status: {$c}";        // status: chevron 7 locked
+```
+
+That is all [interpolation](/collections/strings#interpolation) is: `"{$x}"` becomes `str::from($x)`, and
+`"{$x:spec}"` becomes `str::from($x, 'spec')`. A type that renders but does not want to honour format specs
+simply has no two-argument overload, and `"{$c:>8}"` says so by name rather than silently ignoring it.
+
+`str::from(1.5)` is `1.5` where `echo 1.5` is `1.500000`. `echo` reaches printf's `%f` and always has, while
+`str::from` uses the shortest form that reads well in a sentence: six significant digits for a `float`,
+fifteen for a `float64`. Ask for `{$x:.17g}` when you need a value to round-trip.
+
+## Splitting, joining, trimming
+
+```echo
+array<string> $parts = str::split('SG-1,SG-9,SG-11', ',');
+echo $parts->count();               // 3
+
+echo str::join($parts, ' / ');      // SG-1 / SG-9 / SG-11
+
+string $padded = '  Chulak  ';
+string $trimmed = str::trim($padded);
+
+echo "|{$trimmed}|";                // |Chulak|
+```
+
+`n` separators give `n + 1` parts, always. That is the rule worth remembering, because it is the one that
+makes `str::join(str::split($t, $s), $s)` give `$t` back. An empty text splits to one empty part, and `',a,'`
+on `','` gives three.
+
+Note the extra variable on that last line. A hole opens on `{$` and nothing else, so `"|{str::trim($p)}|"`
+is ordinary text rather than a call, and the result has to be bound before you can interpolate it.
+
+`trim_start` and `trim_end` do one side each. All three answer a **window** rather than a copy, so trimming
+is free. Call `->clone()` on the result if you want the parent's buffer released.
+
+## Reading a number back
+
+```echo
+guard int64 $n = str::parse_int('42') else {
+    die('not a number');
+}
+
+echo $n;        // 42
+```
+
+Both parsers answer a nullable, so failure is `guard ... else` rather than a sentinel you have to look up.
+Nothing is forgiven: no leading whitespace, no separators, no trailing text. `str::trim` first if the text
+came from a line of input.
+
+```echo
+echo str::parse_int('4kg') ?? -1;       // -1
+echo str::parse_int(' 4') ?? -1;        // -1
+echo str::parse_int('9223372036854775808') ?? -1;    // -1, overflow rather than a wrapped value
+```
+
+`str::parse_float` goes through C's `strtod` and requires the whole text to be consumed, which is the
+difference between it and calling `strtod` yourself.
+
 ## Why this page is short
 
 Because `string` got there first. Concatenation, slicing, searching, `starts_with`, `char_count`, the
-mutators, all of it is on the type itself. What is left over here is the buffer nobody should touch and the
-two conversions that need a namespace to live in.
-
-What a fuller string library wants first is not more functions in `str::`. It is formatting, an encoding
-story beyond "bytes with a UTF-8 aware `char_count`", and a split or join that can hand back an
-`array<string>` without a copy per element. Those are on [the list](/reference/limitations).
+mutators, all of it is on the type itself. What is left over here is the buffer nobody should touch, the
+conversions that need a namespace to live in, and the formatting surface interpolation is built on.
 
 ## The whole surface
 
 | Signature | What it does |
 |---|---|
+| `str::from(T $v) : string` | the value as text. one overload per primitive, plus `string` and `string::view` |
+| `str::from(T $v, const string& $spec) : string` | the same, honouring a format spec |
+| `str::spec_of(const string& $text) : spec` | the spec a `{$x:...}` hole spells, parsed |
 | `str::from_c_str(ptr<const uint8> $s) : string` | an owning copy of a NUL-terminated C string |
+| `str::from_bytes(ptr<const uint8> $b, usize $n) : string` | an owning copy of `$n` bytes, no terminator needed |
 | `str::view_of_c_str(ptr<const uint8> $s) : string::view` | a borrowing window over one. allocates nothing |
+| `str::concat(const string& $a, const string& $b) : string` | the two joined. what interpolation lowers to |
+| `str::split(const string& $t, const string& $sep) : array<string>` | `n` separators give `n + 1` parts |
+| `str::join(const array<string>& $parts, const string& $sep) : string` | the inverse, in one allocation |
+| `str::trim` / `trim_start` / `trim_end` `(const string&) : string` | ASCII whitespace off both ends, or one |
+| `str::pad_start` / `pad_end` `(const string&, usize $width, uint8 $fill) : string` | widen to `$width` **bytes** |
+| `str::repeat(const string& $t, usize $times) : string` | `$t` written over |
+| `str::parse_int(const string& $t) : int64?` | base ten, optional sign, nothing else |
+| `str::parse_float(const string& $t) : float64?` | through `strtod`, whole text consumed |
 | `arr::merge<T>(const array<T>& $a, const array<T>& $b) : array<T>` | a new array, `$a`'s elements then `$b`'s |
 | `arr::with_capacity<T>(usize $count) : array<T>` | an empty array with room for `$count` |
 

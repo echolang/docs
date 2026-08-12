@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitepress'
 
 import { echoTheme } from './theme/shiki-echo'
+import echoGrammar from './echo.tmLanguage.json'
 
 // The sidebar is the structure of the docs. It is deliberately one flat definition rather than a per
 // directory one, because the reading order across sections is the point: a newcomer can start at the top
@@ -31,6 +32,7 @@ const sidebar = [
       { text: 'Generics', link: '/language/generics' },
       { text: 'Operators', link: '/language/operators' },
       { text: 'Namespaces', link: '/language/namespaces' },
+      { text: 'Visibility', link: '/language/visibility' },
       { text: 'Constants', link: '/language/constants' },
       { text: 'Errors and panics', link: '/language/errors-and-panics' },
     ],
@@ -75,6 +77,7 @@ const sidebar = [
       { text: 'contract', link: '/stdlib/contract' },
       { text: 'hash', link: '/stdlib/hash' },
       { text: 'str and arr', link: '/stdlib/str-arr' },
+      { text: 'std::io', link: '/stdlib/io' },
       { text: 'std::math', link: '/stdlib/math' },
       { text: 'std::env', link: '/stdlib/env' },
     ],
@@ -110,12 +113,12 @@ export default defineConfig({
   ],
 
   markdown: {
-    // Shiki has no grammar for Echo. PHP is close enough that `$variables`, comments, strings, numbers and
-    // most keywords colour correctly. A real TextMate grammar is the proper fix later; see README.md.
-    languageAlias: {
-      echo: 'php',
-      eco: 'php',
-    },
+    // Echo's own TextMate grammar, so `usize`, attributes and `?->` colour as themselves rather than as
+    // whatever PHP happened to make of them. It declares `eco` as an alias, so both fence spellings work.
+    //
+    // The file is a copy — echolang/echolang-vscode is the source of truth and its header says so. The two
+    // are separate repositories and the docs have no build step that could fetch one.
+    languages: [echoGrammar as any],
 
     // One theme, not a light/dark pair — code blocks stay dark on a white page. See theme/shiki-echo.ts.
     theme: echoTheme,

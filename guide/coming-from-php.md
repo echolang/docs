@@ -15,7 +15,7 @@ you expected" rather than by topic.
 | Arrays are hash maps | Arrays are contiguous buffers. Maps are `map<K, V>` |
 | `new Foo()` | `Foo()`. There is no `new` |
 | `$obj->method()`, `$arr['k']`, `Foo::bar()` | `->` for members, `[]` for indexing, `::` for namespaces |
-| `echo "Hi $name"` | No interpolation. No formatting. `echo` prints one value |
+| `echo "Hi $name"` | `echo "Hi {$name}"`. Interpolation is `{$...}`, and `'` is verbatim as it is in PHP |
 | Everything is a reference-ish object | `struct` is a value, `class` is reference counted |
 | Garbage collected | Ownership plus reference counting, no GC |
 | `function f($a)` | `function f(int32 $a) : void` |
@@ -86,11 +86,25 @@ declaration order, for free. That is where `Point(1.0, 2.0)` comes from when you
 ## echo prints exactly one thing, and adds a newline
 
 ```echo
-echo "Hello";       // prints Hello and a newline
+echo 'Hello';       // prints Hello and a newline
 echo 42;            // prints 42 and a newline
 ```
 
-No comma-separated list, no interpolation, no `printf`. And this does not work:
+No comma-separated list and no `printf`. Interpolation works the way you expect, though, and it is how you
+print more than one thing:
+
+```echo
+$name = 'Ronon';
+$rolls = 3;
+
+echo "{$name} rolled {$rolls} dice";
+```
+
+The quote rule is PHP's: `"` interpolates and `'` does not. Unlike PHP, the braces are not optional.
+`"Hi $name"` prints the dollar sign, and `"Hi {$name}"` is the interpolation. There is also
+[`std::io`](/stdlib/io) when you want `print` without the newline, or stderr.
+
+And this does not work:
 
 ```echo
 echo $point;        // error: 'echo' has no way to print a 'Point' - print its members instead
@@ -106,17 +120,21 @@ dprint($point);
 // }
 ```
 
-Building a string means appending to one:
+Building a string out of values is interpolation, and the quote rule is the one you already know:
 
 ```echo
-string $line = "Hello, ";
-$line->append($name);
-$line->append("!");
+$name = 'Ronon';
+
+string $line = "Hello, {$name}!";
 echo $line;
 ```
 
-This is genuinely annoying and it is the missing feature I feel most often. String formatting needs variadic
-functions, which the resolver does not have yet. It is on [the list](/reference/limitations).
+What PHP does not have is the format spec. `{$x:.2f}` asks for two decimals, `{$n:>8}` right-aligns in eight
+columns, and `{$n:x}` gives you hex, so the `sprintf` you would reach for next is usually already there.
+[Strings](/collections/strings#interpolation) has the full spec grammar.
+
+One difference to keep in mind: PHP's braces are optional and Echo's are not. `"Hi $name"` prints a dollar
+sign.
 
 ## struct or class, decided once
 

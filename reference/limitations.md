@@ -18,8 +18,15 @@ notes describe this feature as if it exists; they are aspirational.
 signature stays `f(int32, int32)` and calling `f(1)` is a "no matching overload" error. Do not use it. It
 looking like it works is worse than it not parsing, and that is a bug in its own right.
 
-**Variadic functions.** There is no `...`. This is the one that blocks the most: no `printf`, no string
-formatting, and no way to declare C variadics in an `extern` block.
+**Variadic functions.** There is no `...`, and there is deliberately not going to be one: overload
+resolution matches arity exactly, and that is what lets a call with one surviving candidate resolve without
+consulting types at all.
+
+The two things you would reach for it are covered elsewhere. String formatting is
+[interpolation](/collections/strings#interpolation), where every hole is a *one-argument* call. A C variadic
+function is reachable through [`variadic_args`](/projects/c-interop#calling-a-c-variadic-function), which
+spells the tail as the last parameter's type and takes a written list at the call site, so the call still
+has exactly the declared arity.
 
 **Multiple return values.** Documented in old notes, not implemented. Return a struct.
 
@@ -36,8 +43,10 @@ formatting, and no way to declare C variadics in an `extern` block.
 **Exceptions.** No `throw`, no `try`, no `catch`, and no richer error type either. You get `T?` for
 recoverable failure, `assert` for "this should never happen", and `die` for "no recovering from this".
 
-**`private` on methods.** `private` landed for properties only. On a method it does not parse. There is also
-no visibility control across namespaces.
+**Visibility has two holes.** Assigning a whole struct copies a `const` property, because the target's own
+type is not const, so the field is write-once only through its own name. And a generic body is exempt from
+the module rung (it has to be, or `map<K, V>` could not call your `hash::of`), so a call routed through a
+generic can reach another module's internals. See [Visibility](/language/visibility).
 
 ## Things that compile and are wrong
 
@@ -100,9 +109,6 @@ is a use-after-destruction at every optimization level, with no diagnostic.
 **An uninitialised class declaration escapes the null rule.** `Node $n;` compiles and hands you a null handle
 through a non-nullable type.
 
-**`string?` does not work.** Declaring a nullable string is rejected with a message about `->` not reaching
-through it. Other nullable types (`int32?`, `Point?`, class handles, `string::view?`) are fine.
-
 ## Things that crash the compiler
 
 A crash is at least loud. These are the ones I know about:
@@ -145,9 +151,6 @@ larger expression, so `echo $maybe?->name ?? "";` is fine.
 
 **A const array from a literal.** `const $c = [1, 2];` is refused. Other routes to a const array work.
 
-**A struct with a private owning property.** If a `struct` has a `private` property that needs destruction,
-it cannot be constructed at all. Classes are unaffected.
-
 **`size_of` and `align_of` in a `const if`.** Layout queries cannot decide a compile-time branch, which is
 what blocks small-buffer optimisation.
 
@@ -162,15 +165,29 @@ the diagnostic gives you no hint that spacing is the answer.
 
 ## Standard library
 
-**No string formatting, at all.** No `printf`, no `sprintf`, no interpolation, no `str::fmt`. Building a
-string means `append`. This needs variadics.
-
-**No `print`.** `echo` is the only output mechanism, it takes exactly one value, and it appends a newline.
+**`echo` takes exactly one value and appends a newline**, and it is staying that way. It is the only
+output a program has with `--no-stdlib`, where there is no `string` type at all. Use
+[interpolation](/collections/strings#interpolation) to put several values in one, and
+[`std::io`](/stdlib/io) when you need a destination, no newline, or a function you can pass.
 
 **`echo` cannot print a struct or class.** That is a located error, not a fallback. Use `dprint($value)` for
-debugging, which prints the type and every property.
+debugging, which prints the type and every property, or declare `str::from` for your type, after which
+`"{$value}"` works.
 
-**No file I/O.** There is no `std::io`. You can reach `fopen` and friends through an `extern` block.
+**Formatting is `str::from` and interpolation, not `printf`.** The spec grammar is deliberately small:
+alignment, width, precision and a type letter. No thousands separators, no locale, no `%n$` positional
+arguments, and no runtime format string, since a spec is written inside a literal and read at compile time.
+
+**Building one string out of many is O(n^2).** Interpolation lowers to a fold of `str::concat`, so every hole
+is another allocation. Fine for a sentence, wrong for a loop, and nothing warns you which one you wrote.
+`string::append` into one buffer is the tool until there is a proper builder.
+
+**No file I/O.** [`std::io`](/stdlib/io) is standard in, out and error only. There is no `open`, no path
+type and no directory listing. You can reach `fopen` and friends through an `extern` block.
+
+**Reading is unbuffered.** `std::io::read_line` issues one `read` per byte, because a library module has no
+mutable state to keep a buffer in. It is correct and it is slow, which is the worst combination for something
+that will not show up until your input gets big. A `reader` type you hold is the fix.
 
 **`map<K, V>` uses linear probing.** It is correct and it is not fast. A better table is planned.
 
@@ -183,7 +200,11 @@ debugging, which prints the type and every property.
 --diagnostics=json` emits JSON Lines on stderr and is stable, so the hook for building one exists. Nothing
 consumes it yet.
 
-**No syntax highlighting package.** Set your editor to treat `.eco` as PHP; it gets most of it.
+**No language support beyond highlighting.** There is an official VS Code extension in
+[echolang-vscode](https://github.com/echolang/echolang-vscode), and its grammar is derived from the
+compiler's own token list, so `mv`, `guard`, `:$`, the attributes and the `#[if:]` directives all colour as
+themselves. That is where it stops. No completion, no diagnostics, no go-to-definition, and nothing for any
+other editor.
 
 **No package manager.** A dependency is a path on disk:
 

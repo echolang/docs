@@ -317,19 +317,140 @@ echo $safe->is_terminated();    // 1
 
 Cloning is how a substring becomes safe to hand over. [C interop](/projects/c-interop) has the rest.
 
-## Two things that are missing
+## Interpolation
 
-Stated here because they will be the first two you reach for.
+Building a string out of values needs no format function and no `append`. It is part of the literal:
 
-**There is no string formatting at all.** No `printf`, no `sprintf`, no interpolation, no `str::fmt`.
-Building a string means `append`. This needs variadics first.
+```echo
+$name = 'Ronon';
+$age = 3;
 
-**`string?` does not work.** Declaring a nullable string is rejected with a message about `->` not reaching
-through it. Other nullable types are fine, including `string::view?`. Both are on
-[the list](/reference/limitations).
+echo "{$name} is {$age} years old.";        // Ronon is 3 years old.
+```
+
+That is the whole thing for the common case. The rest of this section is the format specs, and how your own
+types join in.
+
+Every `{$...}` is a hole, and what goes in one is an **expression**, not just a name:
+
+```echo
+struct Point
+{
+    int32 $x;
+    int32 $y;
+}
+
+$p = Point(3, 4);
+$xs = [10, 20, 30];
+
+echo "sum {$p->x + $p->y}";     // sum 7
+echo "second {$xs[1]}";         // second 20
+```
+
+### Double quotes interpolate, single quotes do not
+
+This is the one place in Echo where the two quote characters mean different things, and it is the escape
+hatch. If you want the braces to stay, use `'`:
+
+```echo
+$name = 'Ronon';
+
+echo "{$name} interpolates";    // Ronon interpolates
+echo '{$name} does not';        // {$name} does not
+```
+
+A hole opens on `{$` and on nothing else, so a lone brace is ordinary text and needs no escape:
+
+```echo
+echo "a { brace and a } brace";     // a { brace and a } brace
+```
+
+For the case that is left there is `\{`:
+
+```echo
+$name = 'Ronon';
+echo "not a hole: \{$name}";        // not a hole: {$name}
+```
+
+One consequence of the `{$` rule: a hole has to *start* from a value, so `"{twice($n)}"` is text rather
+than a call. Bind it first.
+
+### Formats
+
+`{$x:spec}` asks for a particular rendering. The spec is `[align][width][.precision][type]`, and every part
+is optional:
+
+```echo
+$n = 42;
+$pi = 3.14159265358979;
+
+echo "|{$n:>8}|";       // |      42|
+echo "|{$n:<8}|";       // |42      |
+echo "|{$n:^8}|";       // |   42   |
+echo "{$n:x}";          // 2a
+echo "{$pi:.2f}";       // 3.14
+echo "{$pi:.3e}";       // 3.142e+00
+```
+
+| part | means |
+|---|---|
+| `<` `>` `^` | left, right, centred. Absent means right for numbers, left for text |
+| a number | a minimum width, **in bytes**. Wider text is never truncated |
+| `.` and a number | decimals for `f` and `e`, significant digits for `g`, a maximum length for text |
+| `d` `x` `X` `b` `o` | base ten, hex, upper hex, binary, octal |
+| `f` `e` `g` | fixed, scientific, shortest |
+| `s` | text |
+
+### It is all `str::from`
+
+There is no magic here, and that is the point. `"{$x}"` becomes `str::from($x)`, and `"{$x:.2f}"` becomes
+`str::from($x, '.2f')`. So your own type joins in by declaring one function:
+
+```echo
+struct Point
+{
+    int32 $x;
+    int32 $y;
+}
+
+namespace str;
+
+public function from(const Point& $p) : string
+{
+    return "({$p->x}, {$p->y})";
+}
+```
+
+after which `"{$p}"` works everywhere. [`str` and `arr`](/stdlib/str-arr) has the whole surface.
+
+## Printing
+
+`echo` takes exactly one value and appends a newline. Interpolation is how you get several values into that
+one:
+
+```echo
+$name = 'Ronon';
+$rolls = 3;
+
+echo "{$name} rolled {$rolls} dice";
+```
+
+For the things `echo` cannot do (writing without a newline, writing to stderr, passing an output stream
+around) there is [`std::io`](/stdlib/io):
+
+```echo
+std::io::println('to stdout');
+std::io::eprintln('to stderr');
+std::io::print('no newline');
+```
+
+One difference worth knowing: `echo` renders a float as `3.500000` and `str::from` renders it as `3.5`.
+`echo` reaches printf's `%f` directly and always has; `str::from` uses the shortest form that reads well in
+a sentence.
 
 ## Next
 
 - [Maps](/collections/maps) for `string` as a key, which is what `==` and `hash::of` are for.
 - [Slices](/collections/slices) for the same borrow-a-window idea over arbitrary elements.
+- [`std::io`](/stdlib/io) for writing text out and reading a line back.
 - [C interop](/projects/c-interop) for what to do with a `ptr<const uint8>` once you have one.

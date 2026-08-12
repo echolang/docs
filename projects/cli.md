@@ -61,6 +61,19 @@ echoc run
 That last one is how you will run a real project most of the time. [Modules](/projects/modules) is what a
 manifest can say.
 
+A project whose manifest declares more than one program picks between them with `--target`:
+
+```bash
+echoc build                    # every target it declares
+echoc build --target clock     # one of them
+echoc run --target clock
+```
+
+`build` with no target builds all of them, each into its own binary under the module's build directory, so it
+needs no `-o` and refuses one when several targets are being built. `run` takes exactly one, since one
+invocation runs one program. [More than one program](/projects/modules#more-than-one-program) is the
+manifest side.
+
 ## Everything after `--` belongs to your program
 
 ```bash

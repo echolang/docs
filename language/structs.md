@@ -328,7 +328,7 @@ the outer type.
 
 ## private
 
-`private` restricts a property to the type's own bodies:
+`private` restricts a member, property or method alike, to the type's own bodies:
 
 ```echo
 struct ZPM
@@ -352,9 +352,14 @@ ZPM $module = ZPM(4096);
 echo $module->remaining();      // 4096
 ```
 
-Two things to know. `private` works on **properties only**: on a method it does not parse yet. And a struct
-with a private property that *owns* something currently has a hole in it, which is written up in
-[the list](/reference/limitations). A class does not have that problem.
+Nothing outside `ZPM` reads `$used`, and a `private function` is refused from outside the same way. Watch out
+for one thing: on a *top-level* declaration the word means the file rather than the type, which is a
+different question entirely. [Visibility](/language/visibility) is the whole of that.
+
+A private property may own something, an `array`, a `string`, another struct that owns one, and hiding it is
+usually the point: what a type keeps behind `private` is normally exactly what it has an invariant about. You
+pay nothing for it. The compiler writes the teardown from inside the type, so the destructor reaches a
+property that no caller can name.
 
 ## Interfaces
 

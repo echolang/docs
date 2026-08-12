@@ -72,14 +72,10 @@ this class of mistake stops being something you find out about from a user.
 ```echo
 function greet(string $who) : void
 {
-    string $line = "Hello, ";
-    $line->append($who);
-    $line->append("!");
-
-    echo $line;
+    echo "Hello, {$who}!";
 }
 
-greet("Echo");
+greet('Echo');
 ```
 
 ```
@@ -93,12 +89,13 @@ a colon.
 I know that is a little verbose for a function that just prints. I prefer it to the alternative, where you
 have to read the whole body to find out whether something comes back.
 
-Notice `$line->append(...)`. Echo uses `->` for **every** member access: reading a property, calling a
-method, reaching through a pointer. There is no `.`, and there is no `::` for instance members. One arrow,
-everywhere.
+That `{$who}` is **string interpolation**, and it only happens in a double-quoted string. A `'` string is
+verbatim. Any expression goes in a hole, and `{$x:.2f}` asks for a particular format.
+[Strings](/collections/strings#interpolation) has the whole of it.
 
-There is no string interpolation and no `sprintf`, which is why we are appending. It is on the list of
-[things that are missing](/reference/limitations).
+One other thing you will meet immediately: Echo uses `->` for **every** member access, whether that is
+reading a property, calling a method, or reaching through a pointer. There is no `.`, and there is no `::`
+for instance members. One arrow, everywhere.
 
 ## Arrays
 

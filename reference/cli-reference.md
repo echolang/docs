@@ -33,6 +33,9 @@ Name no sources at all and your program is whatever manifest the invocation poin
 names, or the `module.eco` in your working directory. A `*` in a source path is expanded by echoc itself,
 through the same expander a manifest's `#[sources:]` uses.
 
+If that manifest declares `#[target:]`s, it produces one program per target and `--target` picks between
+them. See [More than one program](/projects/modules#more-than-one-program).
+
 ## Every option
 
 `run+build` in the third column means the option is refused on `clean`, by name.
@@ -41,8 +44,9 @@ through the same expander a manifest's `#[sources:]` uses.
 
 | Option | Short | Commands | Value | Default | Does |
 |---|---|---|---|---|---|
-| `--output <file>` | `-o` | build | path | required on `build` | where the executable is written |
+| `--output <file>` | `-o` | build | path | the target's name, or required | where the executable is written. A manifest declaring targets names its own, so this overrides for one of them and is refused for several |
 | `--module <manifest>` | `-m` | all | path, repeatable | | build a module from its manifest. A file or a directory holding one |
+| `--target <name>` | | run+build | name, repeatable | every target declared | which of the programs a manifest declares to build. `run` takes exactly one |
 | `--build-dir <dir>` | | all | path | `ecobuild` beside the manifest | where build artifacts are written. Outranks `#[build_dir:]` |
 | `--link <requirement>` | | run+build | `<scheme>:<value>`, repeatable | | add a link requirement. Merged after the manifest's, so a declaration wins |
 
@@ -175,7 +179,7 @@ only thing that goes to stdout.
 | `echoc frobnicate` | `'frobnicate' is not an echoc command. Write 'run', 'build' or 'clean'.` |
 | `echoc run --nonsense` | `Unknown option '--nonsense'.` |
 | `echoc run --optimize hard` | `Unknown '--optimize' value 'hard'. Expected one of: none\|module\|whole.` |
-| `echoc build x.eco` | `'build' needs '-o, --output <file>'.` |
+| `echoc build x.eco` | `'build' needs '-o, --output <file>' - nothing here names the binary.` Reported once the manifest is known, since a project declaring targets names its own |
 | `echoc build -o` | `'-o, --output <file>' needs a value.` |
 | `echoc build -o --silent` | `'-o, --output' needs a value, and '--silent' is an option.` |
 | `echoc run --silent=1` | `'--silent' takes no value.` |

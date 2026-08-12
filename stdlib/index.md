@@ -138,7 +138,8 @@ echo $c->bump(5);       // 7
 | `contract::` | `iterator`, `iterable`, `const_iterable`, `keyed` | [contract](/stdlib/contract) |
 | `mem::` | allocation, type queries, `take` / `init`, `buffer<T>` | [mem](/stdlib/mem) |
 | `hash::` | `of` and the composition primitives | [hash](/stdlib/hash) |
-| `str::`, `arr::` | `str::buf`, the C string boundary, two array helpers | [str and arr](/stdlib/str-arr) |
+| `str::`, `arr::` | `str::from` and the formatting surface, splitting and joining, `str::buf`, the C string boundary, two array helpers | [str and arr](/stdlib/str-arr) |
+| `std::io::` | writing text out, reading a line back | [std::io](/stdlib/io) |
 | `std::math::` | constants and the numeric functions | [std::math](/stdlib/math) |
 | `std::env::` | arguments, environment, directories, `exit` | [std::env](/stdlib/env) |
 

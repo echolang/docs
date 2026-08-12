@@ -367,9 +367,11 @@ echo log(null);             // the parameter says, -1
 That covers essentially everything you will write. A `null` with no destination at all has nothing to take a
 type from, and the compiler says so rather than picking one.
 
-Note: **`string?` does not work today.** Declaring one is rejected with the "cannot reach through it" message
-above, on the declaration itself. Other nullable types are fine, including `string::view?`. It is on
-[the list](/reference/limitations).
+Note: a `T?` whose `T` owns something (a `string?`, an `array<int32>?`, a struct holding either) works the
+same as every other nullable, and costs one more machine word plus a branch when it is torn down or copied.
+The value inside is destroyed only when it is there, and copying one copies what is inside it only when there
+is something to copy. If `T` owns something and never said how it is copied, `$b = $a` over a `T?` is refused
+exactly as it is over a `T`, and the message names `guard` as the way to reach the value.
 
 ## Next
 
