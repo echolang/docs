@@ -38,9 +38,9 @@ something you have to think about.
 Ask for a size yourself and you get the same numbers:
 
 ```echo
-echo mem::size_of<int32>();     // 4
-echo mem::size_of<bool>();      // 1
-echo mem::size_of<usize>();     // 8
+echo mem::size<int32>();     // 4
+echo mem::size<bool>();      // 1
+echo mem::size<usize>();     // 8
 ```
 
 ## usize and isize are pointer width, and today that is always 8
@@ -259,7 +259,8 @@ echo $f;                // 3.141593
 ```
 
 The type checker deliberately does not look at primitive-to-primitive conversions. It refuses conversions
-between pointers, structs, classes, interfaces, callables and weak handles, and waves numbers through. I am
+between pointers, structs, classes, interfaces, callables, C function pointers and weak handles, and waves
+numbers through. I am
 not happy with that. I would rather narrowing needed something written down, and it is on
 [the list](/reference/limitations). Until then the literal check is the only safety net you get.
 

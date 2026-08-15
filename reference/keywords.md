@@ -35,7 +35,7 @@ identifiers, and nothing about them collides with `for`, `class`, `enum`, `null`
 | `destructor` | declares the method that runs when a value dies | [Structs](/language/structs) |
 | `operator` | declares an operator, infix, prefix or `[]` | [Operators](/language/operators) |
 | `namespace` | puts the rest of the file in a namespace | [Namespaces](/language/namespaces) |
-| `extern` | opens a block of C declarations bound by raw symbol name | [C interop](/projects/c-interop) |
+| `extern` | opens a block of C declarations, or the C function-pointer type `extern function<R(P...)>` | [C interop](/projects/c-interop) |
 | `const` | a read-only variable, a constant, or a `const if` | [Constants](/language/constants) |
 | `private` | narrows a declaration to its file, or a member to its own type | [Visibility](/language/visibility) |
 | `internal` | narrows a declaration to its module, which is also the default | [Visibility](/language/visibility) |

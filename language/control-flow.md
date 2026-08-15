@@ -291,7 +291,7 @@ Not everything is answerable this early. Layout queries in particular are not, b
 knows a type's size once it is emitting code:
 
 ```echo
-const if (mem::size_of<int32>() == 4) {
+const if (mem::size<int32>() == 4) {
     echo "four";
 }
 // error: 'size_of' is answered from the target's layout, which the compiler only knows once it is

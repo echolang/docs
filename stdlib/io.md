@@ -7,7 +7,7 @@ this namespace exists.
 ```echo
 std::io::println('Chevron seven, locked.');
 
-string $line = guard std::io::read_line() else {
+string $line = guard std::io::readline() else {
     std::io::eprintln('nothing on stdin');
     return 0;
 }
@@ -40,10 +40,10 @@ can be copied into a variable and handed around like the number it is:
 
 ```echo
 std::io::stdout->write('straight to fd 1');
-std::io::stdout->write_line(' with a newline');
+std::io::stdout->writeline(' with a newline');
 
 stream $target = std::io::stdout;
-$target->write_line('through a copy');
+$target->writeline('through a copy');
 ```
 
 There are three: `std::io::stdout`, `std::io::stderr` and `std::io::stdin`.
@@ -57,21 +57,22 @@ The methods:
 | | |
 |---|---|
 | `write(const string&)` | the string's bytes, nothing else |
-| `write_line(const string&)` | the same, then a newline |
-| `write_bytes(ptr<const uint8>, usize)` | raw, when you already have a pointer and a length |
+| `writeline(const string&)` | the same, then a newline |
+| `write(ptr<const uint8>, usize)` | raw, when you already have a pointer and a length |
 | `flush()` | flush every buffered stdio stream |
-| `read_line() : string?` | the next line without its newline, or `null` at end of input |
+| `fd() : int32` | the descriptor this stream names |
+| `readline() : string?` | the next line without its newline, or `null` at end of input |
 
 `write` uses the string's **length**, never a terminator. A substring shares its parent's buffer and simply
 stops early, so `%s` or `strlen` would run off the end of one.
 
 ## Reading a line
 
-`read_line` answers a nullable, so the absence case is spellable rather than a sentinel you have to know
+`readline` answers a nullable, so the absence case is spellable rather than a sentinel you have to know
 about:
 
 ```echo
-string $name = guard std::io::read_line() else {
+string $name = guard std::io::readline() else {
     std::io::println('no name given');
     return 0;
 }
@@ -82,14 +83,173 @@ std::io::println("hello, {$name}");
 `null` means *there was nothing at all*. A final line with no newline is still answered in full, and an
 empty line is an empty string rather than a `null`. That is the distinction `guard` exists to make easy.
 
-`std::io::read_line()` is `std::io::stdin->read_line()` written the short way.
+`std::io::readline()` is `std::io::stdin->readline()` written the short way.
 
-**It is unbuffered: one `read` per byte.** That is as slow as it sounds, and I am not happy about it, but it
-is the only correct thing this function can do. A buffered reader needs somewhere to keep what it read past
-the newline, and a library module has no mutable state of its own, so the buffer would have to be a value you
-hold, which is a different type with a different name. Buffering here would also over-read, and anything else
-reading the same descriptor would find its bytes gone. A `reader` type is the fix, and it is on
-[the list](/reference/limitations).
+**It is unbuffered: one `read` per byte.** A library module has no mutable state of its own, so leftover
+bytes past the newline have nowhere to live, and buffering here would steal input from anything else on
+fd 0. Keep this function when you are mixing readers.
+
+## A reader and a writer
+
+Buffering needs a value you hold. `reader` and `writer` wrap a `stream`. They do not own the
+descriptor and they do not close it. The last `writer` flushes.
+
+```echo
+std::io::reader $in = std::io::reader(std::io::stdin);
+string? $line = guard $in->readline() else ($e) {
+    std::io::eprintln($e->message());
+    return 1;
+}
+
+echo $line == null;
+```
+
+```echo
+std::io::writer $out = std::io::writer(std::io::stdout);
+usize $n = guard $out->write('chevron') else ($e) {
+    std::io::eprintln($e->message());
+    return 1;
+}
+
+usize $z = guard $out->flush() else ($e) {
+    std::io::eprintln($e->message());
+    return 1;
+}
+
+echo $n;
+```
+
+`write` and `writeline` go into an 8 KiB window and hit the kernel when it fills, on `flush`, or
+when the last handle goes. If you wrap stdout, `flush` before `echo`. `echo` goes through printf,
+the writer through `write(2)`, and an unflushed window is a third place for output to sit.
+
+`file` is the same pair of windows on a descriptor it owns. You do not wrap a live file's `fd()` in
+either of these: that would steal bytes from the file's own window.
+
+## Files
+
+A `stream` is a borrowed fd. A `file` is one you opened, so it closes itself, and leftover bytes have
+somewhere to sit. That is why `readline` on a file is not one syscall per byte.
+
+```echo
+string $path = '';
+$path->append(str::from(std::env::tmp()));
+$path->append('/echo-io-docs-');
+$path->append(str::from(std::env::pid()));
+$path->append('.txt');
+
+usize $n = guard std::io::writefile($path, 'chevron seven\nlocked') else ($e) {
+    std::io::eprintln($e->message());
+    return 1;
+}
+
+string $body = guard std::io::readfile($path) else ($e) {
+    std::io::eprintln($e->message());
+    return 1;
+}
+
+echo $n;
+echo $body;
+
+bool $rm = guard std::io::remove($path) else ($e) {
+    std::io::eprintln($e->message());
+    return 1;
+}
+```
+
+`writefile` creates or truncates. `readfile` is the whole contents. Both answer a
+[`result`](/stdlib/result), because a missing path is a correct program, not a bug.
+
+A missing file is `missing()`, not a die:
+
+```echo
+file $f = guard std::io::open('definitely-missing-echo-docs-xyz', .read) else ($e) {
+    echo $e->missing();
+    return 0;
+}
+
+echo 'opened';
+```
+
+The modes:
+
+| | |
+|---|---|
+| `.read` | existing file, read only |
+| `.write` | create or truncate, write only. `create($path)` is this |
+| `.append` | create if needed, writes go at the end. `append($path)` is this |
+| `.readwrite` | existing file, both. does not create |
+
+`file` is a class. Copying one is another handle to the same fd, and the last one to go runs `close`.
+`close` is also a method, if you want the fd back before the end of the scope.
+
+```echo
+string $path = '';
+$path->append(str::from(std::env::tmp()));
+$path->append('/echo-io-docs-file-');
+$path->append(str::from(std::env::pid()));
+$path->append('.txt');
+
+file $out = guard std::io::create($path) else ($e) {
+    std::io::eprintln($e->message());
+    return 1;
+}
+
+usize $w = guard $out->write('alpha\nbeta') else ($e) {
+    std::io::eprintln($e->message());
+    return 1;
+}
+
+$out->close();
+
+file $in = guard std::io::open($path, .read) else ($e) {
+    std::io::eprintln($e->message());
+    return 1;
+}
+
+string? $line = guard $in->readline() else ($e) {
+    std::io::eprintln($e->message());
+    return 1;
+}
+
+echo $line ?? '';
+
+bool $rm = guard std::io::remove($path) else ($e) {
+    std::io::eprintln($e->message());
+    return 1;
+}
+```
+
+Writes go through an 8 KiB window and land on disk at `flush`, `seek`, `close`, or when the window fills.
+A write bigger than the window, with the window empty, goes straight to the kernel, so `writefile` of a
+large string is still one syscall.
+
+Reads fill the same size of window. `readline` scans it for a newline and only hits the kernel when the
+line crosses a fill.
+
+`fd()` is the raw descriptor. The kernel's offset may disagree with `position()` until you `flush`: unread
+bytes have already been pulled, unflushed writes have not been pushed. Do not wrap a live file's `fd()`
+in a `reader` or a `writer`.
+
+The rest of the surface:
+
+| | |
+|---|---|
+| `reader` / `writer` | a window over a `stream`. do not own, do not close |
+| `open` / `create` / `append` | `result<file, ioerror>` |
+| `readfile` / `writefile` | the whole contents |
+| `exists` | `bool`. no reason, the answer is yes or no |
+| `remove` / `rename` | `result<usize, ioerror>`, `0` on success |
+| `file::write` / `write` | `result<usize, ioerror>`, bytes transferred |
+| `file::read` | into a pointer and a count. `0` is EOF |
+| `file::readall` | the rest of the file, as a `string` |
+| `file::readline` | `result<string?, ioerror>`. `ok(null)` is EOF |
+| `file::seek` / `position` / `size` | `result<int64, ioerror>` |
+| `file::flush` | drain the write window |
+| `file::close` | flush, then close. void. safe twice |
+| `ioerror::message` / `missing` / `denied` / `exists` | strerror, and the three questions |
+
+`"{$e}"` is `message()`, because `str::from` has an overload.
 
 ## It stays in order with `echo`
 
@@ -133,11 +293,12 @@ std::io::println("{$seconds}");     // 3.5
 the shortest form that reads well in a sentence. Neither one is wrong, but they are not interchangeable, and
 if the digits matter you want to pick on purpose rather than find out later.
 
-Use `echo` for a quick value. Use `std::io` when you need a destination, no newline, or a function you can
-pass around.
+Use `echo` for a quick value. Use `std::io` when you need a destination, no newline, a file, or a function
+you can pass around.
 
 ## Next
 
-- [Strings](/collections/strings) for interpolation and the format specs.
+- [Strings](/collections/strings) for interpolation, `data()`, and writing into a spare.
 - [`str` and `arr`](/stdlib/str-arr) for `str::from`, `split`, `join`, `trim` and the number parsers.
 - [`std::env`](/stdlib/env) for arguments, the environment and `exit`.
+- [C interop](/projects/c-interop) for handing `data()` or `fd()` to a C library.

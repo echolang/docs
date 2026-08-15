@@ -160,7 +160,7 @@ echo $sgc->downstream?->id ?? -1;       // -1
 The result is nullable, which is why `?? -1` is doing real work in both examples rather than decorating them.
 An already-nullable continuation is not wrapped twice, so `$a?->maybeB()` is one `B?` and not a `B??`.
 
-**`?->` cannot start a statement today.** It only works inside a larger expression:
+A chain that ends in a call is a statement, the same way `$n->close();` is. Absence skips the call:
 
 ```echo
 class Wormhole
@@ -169,17 +169,16 @@ class Wormhole
 
     function close() : void
     {
-        echo "closed";
+        echo $this->id;
     }
 }
 
 Wormhole? $active = Wormhole(1);
-$active?->close();
-// error: Unexpected token 'varname' found
-```
+$active?->close();          // 1
 
-That one is a parser hole rather than a decision, and it is on [the list](/reference/limitations). Until it
-is fixed, use a `guard`.
+Wormhole? $gone = null;
+$gone?->close();            // nothing
+```
 
 ## guard binds it once
 
@@ -391,7 +390,7 @@ that. The same goes for a plain `T?`, where there is genuinely nothing to bind.
 ```echo
 function parse_port(const string& $text) : result<int32, string>
 {
-    int64 $n = guard str::parse_int($text) else {
+    int64 $n = guard str::int($text) else {
         return .error('not a number');
     }
 

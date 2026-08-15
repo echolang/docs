@@ -23,8 +23,8 @@ in the binary, a byte count, and a null owner. No allocation, no reference count
 $name = 'ray';
 
 echo $name->size();         // 3
-echo $name->is_empty();     // 0
-echo $name->byte_at(0);     // 114
+echo $name->empty();     // 0
+echo $name->byte(0);     // 114
 ```
 
 A null owner owns nothing, which is exactly why the first write to a literal has to clone rather than
@@ -42,7 +42,7 @@ $s = 'ab';
 $s->append('cd');
 
 echo $s;                        // abcd
-echo mem::ref_count($s->owner); // 1
+echo mem::refs($s->owner); // 1
 ```
 
 A second string names the same buffer:
@@ -52,7 +52,7 @@ $orig = 'one';
 $orig->append('two');
 
 $copy = $orig;
-echo mem::ref_count($orig->owner);  // 2
+echo mem::refs($orig->owner);  // 2
 
 $orig->append('three');
 
@@ -86,7 +86,7 @@ $solo = $solo->clone();
 $solo->append('d');
 
 echo $solo;                         // abcd
-echo mem::ref_count($solo->owner);  // 1
+echo mem::refs($solo->owner);  // 1
 ```
 
 ## A substring shares its parent's bytes
@@ -98,12 +98,12 @@ allocation:
 $own = 'hello world';
 $own = $own->clone();
 
-echo mem::ref_count($own->owner);   // 1
+echo mem::refs($own->owner);   // 1
 
 $sub = $own->sub(6, 5);
 
 echo $sub;                          // world
-echo mem::ref_count($own->owner);   // 2
+echo mem::refs($own->owner);   // 2
 ```
 
 Taking a substring of a substring narrows again, still sharing. No bytes move at any point.
@@ -147,7 +147,7 @@ whatever owns the bytes is, and growing that buffer invalidates it.
 
 ## Building a string
 
-`append`, `push_byte` and `concat`, and `reserve` when you know roughly how much is coming:
+`append`, `push` and `concat`, and `reserve` when you know roughly how much is coming:
 
 ```echo
 $s = '';
@@ -156,7 +156,7 @@ $s->reserve(32);
 $s->append('hello');
 $s->append(', ');
 $s->append('world');
-$s->push_byte(33);          // a byte, not a character
+$s->push(33);          // a byte, not a character
 
 echo $s;                    // hello, world!
 echo $s->size();            // 13
@@ -199,6 +199,38 @@ $self->append($self);
 echo $self;     // abab
 ```
 
+`data()` is the bytes with no terminator required. `cstr()` is that plus the assert that C can walk off
+the end of a substring. A window that stops early is still a valid pointer and length:
+
+```echo
+$owned = 'hello';
+$owned = $owned->clone();
+$owned->append(' world');
+
+$head = $owned->sub(0, 5);
+echo $head->terminated();        // 0
+echo $head->data() != null;         // 1
+```
+
+To let C write *into* a string, reserve, take `spare()`, then `commit` the count it wrote:
+
+```echo
+$s = '';
+$s->reserve(8);
+
+ptr<uint8> $p = $s->spare();
+$p:$[0] = 65;
+$p:$[1] = 66;
+$s->commit(2);
+
+echo $s;                // AB
+echo $s->room();        // 6
+```
+
+`room()` is how many bytes `spare()` can accept without growing. Growing the buffer after `spare()`
+invalidates the pointer. There is no mutable `data()`: a write into the middle of a shared or literal
+buffer is the thing the copy-on-write gate exists to prevent.
+
 ## Reading a string
 
 All of it byte-for-byte. No normalization, no case folding, no encoding validation:
@@ -206,20 +238,20 @@ All of it byte-for-byte. No normalization, no case folding, no encoding validati
 ```echo
 $a = 'hello world';
 
-echo $a->starts_with('hello');  // 1
-echo $a->ends_with('world');    // 1
+echo $a->starts('hello');  // 1
+echo $a->ends('world');    // 1
 echo $a->contains('lo w');      // 1
 echo $a->equals('hello');       // 0
 ```
 
-`index_of` answers with the haystack's **own size** when there is no match, which is the one value always
+`find` answers with the haystack's **own size** when there is no match, which is the one value always
 to hand that is never a valid index:
 
 ```echo
 $a = 'hello world';
 
-echo $a->index_of('world');     // 6
-echo $a->index_of('zzz');       // 11
+echo $a->find('world');     // 6
+echo $a->find('zzz');       // 11
 echo $a->size();                // 11
 ```
 
@@ -228,12 +260,12 @@ So the found offset feeds straight back into `sub` with no adjustment:
 ```echo
 $a = 'hello world';
 
-echo $a->sub($a->index_of('world'), 5);     // world
+echo $a->sub($a->find('world'), 5);     // world
 ```
 
-## size() and char_count() are different questions
+## size() and chars() are different questions
 
-`size()` is bytes and is O(1). `char_count()` walks the string counting UTF-8 codepoints. That the two
+`size()` is bytes and is O(1). `chars()` walks the string counting UTF-8 codepoints. That the two
 disagree is the point, not an oversight:
 
 ```echo
@@ -241,16 +273,16 @@ $ascii = 'hello';
 $accent = "h\u{E9}llo";     // hello, with an e-acute
 
 echo $ascii->size();        // 5
-echo $ascii->char_count();  // 5
+echo $ascii->chars();  // 5
 
 echo $accent->size();       // 6
-echo $accent->char_count(); // 5
+echo $accent->chars(); // 5
 ```
 
 Five characters in six bytes. `\u{...}` takes a codepoint in hex, and is how you write a character your
 editor would rather not show you.
 
-Every index into a string is a **byte** index. `char_count()` is a count, not a validator: invalid UTF-8 is
+Every index into a string is a **byte** index. `chars()` is a count, not a validator: invalid UTF-8 is
 counted rather than rejected.
 
 ## == is a declared operator, not syntax
@@ -286,8 +318,10 @@ There is no `+` for strings, and no ordering operators. Use `concat` and `equals
 
 ## Crossing into C
 
-`c_str()` hands over a `ptr<const uint8>` and costs nothing: every buffer this library allocates has room
+`cstr()` hands over a `ptr<const uint8>` and costs nothing: every buffer this library allocates has room
 for one byte past its text and holds a `0` there, and the compiler emits every literal NUL-terminated too.
+`data()` is the same pointer without the terminator requirement, which is what you want for a C API that
+already has a length.
 
 ```echo
 extern {
@@ -298,21 +332,21 @@ $owned = 'hello';
 $owned = $owned->clone();
 $owned->append(' world');
 
-echo $owned->is_terminated();       // 1
-echo c_strlen($owned->c_str());     // 11
+echo $owned->terminated();       // 1
+echo c_strlen($owned->cstr());     // 11
 ```
 
 The catch is a substring that stops early. It is a window into the middle of a buffer, so the byte after it
-is not a `0`, and `c_str()` asserts rather than running past the end:
+is not a `0`, and `cstr()` asserts rather than running past the end:
 
 ```echo
 $owned = 'hello world';
 
 $head = $owned->sub(0, 5);
-echo $head->is_terminated();    // 0
+echo $head->terminated();    // 0
 
 $safe = $head->clone();
-echo $safe->is_terminated();    // 1
+echo $safe->terminated();    // 1
 ```
 
 Cloning is how a substring becomes safe to hand over. [C interop](/projects/c-interop) has the rest.

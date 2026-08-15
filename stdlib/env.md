@@ -7,7 +7,7 @@ your code**, because the environment block arrives as the entry point's third ar
 
 ```echo
 echo std::env::argc();                  // 1 when nothing was passed
-echo std::env::arg(0)->is_empty();      // 0, argument zero is the program
+echo std::env::arg(0)->empty();      // 0, argument zero is the program
 ```
 
 The platform differences that do exist, and there are a few, are handled once inside the library so your
@@ -22,7 +22,7 @@ echo std::env::argc();
 
 // one, by index. asserts if you go past the end
 string::view $program = std::env::arg(0);
-echo $program->is_empty();          // 0
+echo $program->empty();          // 0
 
 // all of them, as a cursor
 foreach (std::env::args() as $i => $argument) {
@@ -77,10 +77,10 @@ afford it.
 ```echo
 // under `echoc run gate.eco` this is "gate.eco"
 // under a built binary it is whatever the shell used to invoke it
-echo std::env::arg(0)->is_empty();      // 0
+echo std::env::arg(0)->empty();      // 0
 
 // under `echoc run` this is the path to echoc itself
-echo std::env::exe()->is_empty();       // 0
+echo std::env::exe()->empty();       // 0
 ```
 
 `exe()` asks the operating system for the path of the running image, and under `run` the running image is
@@ -130,7 +130,7 @@ echo std::env::has('PATH');                             // 1
 string::view $path = guard std::env::var('PATH') else {
     die('PATH is not set');
 }
-echo $path->is_empty();                                 // 0
+echo $path->empty();                                 // 0
 
 // what is it, or this instead?
 echo std::env::var('ECO_MISSING', 'fell_back');         // fell_back
@@ -146,7 +146,7 @@ statement.
 
 ## A sub-window is not a C string
 
-Every key goes through `c_str()` on its way to `getenv`, which needs the bytes to be NUL terminated. Every
+Every key goes through `cstr()` on its way to `getenv`, which needs the bytes to be NUL terminated. Every
 literal is, and so is every whole `string`. A **window into one is not**:
 
 <!-- verify: dies -->
@@ -165,18 +165,18 @@ on a terminator is not something the compiler can know.
 ## Directories
 
 ```echo
-string $here = std::env::working_dir();
-echo $here->is_empty();                     // 0
+string $here = std::env::cwd();
+echo $here->empty();                     // 0
 
-string::view $tmp = std::env::tmp_dir();
-echo $tmp->is_empty();                      // 0
+string::view $tmp = std::env::tmp();
+echo $tmp->empty();                      // 0
 ```
 
-`working_dir()` allocates, unlike almost everything else here, because there is no block to borrow from. It
+`cwd()` allocates, unlike almost everything else here, because there is no block to borrow from. It
 hands you an owning `string`.
 
-`home_dir()` is `var('HOME')`, so it is **nullable**. An unset `HOME` has no honest answer, and returning
-`""` would hand you a path that resolves, to the working directory. `tmp_dir()` is `var('TMPDIR', '/tmp')`
+`home()` is `var('HOME')`, so it is **nullable**. An unset `HOME` has no honest answer, and returning
+`""` would hand you a path that resolves, to the working directory. `tmp()` is `var('TMPDIR', '/tmp')`
 and is *not* nullable, because unlike `HOME` there is an honest answer when the variable is missing.
 
 ## exit is not a return
@@ -200,7 +200,7 @@ with every destructor run. See [Errors and panics](/language/errors-and-panics).
 Worth saying once, because it is consistent across the module and it is a design position rather than an
 oversight:
 
-- **Absence** is a nullable type. `var` and `home_dir`.
+- **Absence** is a nullable type. `var` and `home`.
 - **A mistake in your code** is an `assert`. `arg` past the end, a key that is not NUL terminated.
 - **A platform failure** is a `die`. `getcwd` refusing a buffer it asked for, a path over 64 KiB.
 
@@ -222,9 +222,9 @@ and `die`. It does not return a [`result<T, E>`](/stdlib/result).
 | `var(string::view $key) : string::view?` | its value, borrowed. null when unset |
 | `var(string::view $key, string::view $fallback) : string::view` | its value, or the fallback |
 | `vars() : var_iterator` | a cursor over every variable, for `foreach`. allocates nothing |
-| `working_dir() : string` | the current directory, owned |
-| `home_dir() : string::view?` | `HOME`, borrowed. null when unset |
-| `tmp_dir() : string::view` | `TMPDIR`, or `/tmp` |
+| `cwd() : string` | the current directory, owned |
+| `home() : string::view?` | `HOME`, borrowed. null when unset |
+| `tmp() : string::view` | `TMPDIR`, or `/tmp` |
 
 ## Next
 

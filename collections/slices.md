@@ -68,7 +68,7 @@ There is no copy anywhere in that program. The slice named the array's own stora
 <!-- verify: skip -->
 ```echo
 const function count() : usize
-const function is_empty() : bool
+const function empty() : bool
 
 const function get(usize $index) : T
 function at(usize $index) : T&

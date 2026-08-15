@@ -105,7 +105,7 @@ overload accepts these arguments".
 ```echo
 const function count() : usize
 const function capacity() : usize
-const function is_empty() : bool
+const function empty() : bool
 
 const function has(const K& $key) : bool
 const function get(const K& $key) : V
@@ -119,7 +119,7 @@ function take(const K& $key) : V
 function extend(const map<K, V>& $other) : void
 function clear() : void
 function reserve(usize $count) : void
-function shrink_to_fit() : void
+function shrink() : void
 
 const function keys() : array<K>
 const function values() : array<V>
@@ -293,7 +293,7 @@ Four things, and they are the reason it is not the default:
 - **Iteration costs one hash lookup per step**, because the values are reached through the table by key.
   Sequential in the keys, random in the values.
 
-It also has no `shrink_to_fit`. Everything else on `map`'s surface is here.
+It also has no `shrink`. Everything else on `map`'s surface is here.
 
 ## Writing to a const map, or to a temporary
 

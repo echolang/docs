@@ -38,8 +38,8 @@ them.
 You can ask for a size yourself, which is occasionally handy and is the same number the table claims:
 
 ```echo
-echo mem::size_of<int32>();     // 4
-echo mem::size_of<usize>();     // 8 on a 64-bit machine
+echo mem::size<int32>();     // 4
+echo mem::size<usize>();     // 8 on a 64-bit machine
 ```
 
 `void` is only ever a return type. There is no `void` variable, and a function that returns nothing still

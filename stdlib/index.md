@@ -36,12 +36,12 @@ these every day, so they cost you no namespace at all.
 **Tier two is still about the language, but you do not write it every line.** A short namespace:
 
 ```echo
-echo mem::size_of<int32>();             // 4
+echo mem::size<int32>();             // 4
 echo hash::of(42) == hash::of(42);      // 1
 ```
 
 `contract::` (interfaces only), `mem::`, `str::`, `arr::` and `hash::`. Container plumbing, mostly. If you
-are writing a data structure you will live here; otherwise you will visit for `mem::size_of` and leave.
+are writing a data structure you will live here; otherwise you will visit for `mem::size` and leave.
 
 **Tier three is ordinary utility with nothing to do with the language.** Fully qualified under `std`:
 
@@ -140,7 +140,7 @@ echo $c->bump(5);       // 7
 | `mem::` | allocation, type queries, `take` / `init`, `buffer<T>` | [mem](/stdlib/mem) |
 | `hash::` | `of` and the composition primitives | [hash](/stdlib/hash) |
 | `str::`, `arr::` | `str::from` and the formatting surface, splitting and joining, `str::buf`, the C string boundary, two array helpers | [str and arr](/stdlib/str-arr) |
-| `std::io::` | writing text out, reading a line back | [std::io](/stdlib/io) |
+| `std::io::` | writing text out, files, a buffered `reader` and `writer` | [std::io](/stdlib/io) |
 | `std::math::` | constants and the numeric functions | [std::math](/stdlib/math) |
 | `std::env::` | arguments, environment, directories, `exit` | [std::env](/stdlib/env) |
 

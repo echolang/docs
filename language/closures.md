@@ -175,6 +175,13 @@ function outer() : int32
 
 Both of these are on [the list](/reference/limitations).
 
+## And a C function pointer is a different type
+
+`function<R(P...)>` is Echo's callable: two words, an environment, a closure. C has no spelling
+for that. When a C library wants a callback, the type is `extern function<R(P...)>` — one word,
+no environment, produced by `&name`. [C interop](/projects/c-interop#callbacks-passing-a-function-to-c)
+has the rest, including why a closure cannot be one.
+
 ## A property
 
 A closure is an ordinary value, so it can be a struct or class property:

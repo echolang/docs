@@ -122,13 +122,13 @@ struct Chevron
     int32 $n;
 }
 
-echo mem::size_of<int32>();                     // 4
-echo mem::align_of<float64>();                  // 8
+echo mem::size<int32>();                     // 4
+echo mem::align<float64>();                  // 8
 echo mem::is_trivially_copyable<Chevron>();     // 1
 echo mem::needs_destruction<string>();          // 1
 ```
 
-`size_of<T>` is the **allocation stride**, so it includes tail padding. `size_of<T>() * $n` is exactly the
+`size<T>` is the **allocation stride**, so it includes tail padding. `size<T>() * $n` is exactly the
 room `$n` elements need, and `$p:$[$n]` lands where you expect.
 
 `is_trivially_copyable<T>` is true when duplicating a `T` is duplicating its bytes and nothing else. It is
@@ -237,7 +237,7 @@ storage, so there is nothing to promise. It needs no `unsafe` and could not hone
 
 Both type parameters are spelled out because Echo binds a generic's type arguments all or none, and `To` is
 the one it cannot work out for you. The two types must be the same size, and a mismatch is a failed
-assertion at runtime rather than a compile error, so check yours with `mem::size_of` if it is not obvious.
+assertion at runtime rather than a compile error, so check yours with `mem::size` if it is not obvious.
 
 ## Reading the counts on a class handle
 
@@ -250,11 +250,11 @@ class Wormhole
 Wormhole $w = Wormhole(7);
 Wormhole $second = $w;
 
-echo mem::ref_count<Wormhole>($w);      // 2
-echo mem::weak_count<Wormhole>($w);     // 1
+echo mem::refs<Wormhole>($w);      // 2
+echo mem::weaks<Wormhole>($w);     // 1
 ```
 
-`ref_count` is about the *object*: at zero the destructor runs. `weak_count` is about the *memory*: at zero
+`refs` is about the *object*: at zero the destructor runs. `weaks` is about the *memory*: at zero
 the block is given back. They are not the same moment, and the gap between them is exactly what a `weak<T>`
 lives in. All the strong references together hold one weak count, seated with the first, which is why a
 freshly built object reads 1 there.
@@ -357,24 +357,24 @@ the buffer cannot see the borrows.
 | `copy<T>(ptr<T> $dst, ptr<T> $src, usize $count) : void` | the regions must not overlap |
 | `move<T>(ptr<T> $dst, ptr<T> $src, usize $count) : void` | the regions may overlap |
 | `zero<T>(ptr<T> $p, usize $count) : void` | fills `$count` elements with zero bytes |
-| `size_of<T>() : usize` | allocation stride in bytes, a compile-time constant |
-| `align_of<T>() : usize` | required alignment in bytes, a compile-time constant |
+| `size<T>() : usize` | allocation stride in bytes, a compile-time constant |
+| `align<T>() : usize` | required alignment in bytes, a compile-time constant |
 | `is_trivially_copyable<T>() : bool` | true when a copy is a byte copy and nothing else |
 | `needs_destruction<T>() : bool` | true when going out of scope has something to give back |
 | `take<T>(T& $place) : T` | hands the value over and empties the place |
 | `init<T>(T& $place, T $value) : void` | stores into a place that holds nothing |
 | `bit_cast<To, From>(From $value) : To` | the bits, read as another type of the same size |
-| `ref_count<T>(T& $handle) : usize` | references naming the object. 0 for null |
-| `weak_count<T>(T& $handle) : usize` | handles needing the block to stay readable. 0 for null |
+| `refs<T>(T& $handle) : usize` | references naming the object. 0 for null |
+| `weaks<T>(T& $handle) : usize` | handles needing the block to stay readable. 0 for null |
 | `live_allocations() : usize` | allocations still outstanding. needs `--track-allocations` |
 | `buffer<T>()` | an empty buffer, holding no allocation |
 | `buffer<T>::capacity() : usize` | how many elements it has room for |
 | `buffer<T>::resize(usize $count) : void` | consumes the old region, produces its replacement |
 | `buffer<T>::at(usize $index) : T&` | a borrow of one slot, unchecked |
 | `buffer<T>::sub(usize $from, usize $count) : slice<T>` | a window over `$count` slots, unchecked |
-| `buffer<T>::copy_nonoverlapping(usize $to, usize $from, usize $count)` | the ranges must not overlap |
+| `buffer<T>::copy(usize $to, usize $from, usize $count)` | the ranges must not overlap |
 | `buffer<T>::move(usize $to, usize $from, usize $count)` | the ranges may overlap |
-| `buffer<T>::copy_from(usize $to, const buffer<T>& $src, usize $from, usize $count)` | between two buffers |
+| `buffer<T>::copy(usize $to, const buffer<T>& $src, usize $from, usize $count)` | between two buffers |
 
 ## Next
 

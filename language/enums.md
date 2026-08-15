@@ -462,9 +462,10 @@ enum CurlError {
 }
 ```
 
-That becomes a value holding a tag and the fields of *every* case, not only the live one. So the size is the
-sum of the payloads rather than the largest of them. A plain enum is one byte; one with three fat cases is
-as big as all three.
+That becomes a value holding a tag and the fields of *every* case, not only the live one. The size is at
+least the sum of those fields, plus the tag and whatever padding their alignment wants, rather than the
+largest of them. A plain enum is one byte; one with three fat cases is as wide as all three sitting side
+by side.
 
 That is a real cost, and it is the honest trade for the rest of the feature being ordinary. The payload
 slots are properties like any others, so member access, debug info, aliasing metadata and the copy rules all

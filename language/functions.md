@@ -253,8 +253,8 @@ extern {
 echo c_abs(-5);     // 5
 ```
 
-[C interop](/projects/c-interop) covers linking, strings across the boundary, and shipping C sources beside
-your Echo.
+[C interop](/projects/c-interop) covers linking, strings across the boundary, shipping C sources beside
+your Echo, and passing a function to C as `extern function<R(P...)>` with `&name`.
 
 ## What functions cannot do yet
 

@@ -201,7 +201,7 @@ about it:
 ```echo
 function describe<T>() : usize
 {
-    return mem::size_of<T>();
+    return mem::size<T>();
 }
 
 echo describe<int32>();     // 4
@@ -212,7 +212,7 @@ Three of these come up constantly when writing containers:
 
 | Query | Answers |
 |---|---|
-| `mem::size_of<T>()` | the size in bytes |
+| `mem::size<T>()` | the size in bytes |
 | `mem::is_trivially_copyable<T>()` | whether copying is just copying the bytes |
 | `mem::needs_destruction<T>()` | whether `T` owns something that has to be given back |
 
@@ -239,7 +239,7 @@ This is how `array<T>` is written. Its copy, its destructor and its `clear()` al
 questions, which is why an owning element type works correctly with **no arm anywhere in the compiler that
 knows what a container is**.
 
-One limitation worth knowing: `mem::size_of` and `mem::align_of` cannot decide a `const if`. They are
+One limitation worth knowing: `mem::size` and `mem::align` cannot decide a `const if`. They are
 answered from the target's layout, which the compiler only knows once it is emitting code, and the branch
 has to be picked earlier than that. The two AST questions above can. See
 [Control flow](/language/control-flow).

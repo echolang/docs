@@ -380,10 +380,10 @@ class Stargate
 }
 
 Stargate $sgc = Stargate(0);
-echo mem::ref_count($sgc);      // 1
+echo mem::refs($sgc);      // 1
 
 Stargate $alias = $sgc;
-echo mem::ref_count($sgc);      // 2
+echo mem::refs($sgc);      // 2
 ```
 
 So there is nothing to move. A class handle is copied freely, the destructor runs when the last holder goes

@@ -243,7 +243,7 @@ A name's spelling tells you what tier it is in:
 | `contract::`, `mem::`, `str::`, `arr::`, `hash::` | still about the language, but not written every line | `stdlib/core/` |
 | `std::math::`, `std::env::` | ordinary utility with no special relationship to the language | `stdlib/std/` |
 
-So `array<int32>` is unqualified because you write it constantly, while `mem::size_of<T>()` is qualified
+So `array<int32>` is unqualified because you write it constantly, while `mem::size<T>()` is qualified
 because you do not. And anything under `std::` is a library like any you would write yourself.
 
 ## Next

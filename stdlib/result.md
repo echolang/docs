@@ -46,7 +46,7 @@ result<int32, string> $good = result<int32, string>::ok(7);
 result<int32, string> $bad = result<int32, string>::error('nope');
 
 echo $good->has_value();    // 1
-echo $bad->is_error();      // 1
+echo $bad->failed();      // 1
 ```
 
 Writing the type twice gets old, and you do not have to. Wherever the destination already names the type,
@@ -62,8 +62,8 @@ function halve(int32 $n) : result<int32, string>
     return .ok($n / 2);
 }
 
-echo halve(10)->value_or(-1);    // 5
-echo halve(7)->value_or(-1);     // -1
+echo halve(10)->or(-1);    // 5
+echo halve(7)->or(-1);     // -1
 ```
 
 A return type is a destination. So is a declared variable, and so is a parameter of a call the compiler has
@@ -74,7 +74,7 @@ result<int32, string> $declared = .error('from a declaration');
 
 function takes(result<int32, string> $r) : int32
 {
-    return $r->value_or(-1);
+    return $r->or(-1);
 }
 
 echo $declared->failure();      // from a declaration
@@ -103,7 +103,7 @@ safe afterwards. If the block could fall through, `$n` would exist with nothing 
 ```echo
 function first_word(const string& $line) : result<string, int32>
 {
-    if ($line->is_empty()) {
+    if ($line->empty()) {
         return .error(-1);
     }
 
@@ -155,7 +155,7 @@ the `else` has to leave.
 
 ### A fallback, when you have one
 
-`value_or` is the const read. It copies the value out, or the fallback you passed:
+`or` is the const read. It copies the value out, or the fallback you passed:
 
 ```echo
 function status(int32 $n) : result<int32, string>
@@ -167,8 +167,8 @@ function status(int32 $n) : result<int32, string>
     return .ok($n * 10);
 }
 
-echo status(4)->value_or(-1);    // 40
-echo status(0)->value_or(-1);    // -1
+echo status(4)->or(-1);    // 40
+echo status(0)->or(-1);    // -1
 ```
 
 That works on a temporary, because a copy does not need the result to outlive the statement. `unwrap()`
@@ -216,15 +216,15 @@ cannot hand back a place. That last one is why `unwrap()` is a method on the res
 result<int32, string> $r = result<int32, string>::ok(41);
 
 echo $r->has_value();       // 1
-echo $r->is_error();        // 0
+echo $r->failed();        // 0
 echo $r->unwrap() + 1;      // 42
-echo $r->value_or(-1);      // 41
+echo $r->or(-1);      // 41
 
 result<int32, string> $e = result<int32, string>::error('bad');
 
-echo $e->is_error();        // 1
+echo $e->failed();        // 1
 echo $e->failure();         // bad
-echo $e->value_or(-1);      // -1
+echo $e->or(-1);      // -1
 ```
 
 `unwrap()` and `failure()` are each valid on one arm only. Call the wrong one and the program stops:
@@ -277,7 +277,7 @@ Name it first. That is the same rule `map<K, V>::at()` and `slice<T>::at()` live
 check the rest: a borrow you stash past the result is yours to keep straight. See
 [Pointers and references](/memory/pointers).
 
-`value_or` is the copy, and that is why it is the one that works on a `const` result and on a temporary.
+`or` is the copy, and that is why it is the one that works on a `const` result and on a temporary.
 `unwrap()` cannot be `const`. Handing a writable borrow out of a read-only value would be a lie.
 
 ## E can be an enum
@@ -293,7 +293,7 @@ enum ParseError
 
 function parse_port(const string& $text) : result<int32, ParseError>
 {
-    int64 $n = guard str::parse_int($text) else {
+    int64 $n = guard str::int($text) else {
         return .error(.empty);
     }
 
@@ -359,23 +359,26 @@ back as a `T&` rather than this type growing a `bool`.
 
 ## What it costs
 
-An enum's layout is flat: a tag, then one slot per payload field of **every** case. So `result<T, E>` is
-as wide as `T` *and* `E` together, not the larger of the two.
+An enum does not overlay its cases. The value is a tag, then a slot for every payload field of every
+case, so `result<T, E>` holds both `T` and `E` even though only one of them is live.
 
 ```echo
-echo mem::size_of<result<int64, int32>>();    // 24
-echo mem::size_of<int64>();                   // 8
-echo mem::size_of<int32>();                   // 4
+echo mem::size<result<int64, int32>>();    // 24
+echo mem::size<int64>();                   // 8
+echo mem::size<int32>();                   // 4
 ```
 
-Rust overlaps the payloads and then squeezes the tag into a spare bit pattern, so its `Result<i64, i32>`
-is 16. Echo does not do either yet. [Enums](/language/enums#what-an-enum-is-underneath) has the reasoning:
-the payload slots being ordinary properties is what keeps member access, debug info, aliasing metadata
-and the copy rules free of a special case anywhere in the compiler.
+24 is not 8 + 4. The tag is one byte, `int64` wants 8-byte alignment, and the whole value is padded out
+to that alignment. A layout that sat the two payloads on top of each other would be 16. Echo does not
+do that yet.
 
-For a result that is returned and immediately tested, which is essentially all of them, it does not show
-up. That is measured, not assumed. A `result<int64, E>` over a payload that owns nothing inlines down to
-a tag test in a register. Overlapping the slots later would not change a line of Echo.
+[Enums](/language/enums#what-an-enum-is-underneath) is the reasoning: the slots are ordinary properties,
+which is what keeps copy and teardown per case with no special rule for this type. Overlapping them
+later would not change a line of Echo.
+
+A result you produce and immediately `guard` is usually inlined down to a test of the tag, so the extra
+width never becomes a copy you pay for. A result you store, put in an array, or hand across a function
+that does not inline is the 24-byte value above.
 
 ## The whole surface
 
@@ -384,10 +387,10 @@ a tag test in a register. Overlapping the slots later would not change a line of
 | `result<T, E>::ok(T $value)` | a result holding a value | always |
 | `result<T, E>::error(E $failure)` | a result holding a failure | always |
 | `const function has_value() : bool` | is there a value | always |
-| `const function is_error() : bool` | the complement of `has_value()` | always |
+| `const function failed() : bool` | the complement of `has_value()` | always |
 | `function unwrap() : T&` | a borrow of the value | `has_value()` is true, dies otherwise |
-| `function failure() : E&` | a borrow of the failure | `is_error()` is true, dies otherwise |
-| `const function value_or(T $fallback) : T` | a copy of the value, or `$fallback` | always |
+| `function failure() : E&` | a borrow of the failure | `failed()` is true, dies otherwise |
+| `const function or(T $fallback) : T` | a copy of the value, or `$fallback` | always |
 
 `has_value()` and `unwrap()` are `contract::unwrappable<T>`. `failure()` is `contract::failable<E>`. Those
 two are the whole of what `guard` needs.

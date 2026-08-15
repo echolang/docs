@@ -122,12 +122,7 @@ foreach ($items as const &$item) {
 
 Binding by value works, and direct field access on the borrow works. Only the method call fails.
 
-**An optional chain cannot start a statement.** `$maybe?->save();` does not parse. `?->` only works inside a
-larger expression, so `echo $maybe?->name ?? "";` is fine.
-
-**A const array from a literal.** `const $c = [1, 2];` is refused. Other routes to a const array work.
-
-**`size_of` and `align_of` in a `const if`.** Layout queries cannot decide a compile-time branch, which is
+**`mem::size` and `mem::align` in a `const if`.** Layout queries cannot decide a compile-time branch, which is
 what blocks small-buffer optimisation.
 
 **`mv` on a field or element.** `$x = mv $doc->body;` is refused. `mv` moves a whole variable only.
@@ -158,12 +153,12 @@ arguments, and no runtime format string, since a spec is written inside a litera
 is another allocation. Fine for a sentence, wrong for a loop, and nothing warns you which one you wrote.
 `string::append` into one buffer is the tool until there is a proper builder.
 
-**No file I/O.** [`std::io`](/stdlib/io) is standard in, out and error only. There is no `open`, no path
-type and no directory listing. You can reach `fopen` and friends through an `extern` block.
+**No path type, and no directory listing.** [`std::io`](/stdlib/io) opens, reads and writes files. Paths
+are `string`s. There is no `mkdir`, no `stat`, and nothing that lists a directory.
 
-**Reading is unbuffered.** `std::io::read_line` issues one `read` per byte, because a library module has no
-mutable state to keep a buffer in. It is correct and it is slow, which is the worst combination for something
-that will not show up until your input gets big. A `reader` type you hold is the fix.
+**`std::io::readline()` on stdin is still unbuffered.** One `read` per byte, so it cannot steal input from
+anything else on fd 0. Wrap stdin in a `reader` when you want the window, stdout in a `writer` when you
+want the write window. `file` is buffered already.
 
 **`map<K, V>` uses linear probing.** It is correct and it is not fast. A better table is planned.
 

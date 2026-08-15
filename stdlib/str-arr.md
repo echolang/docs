@@ -33,10 +33,10 @@ The elements are **copied** by the ordinary rules, so an element type whose copy
 one here too. See [Copying](/memory/copying). It allocates once for the result and no more, so merging two
 large arrays does not thrash.
 
-## `with_capacity` is a function because a constructor would lie
+## `room` is a function because a constructor would lie
 
 ```echo
-array<int32> $chevrons = arr::with_capacity<int32>(7);
+array<int32> $chevrons = arr::room<int32>(7);
 
 echo $chevrons->count();        // 0, it is empty
 echo $chevrons->capacity();     // 7, and it will not reallocate until the eighth
@@ -63,7 +63,7 @@ the shape: every mutator is `private` on `string`'s side, so no caller reaches o
 The type is public. The mutators are private. Do not construct one. See
 [Visibility](/language/visibility).
 
-You will meet the name in two places: in a debugger, and in `mem::ref_count<str::buf>` if you want to see
+You will meet the name in two places: in a debugger, and in `mem::refs<str::buf>` if you want to see
 the sharing for yourself.
 
 ## A literal allocates nothing, which is why the count starts at zero
@@ -71,16 +71,16 @@ the sharing for yourself.
 <!-- verify: track-allocations -->
 ```echo
 string $literal = "Chulak";
-echo mem::ref_count<str::buf>($literal->owner);     // 0
+echo mem::refs<str::buf>($literal->owner);     // 0
 echo mem::live_allocations();                       // 0
 
 string $built = "";
 $built->append("Chulak");
-echo mem::ref_count<str::buf>($built->owner);       // 1
+echo mem::refs<str::buf>($built->owner);       // 1
 echo mem::live_allocations();                       // 2
 
 string $shared = $built;
-echo mem::ref_count<str::buf>($built->owner);       // 2
+echo mem::refs<str::buf>($built->owner);       // 2
 echo mem::live_allocations();                       // 2
 ```
 
@@ -97,22 +97,22 @@ question: **will the source outlive the result?**
 
 ```echo
 string $gate = "Chulak";
-ptr<const uint8> $raw = $gate->c_str();
+ptr<const uint8> $raw = $gate->cstr();
 
 // borrow: no allocation, valid only while the owner's bytes are
-string::view $window = str::view_of_c_str($raw);
+string::view $window = str::cview($raw);
 echo $window->size;         // 6
 
 // copy: owning, safe to keep
-string $owned = str::from_c_str($raw);
+string $owned = str::from($raw);
 echo $owned;                // Chulak
 ```
 
-`view_of_c_str` walks to the NUL to find the length and points at the same bytes. Use it when the source
+`cview` walks to the NUL to find the length and points at the same bytes. Use it when the source
 lives at least as long as you need the window, which is exactly the case for `argv` entries and environment
 variables. That is why [std::env](/stdlib/env) hands back views rather than strings.
 
-`from_c_str` allocates and copies. Use it when the source is about to be freed, or is behind something like
+`from` allocates and copies. Use it when the source is about to be freed, or is behind something like
 `setenv` that may replace it out from under you.
 
 Note: `string::view` has a `$size` **property** rather than a `size()` method, so it is `$v->size` with no
@@ -185,13 +185,13 @@ on `','` gives three.
 Note the extra variable on that last line. A hole opens on `{$` and nothing else, so `"|{str::trim($p)}|"`
 is ordinary text rather than a call, and the result has to be bound before you can interpolate it.
 
-`trim_start` and `trim_end` do one side each. All three answer a **window** rather than a copy, so trimming
+`ltrim` and `rtrim` do one side each. All three answer a **window** rather than a copy, so trimming
 is free. Call `->clone()` on the result if you want the parent's buffer released.
 
-## parse_int and parse_float
+## int and float
 
 ```echo
-int64 $n = guard str::parse_int('42') else {
+int64 $n = guard str::int('42') else {
     die('not a number');
 }
 
@@ -203,12 +203,12 @@ Nothing is forgiven: no leading whitespace, no separators, no trailing text. `st
 came from a line of input.
 
 ```echo
-echo str::parse_int('4kg') ?? -1;       // -1
-echo str::parse_int(' 4') ?? -1;        // -1
-echo str::parse_int('9223372036854775808') ?? -1;    // -1, overflow rather than a wrapped value
+echo str::int('4kg') ?? -1;       // -1
+echo str::int(' 4') ?? -1;        // -1
+echo str::int('9223372036854775808') ?? -1;    // -1, overflow rather than a wrapped value
 ```
 
-`str::parse_float` goes through C's `strtod` and requires the whole text to be consumed, which is the
+`str::float` goes through C's `strtod` and requires the whole text to be consumed, which is the
 difference between it and calling `strtod` yourself.
 
 ## The whole surface
@@ -218,19 +218,23 @@ difference between it and calling `strtod` yourself.
 | `str::from(T $v) : string` | the value as text. one overload per primitive, plus `string` and `string::view` |
 | `str::from(T $v, const string& $spec) : string` | the same, honouring a format spec |
 | `str::spec_of(const string& $text) : spec` | the spec a `{$x:...}` hole spells, parsed |
-| `str::from_c_str(ptr<const uint8> $s) : string` | an owning copy of a NUL-terminated C string |
-| `str::from_bytes(ptr<const uint8> $b, usize $n) : string` | an owning copy of `$n` bytes, no terminator needed |
-| `str::view_of_c_str(ptr<const uint8> $s) : string::view` | a borrowing window over one. allocates nothing |
+| `str::from(ptr<const uint8> $s) : string` | an owning copy of a NUL-terminated C string |
+| `str::from(ptr<const uint8> $b, usize $n) : string` | an owning copy of `$n` bytes, no terminator needed |
+| `str::cview(ptr<const uint8> $s) : string::view` | a borrowing window over one. allocates nothing |
+| `string::data()` / `string::view::data()` | the bytes, no terminator required |
+| `string::spare()` / `room()` / `commit($n)` | let C write into the buffer |
+| `string::append(ptr<const uint8>, usize)` | `append` for a pointer and a length |
+| `string::capacity()` | text bytes the buffer can hold without growing |
 | `str::concat(const string& $a, const string& $b) : string` | the two joined. what interpolation lowers to |
 | `str::split(const string& $t, const string& $sep) : array<string>` | `n` separators give `n + 1` parts |
 | `str::join(const array<string>& $parts, const string& $sep) : string` | the inverse, in one allocation |
-| `str::trim` / `trim_start` / `trim_end` `(const string&) : string` | ASCII whitespace off both ends, or one |
-| `str::pad_start` / `pad_end` `(const string&, usize $width, uint8 $fill) : string` | widen to `$width` **bytes** |
+| `str::trim` / `ltrim` / `rtrim` `(const string&) : string` | ASCII whitespace off both ends, or one |
+| `str::lpad` / `rpad` `(const string&, usize $width, uint8 $fill) : string` | widen to `$width` **bytes** |
 | `str::repeat(const string& $t, usize $times) : string` | `$t` written over |
-| `str::parse_int(const string& $t) : int64?` | base ten, optional sign, nothing else |
-| `str::parse_float(const string& $t) : float64?` | through `strtod`, whole text consumed |
+| `str::int(const string& $t) : int64?` | base ten, optional sign, nothing else |
+| `str::float(const string& $t) : float64?` | through `strtod`, whole text consumed |
 | `arr::merge<T>(const array<T>& $a, const array<T>& $b) : array<T>` | a new array, `$a`'s elements then `$b`'s |
-| `arr::with_capacity<T>(usize $count) : array<T>` | an empty array with room for `$count` |
+| `arr::room<T>(usize $count) : array<T>` | an empty array with room for `$count` |
 
 ## Next
 

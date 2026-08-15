@@ -117,7 +117,7 @@ struct Item
 }
 
 array<Item> $items = [];
-$items->push_slot()->n = 5;
+$items->slot()->n = 5;
 
 foreach ($items as const &$item) {
     $item->trace();
@@ -140,7 +140,7 @@ struct Item
 }
 
 array<Item> $items = [];
-$items->push_slot()->n = 5;
+$items->slot()->n = 5;
 
 foreach ($items as const &$item) {
     echo $item->n;      // 5

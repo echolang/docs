@@ -26,7 +26,7 @@ extern {
 }
 
 string $greeting = 'hello';
-echo measure($greeting->c_str());   // 5
+echo measure($greeting->cstr());   // 5
 ```
 
 The name on the left is the **symbol**, which is what reaches the linker with no mangling applied. The name
@@ -64,6 +64,7 @@ The mapping you will use most:
 | `double` | `float64` |
 | `float` | `float32` |
 | `void *` | `ptr<uint8>` |
+| `void (*)(int)` | `extern function<void(int32)>` |
 | `void` | `void` |
 
 This is the one part of Echo where the compiler cannot help you at all, and it is worth being deliberate
@@ -147,7 +148,7 @@ And this `tm` is **only ever read**. Real `struct tm` has two more fields after 
 writes through the pointer, so leaving them unspelled cannot overrun anything. A binding that asked libc to
 *fill* a `tm` of ours would have to declare all of them, and get every one right.
 
-## Strings out: `c_str()`
+## Strings out: `cstr()`
 
 Echo strings are not C strings, but every buffer the standard library allocates has room for one byte past
 its text and holds a `0` there, and every literal is emitted NUL-terminated too. So the common case costs
@@ -159,7 +160,7 @@ extern {
 }
 
 string $name = 'Echo';
-echo c_strlen($name->c_str());      // 4
+echo c_strlen($name->cstr());      // 4
 ```
 
 The exception is a substring that stops early. It shares its owner's buffer, so the byte after its window is
@@ -173,23 +174,53 @@ extern {
 string $name = 'Echo';
 
 $tail = $name->sub(1, 3);
-echo $tail->is_terminated();        // 1, it reaches the end of the buffer
+echo $tail->terminated();        // 1, it reaches the end of the buffer
 
 $head = $name->sub(0, 3);
 echo $head;                         // Ech
-echo $head->is_terminated();        // 0
+echo $head->terminated();        // 0
 
 $safe = $head->clone();
-echo c_strlen($safe->c_str());      // 3
+echo c_strlen($safe->cstr());      // 3
 ```
 
-Calling `c_str()` on the unterminated one is an assertion failure rather than a silent over-read:
+Calling `cstr()` on the unterminated one is an assertion failure rather than a silent over-read:
 
 ```
 assertion failed: string is not NUL terminated - clone it first
 ```
 
-Ask `is_terminated()` when you would rather branch than die.
+Ask `terminated()` when you would rather branch than die.
+
+`data()` is the same pointer without that assert. Use it when C already has a length, which is most of
+the interesting APIs (`CURLOPT_POSTFIELDS` plus `CURLOPT_POSTFIELDSIZE`, `write(2)`, anything that is
+not `%s`):
+
+```echo
+string $name = 'Echo';
+$head = $name->sub(0, 3);
+
+echo $head->terminated();        // 0
+echo $head->data() != null;         // 1
+echo $head->size();                 // 3
+```
+
+To let C write *into* a string, reserve, hand it `spare()`, then `commit` the count it produced. Growing
+the buffer after `spare()` invalidates the pointer.
+
+```echo
+string $body = '';
+$body->reserve(8);
+
+ptr<uint8> $dst = $body->spare();
+$dst:$[0] = 69;
+$dst:$[1] = 99;
+$dst:$[2] = 104;
+$dst:$[3] = 111;
+$body->commit(4);
+
+echo $body;         // Echo
+```
 
 ## Strings in: borrow or copy
 
@@ -202,21 +233,21 @@ extern {
 }
 
 string $key = 'HOME';
-ptr<uint8> $home = c_getenv($key->c_str());
+ptr<uint8> $home = c_getenv($key->cstr());
 
 // borrows the bytes C already holds. No allocation
-string::view $view = str::view_of_c_str($home);
+string::view $view = str::cview($home);
 echo $view->size > 0;       // 1
 
 // takes a copy along
-string $owned = str::from_c_str($home);
+string $owned = str::from($home);
 echo $owned->size() > 0;    // 1
 ```
 
-`view_of_c_str` is the right default when the bytes outlive the read, which is true of an `argv` entry and an
+`cview` is the right default when the bytes outlive the read, which is true of an `argv` entry and an
 environment variable: both live as long as the process, so copying them buys nothing.
 
-Reach for `from_c_str` when they do not. A buffer you are about to free, anything behind a `setenv`, anything
+Reach for `from` when they do not. A buffer you are about to free, anything behind a `setenv`, anything
 a library says it may reuse on the next call.
 
 ## Shipping C sources with `#[cc:]`
@@ -343,9 +374,9 @@ extern {
 ptr<uint8> $buffer = mem::alloc<uint8>(64);
 string $format = '%d chevrons, %.1f seconds';
 
-int32 $written = c_snprintf($buffer, 64, $format->c_str(), [7, 2.5]);
+int32 $written = c_snprintf($buffer, 64, $format->cstr(), [7, 2.5]);
 
-echo str::view_of_c_str($buffer);        // 7 chevrons, 2.5 seconds
+echo str::cview($buffer);        // 7 chevrons, 2.5 seconds
 echo $written;                           // 23
 
 mem::free($buffer);
@@ -366,7 +397,7 @@ that, not your declaration, which is also where a C compiler does it. You never 
 yourself and you cannot get it wrong.
 
 What may be in the list is primitives and pointers. A struct is refused, because how C's variadic
-convention unpacks one is platform specific. A `string` is a struct, so pass its `->c_str()`:
+convention unpacks one is platform specific. A `string` is a struct, so pass its `->cstr()`:
 
 ```echo
 extern {
@@ -376,11 +407,49 @@ extern {
 string $format = 'hello, %s';
 string $name = 'Ronon';
 
-c_printf($format->c_str(), [$name->c_str()]);
+c_printf($format->cstr(), [$name->cstr()]);
 ```
 
 `variadic_args` is legal in exactly one place: the last parameter of an `extern` declaration, with at
 least one parameter before it. Everywhere else is a compile error naming the position.
+
+## Callbacks: passing a function to C
+
+C libraries are mostly callback registration. GLFW's `glfwSetKeyCallback`, a signal handler, a
+`qsort` comparator: they all take a function pointer, and they all take **C's** function pointer —
+one word, no environment.
+
+Echo's own callable, `function<R(P...)>`, is two words. C has no declaration for the second one.
+The type C can name is `extern function<R(P...)>`:
+
+```echo
+extern {
+    function apply(extern function<int32(int32)> $fn, int32 $v) : int32;
+}
+
+function double_it(int32 $x) : int32
+{
+    return $x * 2;
+}
+
+echo apply(&double_it, 21);     // 42
+```
+
+`&name` is the only producer. It is the address of a function this compiler compiled, so the
+signature is checked: primitives, `ptr<T>`, another `extern function`, and `void` as a return.
+A struct by value is refused, because that is where echoc's lowering and clang's ABI classification
+come apart silently. Pass a `ptr<T>`.
+
+A C callback has no environment. State it needs is a static, or arrives through the parameters C
+gives it. That is the honest answer, not a limitation to apologise for. A closure literal at an
+`extern function<...>` destination is refused for the same reason — name it and pass `&name`.
+
+`extern function<...>?` is the nullable form, and `null`, `guard`, `??` and `?->` work on it the
+way they work on every other type that can be absent.
+
+An `extern` *declaration* is still a promise about someone else's function, and is still not
+checked against a header. A `extern function<...>` is a promise **echoc keeps** — it hands out
+the address of a function it compiled.
 
 ## Next
 

@@ -40,17 +40,28 @@ array<float64> $ratios = [0.5, 1.5];
 echo $ratios[1];            // 1.500000
 ```
 
-Or `arr::with_capacity`, when you already know how many elements are coming:
+`const` works on that spelling too. The literal fills a mutable array and moves it into the name, so
+`$c` is frozen from the moment it exists:
 
 ```echo
-array<int32> $numbers = arr::with_capacity<int32>(64);
+const $c = [1, 2];
+const array<int32> $typed = [1, 2];
+
+echo $c[0];                 // 1
+echo $typed[0];             // 1
+```
+
+Or `arr::room`, when you already know how many elements are coming:
+
+```echo
+array<int32> $numbers = arr::room<int32>(64);
 
 echo $numbers->count();     // 0
 echo $numbers->capacity();  // 64
 ```
 
 Note what is *not* on that list: there is no `array<int32>(5)`. A single number could mean "five slots" or
-"one element", and I would rather not guess. `arr::with_capacity` says which one you meant.
+"one element", and I would rather not guess. `arr::room` says which one you meant.
 
 ## A literal takes its type from its destination
 
@@ -131,20 +142,20 @@ The full surface, off `stdlib/core/array.eco`:
 ```echo
 const function count() : usize
 const function capacity() : usize
-const function is_empty() : bool
+const function empty() : bool
 
 function reserve(usize $count) : void
-function reserve_exact(usize $count) : void
-function shrink_to_fit() : void
+function fit(usize $count) : void
+function shrink() : void
 
 function push(T $value) : void
-function push_slot() : T&
+function slot() : T&
 function extend(const array<T>& $other) : void
-function extend_from_within(usize $start, usize $count) : void
+function extend(usize $start, usize $count) : void
 
 function pop() : T
 function remove(usize $index) : T
-function swap_remove(usize $index) : T
+function pluck(usize $index) : T
 function truncate(usize $count) : void
 function clear() : void
 
@@ -186,11 +197,11 @@ $big->reserve(1000);
 echo $big->capacity();      // 1000
 ```
 
-`reserve_exact` skips both the doubling and the floor, for when you want a small buffer sized to the byte:
+`fit` skips both the doubling and the floor, for when you want a small buffer sized to the byte:
 
 ```echo
 array<usize> $tight;
-$tight->reserve_exact(3);
+$tight->fit(3);
 echo $tight->capacity();    // 3
 ```
 
@@ -211,9 +222,9 @@ $first = 1;         // the borrow may now point at freed memory
 Reserve up front and the problem goes away, because there is no reallocation left to trip over.
 [Pointers and references](/memory/pointers) covers what a borrow is and how long it is good for.
 
-## push_slot appends without building a value first
+## slot appends without building a value first
 
-Sometimes you want to write into the new element rather than construct one and copy it in. `push_slot()`
+Sometimes you want to write into the new element rather than construct one and copy it in. `slot()`
 hands back a borrow of the fresh slot, and `&$a[]` is the same thing spelled with brackets:
 
 ```echo
@@ -228,7 +239,7 @@ array<Point> $points = array<Point>();
 Point& $slot = &$points[];
 $slot->x = 1;
 
-$points->push_slot()->y = 2;
+$points->slot()->y = 2;
 
 echo $points->count();      // 2
 echo $points[0]->x;         // 1
@@ -293,7 +304,7 @@ echo $out;              // popped
 echo $words->count();   // 0
 ```
 
-`remove($i)` keeps the order and shifts everything after it down. `swap_remove($i)` does **not** keep the
+`remove($i)` keeps the order and shifts everything after it down. `pluck($i)` does **not** keep the
 order: it relocates the last element into the hole, which is why it is the cheap one:
 
 ```echo
@@ -302,7 +313,7 @@ $letters[] = 'x';
 $letters[] = 'y';
 $letters[] = 'z';
 
-echo $letters->swap_remove(0);  // x
+echo $letters->pluck(0);  // x
 echo $letters[0];               // z
 echo $letters->count();         // 2
 ```
@@ -337,7 +348,7 @@ Say which range you meant instead, and it is unambiguous:
 ```echo
 array<int32> $a = [1, 2, 3];
 
-$a->extend_from_within(0, $a->count());     // double it
+$a->extend(0, $a->count());     // double it
 
 echo $a->count();   // 6
 echo $a[3];         // 1

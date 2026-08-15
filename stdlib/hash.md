@@ -165,7 +165,7 @@ transposed pairs then degenerates into a linked list.
 `bytes` and `step` are the byte-at-a-time pieces underneath. Reach for them when your type is made of
 several byte runs and you want to fold them all into one hash without going through `combine`.
 
-## of_bytes is the one you have to ask for by name
+## bits is the one you have to ask for by name
 
 ```echo
 struct Chevron
@@ -174,8 +174,8 @@ struct Chevron
 }
 
 Chevron $c = Chevron(3);
-echo mem::size_of<Chevron>();       // 4
-echo hash::of_bytes<Chevron>($c) == hash::of_bytes<Chevron>(Chevron(3));    // 1
+echo mem::size<Chevron>();       // 4
+echo hash::bits<Chevron>($c) == hash::bits<Chevron>(Chevron(3));    // 1
 ```
 
 This hashes a `T`'s raw bytes, and it is wrong for every type that holds an address. A `string` byte-hashed
@@ -184,7 +184,7 @@ buckets while comparing equal, which is the one way a hash table breaks that not
 also wrong for a struct with padding, whose padding bytes are not defined.
 
 That is exactly why there is no generic `of<T>` sitting above it. A catch-all would answer for a type nobody
-thought about, silently and wrongly. Making you write `of_bytes` is making you say you checked.
+thought about, silently and wrongly. Making you write `bits` is making you say you checked.
 
 ## A float makes a poor key, and the library only fixes half of it
 
@@ -218,7 +218,7 @@ not use one where an attacker chooses the keys.
 | `combine(uint64 $seed, uint64 $value) : uint64` | folds a second hash into a first. not commutative |
 | `bytes(ptr<const uint8> $data, usize $size, uint64 $seed) : uint64` | hashes a byte run, continuing from a seed |
 | `step(uint64 $seed, uint8 $byte) : uint64` | folds one byte in |
-| `of_bytes<T>(const T& $value) : uint64` | the raw bytes. wrong for anything holding an address |
+| `bits<T>(const T& $value) : uint64` | the raw bytes. wrong for anything holding an address |
 
 ## Next
 

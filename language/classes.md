@@ -62,13 +62,13 @@ class Handle
 }
 
 Handle $a = Handle(1);
-echo mem::ref_count($a);        // 1
+echo mem::refs($a);        // 1
 
 Handle $b = $a;
-echo mem::ref_count($a);        // 2
+echo mem::refs($a);        // 2
 ```
 
-`mem::ref_count` and `mem::weak_count` exist for exactly this: understanding what your program is actually
+`mem::refs` and `mem::weaks` exist for exactly this: understanding what your program is actually
 doing. They are not something to build logic on.
 
 ## When the destructor runs
@@ -320,8 +320,8 @@ function dial() : void
     $sgc->active = $outbound;       // strong, forward
     $outbound->origin = &$sgc;      // weak, backward
 
-    echo mem::ref_count($sgc);      // 1
-    echo mem::ref_count($outbound); // 2
+    echo mem::refs($sgc);      // 1
+    echo mem::refs($outbound); // 2
 }
 
 dial();
