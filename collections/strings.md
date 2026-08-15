@@ -233,7 +233,9 @@ buffer is the thing the copy-on-write gate exists to prevent.
 
 ## Reading a string
 
-All of it byte-for-byte. No normalization, no case folding, no encoding validation:
+All of it byte-for-byte. No normalization, no case folding, no encoding validation. Case conversion
+lives next door in [`str::upper`](/stdlib/str#upper--lower--ucfirst--lcfirst) and friends; the type
+itself still compares and slices as bytes.
 
 ```echo
 $a = 'hello world';
@@ -455,7 +457,7 @@ public function from(const Point& $p) : string
 }
 ```
 
-after which `"{$p}"` works everywhere. [`str` and `arr`](/stdlib/str-arr) has the whole surface.
+after which `"{$p}"` works everywhere. [String functions](/stdlib/str) has the whole surface.
 
 ## Printing
 
@@ -470,7 +472,7 @@ echo "{$name} rolled {$rolls} dice";
 ```
 
 For the things `echo` cannot do (writing without a newline, writing to stderr, passing an output stream
-around) there is [`std::io`](/stdlib/io):
+around) there is [Input and Output](/stdlib/io/):
 
 ```echo
 std::io::println('to stdout');
@@ -486,5 +488,6 @@ a sentence.
 
 - [Maps](/collections/maps) for `string` as a key, which is what `==` and `hash::of` are for.
 - [Slices](/collections/slices) for the same borrow-a-window idea over arbitrary elements.
-- [`std::io`](/stdlib/io) for writing text out and reading a line back.
+- [Input and Output](/stdlib/io/) for writing text out and reading a line back.
+- [String functions](/stdlib/str) for `str::from`, `split`, `join`, `trim` and the C string boundary.
 - [C interop](/projects/c-interop) for what to do with a `ptr<const uint8>` once you have one.

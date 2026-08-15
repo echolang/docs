@@ -55,7 +55,7 @@ echo std::env::argc() > 0;      // 1
 ## Nothing in the library is special-cased
 
 The library types have no capabilities your own types cannot have. `map<K, V>` works with `foreach` because
-it declares `contract::iterable<V>`, exactly the way a type of yours would ([contract](/stdlib/contract) is
+it declares `contract::iterable<V>`, exactly the way a type of yours would ([Contracts](/stdlib/contract) is
 that whole story). `range<T>` is the clearest case, because `0 .. 7` looks like syntax and is not:
 
 ```echo
@@ -135,17 +135,20 @@ echo $c->bump(5);       // 7
 | Namespace | Holds | Page |
 |---|---|---|
 | root | `array`, `map`, `ordered_map`, `string`, `slice`, `range`, `die`, `assert`, `dprint` | [Collections](/collections/arrays) |
-| root | `result` | [result](/stdlib/result) |
-| `contract::` | `iterator`, `iterable`, `const_iterable`, `keyed`, `unwrappable`, `failable` | [contract](/stdlib/contract) |
-| `mem::` | allocation, type queries, `take` / `init`, `buffer<T>` | [mem](/stdlib/mem) |
-| `hash::` | `of` and the composition primitives | [hash](/stdlib/hash) |
-| `str::`, `arr::` | `str::from` and the formatting surface, splitting and joining, `str::buf`, the C string boundary, two array helpers | [str and arr](/stdlib/str-arr) |
-| `std::io::` | writing text out, files, a buffered `reader` and `writer` | [std::io](/stdlib/io) |
-| `std::math::` | constants and the numeric functions | [std::math](/stdlib/math) |
-| `std::env::` | arguments, environment, directories, `exit` | [std::env](/stdlib/env) |
+| root | `result` | [Results](/stdlib/result) |
+| `contract::` | `iterator`, `iterable`, `const_iterable`, `keyed`, `unwrappable`, `failable` | [Contracts](/stdlib/contract) |
+| `mem::` | allocation, type queries, `take` / `init`, `buffer<T>` | [Memory](/stdlib/mem) |
+| `hash::` | `of` and the composition primitives | [Hashing](/stdlib/hash) |
+| `str::` | `str::from` and the formatting surface, splitting and joining, case conversion, `str::buf`, the C string boundary | [String functions](/stdlib/str) |
+| `arr::` | `merge` and `room` | [Arrays](/stdlib/arr) |
+| `std::io::` | writing text out, streams | [Input and Output](/stdlib/io/) |
+| `std::io::` | `std::io::file`, `open` / `create` / `readfile` / `writefile` | [Files](/stdlib/io/files) |
+| `std::io::` | a buffered `reader` and `writer` | [Readers and writers](/stdlib/io/buffering) |
+| `std::math::` | constants and the numeric functions | [Math](/stdlib/math) |
+| `std::env::` | arguments, environment, directories, `exit` | [Environment](/stdlib/env) |
 
 ## Next
 
-- [contract](/stdlib/contract) for the interfaces `foreach` uses, and how your own type joins them.
-- [mem](/stdlib/mem) for what a container is built out of.
+- [Contracts](/stdlib/contract) for the interfaces `foreach` uses, and how your own type joins them.
+- [Memory](/stdlib/mem) for what a container is built out of.
 - [Collections](/collections/arrays) for the types you will actually reach for first.

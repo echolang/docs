@@ -315,4 +315,4 @@ Custom symbols such as `..` do not hit this, because nothing is built in for the
 
 - [Interfaces](/language/interfaces) for constraints beyond the numeric shorthands, and associated types.
 - [Control flow](/language/control-flow) for `const if`.
-- [mem](/stdlib/mem) for the full list of type queries.
+- [Memory](/stdlib/mem) for the full list of type queries.

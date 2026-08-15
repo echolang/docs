@@ -22,6 +22,8 @@ you expected" rather than by topic.
 | `try` / `catch` / `throw` | No exceptions. `die`, `assert`, `T?`, and `result<T, E>` |
 | `require` / `use` | A `module.eco` manifest and qualified names |
 | Runs on a request, dies | Compiles to a native binary |
+| `strtoupper` / `mb_strtoupper` | `str::upper`. there is no byte-corrupting variant; Echo's is the `mb_` one |
+| `ucfirst` / `mb_ucfirst` | `str::ucfirst`. first **codepoint**, not first byte |
 
 ## Types are not optional
 
@@ -103,7 +105,7 @@ echo "{$name} rolled {$rolls} dice";
 
 `{$x:.2f}` asks for two decimals, `{$n:>8}` right-aligns, `{$n:x}` is hex. The `sprintf` you would reach
 for next is usually already there. [Strings](/collections/strings#interpolation) has the spec. There is
-also [`std::io`](/stdlib/io) when you want `print` without the newline, or stderr.
+also [Input and Output](/stdlib/io/) when you want `print` without the newline, or stderr.
 
 `echo` cannot print a struct. Use `dprint` for that:
 
@@ -201,7 +203,8 @@ int32 $v = guard halve($n) else {
 return $v + 1;      // $v is int32, not int32?
 ```
 
-The `else` arm has to leave the scope. That is what makes the guarantee afterwards worth anything.
+A written `else` arm has to leave the scope. That is what makes the guarantee afterwards worth
+anything. Leave the `else` off and a missing value stops the program.
 
 ## No exceptions
 

@@ -139,7 +139,7 @@ the diagnostic gives you no hint that spacing is the answer.
 **`echo` takes exactly one value and appends a newline**, and it is staying that way. It is the only
 output a program has with `--no-stdlib`, where there is no `string` type at all. Use
 [interpolation](/collections/strings#interpolation) to put several values in one, and
-[`std::io`](/stdlib/io) when you need a destination, no newline, or a function you can pass.
+[Input and Output](/stdlib/io/) when you need a destination, no newline, or a function you can pass.
 
 **`echo` cannot print a struct or class.** That is a located error, not a fallback. Use `dprint($value)` for
 debugging, which prints the type and every property, or declare `str::from` for your type, after which
@@ -153,12 +153,12 @@ arguments, and no runtime format string, since a spec is written inside a litera
 is another allocation. Fine for a sentence, wrong for a loop, and nothing warns you which one you wrote.
 `string::append` into one buffer is the tool until there is a proper builder.
 
-**No path type, and no directory listing.** [`std::io`](/stdlib/io) opens, reads and writes files. Paths
+**No path type, and no directory listing.** [Files](/stdlib/io/files) opens, reads and writes files. Paths
 are `string`s. There is no `mkdir`, no `stat`, and nothing that lists a directory.
 
 **`std::io::readline()` on stdin is still unbuffered.** One `read` per byte, so it cannot steal input from
-anything else on fd 0. Wrap stdin in a `reader` when you want the window, stdout in a `writer` when you
-want the write window. `file` is buffered already.
+anything else on fd 0. Wrap stdin in a [`reader`](/stdlib/io/buffering) when you want the window, stdout in a
+`writer` when you want the write window. A [`std::io::file`](/stdlib/io/files) is buffered already.
 
 **`map<K, V>` uses linear probing.** It is correct and it is not fast. A better table is planned.
 

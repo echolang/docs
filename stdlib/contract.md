@@ -1,4 +1,4 @@
-# contract
+# Contracts
 
 `contract::` holds interfaces and nothing else. Six of them matter, and they split into two protocols:
 four for iteration, two for unwrapping. **`foreach` uses the first four and nothing else, and `guard` uses

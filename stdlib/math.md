@@ -1,4 +1,4 @@
-# std::math
+# Math
 
 `std::math` is thin, and it is thin on purpose: **most of what is in it is one machine instruction rather
 than a function call.**

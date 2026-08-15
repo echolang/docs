@@ -464,7 +464,8 @@ echo $n?->tag ?? -1;
 echo $n?->next?->tag ?? -1;
 ```
 
-`guard` binds the value and forces you to handle the absent case. The `else` arm has to leave the scope, so
+`guard` binds the value. Leave the `else` off and the program stops if the value is not there, the way
+an uncaught failure would. Write an `else` when you have somewhere to go; that arm has to leave, so
 after the guard the compiler knows the value is there:
 
 ```echo

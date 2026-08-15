@@ -159,7 +159,8 @@ mistake because the step is not part of the body.
 
 ## guard
 
-`guard` is for the shape where a value might not be there and there is nothing sensible to do if it is not.
+`guard` is for the shape where a value might not be there. You can handle the absence, or you can
+leave the `else` off and let the program stop.
 
 The problem it solves: you have a `T?`, you need a `T`, and the pyramid of `if` nesting that usually follows
 is miserable to read.
@@ -198,7 +199,19 @@ int32 $v = guard 5 else { die("nope"); }
 //        if it may not be, or drop the guard
 ```
 
-**The `else` arm has to leave.** It must end in `return`, `break`, `continue` or `die`:
+**A written `else` arm has to leave.** It must end in `return`, `break`, `continue` or `die`. Leave the
+`else` off entirely and the absent path is that stop, with the site of the `guard` in the message:
+
+```echo
+int32? $maybe = 6;
+int32 $sure = guard $maybe;
+echo $sure;     // 6
+```
+
+If `$maybe` had been `null`, that would have printed `fatal error: unwrapped an absent value` and
+exited 1. Same runtime as `die`. No stack unwinding.
+
+A written arm that does not leave is still an error:
 
 ```echo
 int32? $maybe = null;

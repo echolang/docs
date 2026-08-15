@@ -1,4 +1,4 @@
-# result
+# Results
 
 Sometimes a function can fail and the caller needs to know why. `T?` is the cheap answer when absence is
 enough. It cannot carry a reason. **`result<T, E>` is a value of type `T`, or a failure of type `E`.**
@@ -96,9 +96,10 @@ compile.
 
 ## How you read one
 
-`guard` is the shape you want almost always. It declares the variable. The `else` block runs when there is
-no value, and it has to leave: `return`, `break`, `continue` or `die`. That is what makes the declaration
-safe afterwards. If the block could fall through, `$n` would exist with nothing in it.
+`guard` is the shape you want almost always. It declares the variable. Leave the `else` off and a
+failure stops the program, with `E` in the message when `str::from` can print it. Write an `else`
+when you want to handle the reason; that block has to leave: `return`, `break`, `continue` or `die`.
+That is what makes the declaration safe afterwards.
 
 ```echo
 function first_word(const string& $line) : result<string, int32>
@@ -332,7 +333,7 @@ declare, and `.ok(...)` / `.error(...)` are the same
 [static shorthand](/language/structs#a-static-belongs-to-the-type-not-to-a-value) every enum's cases get.
 
 So you can write your own. `result<T, E>` is not a privileged type. It is the one the library happens to
-ship. [contract](/stdlib/contract#unwrappable-and-failable) is the two interfaces, and
+ship. [Contracts](/stdlib/contract#unwrappable-and-failable) is the two interfaces, and
 [Nullability](/memory/nullability#your-own-types-can-be-guarded-too) walks a type that declares them.
 
 I prefer it this way. A language feature would have been a second `T?` with a payload bolted on, and then
@@ -398,6 +399,6 @@ two are the whole of what `guard` needs.
 ## Next
 
 - [Nullability](/memory/nullability) for `T?`, `guard`, and writing a type `guard` accepts.
-- [contract](/stdlib/contract#unwrappable-and-failable) for the two interfaces, in full.
+- [Contracts](/stdlib/contract#unwrappable-and-failable) for the two interfaces, in full.
 - [Enums](/language/enums) for cases, payloads, `match`, and the layout.
 - [Errors and panics](/language/errors-and-panics) for where a result sits among `assert` and `die`.

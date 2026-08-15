@@ -1,54 +1,13 @@
-# str and arr
+# String functions
 
-Two small namespaces, and small is the honest description. `arr::` is two array functions that had nowhere
-better to live, and `str::` is the plumbing under `string` plus the two functions that cross the C
-boundary. **Nothing here is a string library.** [Strings](/collections/strings) is, and `string` itself owns
-almost all of that surface.
+`str::` is the plumbing under `string` plus the two functions that cross the C boundary. **Nothing here is
+a string library.** [Strings](/collections/strings) is, and `string` itself owns almost all of that surface.
 
 ```echo
-array<int32> $inbound = [1, 2];
-array<int32> $outbound = [3];
-
-array<int32> $all = arr::merge($inbound, $outbound);
-echo $all->count();     // 3
-echo $all->get(2);      // 3
+echo str::from(42);         // 42
+echo str::from(true);       // true
+echo str::from(1.5);        // 1.5
 ```
-
-## `arr::` is what does not belong on the array
-
-`merge` takes two arrays and gives you a third. It is a free function rather than a method because it
-touches a property of neither argument: both come in as `const array<T>&`, nothing is consumed, and nothing
-is changed.
-
-```echo
-array<string> $gates = ["Abydos"];
-array<string> $more = ["Chulak", "Dakara"];
-
-array<string> $network = arr::merge($gates, $more);
-echo $network->count();     // 3
-echo $network->get(1);      // Chulak
-```
-
-The elements are **copied** by the ordinary rules, so an element type whose copy needs a constructor needs
-one here too. See [Copying](/memory/copying). It allocates once for the result and no more, so merging two
-large arrays does not thrash.
-
-## `room` is a function because a constructor would lie
-
-```echo
-array<int32> $chevrons = arr::room<int32>(7);
-
-echo $chevrons->count();        // 0, it is empty
-echo $chevrons->capacity();     // 7, and it will not reallocate until the eighth
-
-$chevrons[] = 1;
-echo $chevrons->count();        // 1
-```
-
-`array<int32>(7)` would have been the obvious spelling and it is the wrong one: anybody who has met
-`vec![0; 5]` reads that as *seven elements*, not room for seven. Constructors cannot be named, so the way to
-disambiguate is to stop using one. Reach for this whenever you know the final size, which is most of the
-time you are filling an array in a loop.
 
 ## `str::buf` is the shared block behind every string
 
@@ -110,7 +69,7 @@ echo $owned;                // Chulak
 
 `cview` walks to the NUL to find the length and points at the same bytes. Use it when the source
 lives at least as long as you need the window, which is exactly the case for `argv` entries and environment
-variables. That is why [std::env](/stdlib/env) hands back views rather than strings.
+variables. That is why [Environment](/stdlib/env) hands back views rather than strings.
 
 `from` allocates and copies. Use it when the source is about to be freed, or is behind something like
 `setenv` that may replace it out from under you.
@@ -211,6 +170,31 @@ echo str::int('9223372036854775808') ?? -1;    // -1, overflow rather than a wra
 `str::float` goes through C's `strtod` and requires the whole text to be consumed, which is the
 difference between it and calling `strtod` yourself.
 
+## upper / lower / ucfirst / lcfirst
+
+```echo
+echo str::upper('straße');      // STRASSE
+echo str::lower('CAFÉ');        // café
+echo str::ucfirst('écho');      // Écho
+echo str::lcfirst('ÉCHO');      // éCHO
+```
+
+Unicode Default Case Conversion, locale-independent. That is the same meaning Rust's `to_uppercase` /
+`to_lowercase` have: `ß` becomes `SS`, `ﬁ` becomes `FI`, and Turkish `I` is not a different letter,
+because there is no locale. Greek capital sigma at the end of a word becomes `ς` rather than `σ`.
+That is the only contextual mapping, and it is hard-coded rather than a condition engine.
+
+`ucfirst` titles the **first codepoint** and leaves the rest. Titlecase, not uppercase: they agree
+for almost every letter and disagree on a handful of digraphs. `straße` starts with `s`, so the
+answer is `Straße`. `ß` on its own titles to `Ss`.
+
+Already-cased text is the same string, sharing its buffer. `str::upper('HELLO')` allocates nothing.
+Changing case always allocates; leaving it alone never does. That is [trim](#split--join--trim)'s
+bargain, and the reason the parameter is a `string` rather than a view.
+
+Invalid UTF-8 is copied, not rejected. [chars()](/collections/strings#size-and-chars-are-different-questions)
+already counts it rather than validating, and these four do not invent a stricter contract.
+
 ## The whole surface
 
 | Signature | What it does |
@@ -233,11 +217,11 @@ difference between it and calling `strtod` yourself.
 | `str::repeat(const string& $t, usize $times) : string` | `$t` written over |
 | `str::int(const string& $t) : int64?` | base ten, optional sign, nothing else |
 | `str::float(const string& $t) : float64?` | through `strtod`, whole text consumed |
-| `arr::merge<T>(const array<T>& $a, const array<T>& $b) : array<T>` | a new array, `$a`'s elements then `$b`'s |
-| `arr::room<T>(usize $count) : array<T>` | an empty array with room for `$count` |
+| `str::upper` / `lower` `(const string&) : string` | Unicode uppercase / lowercase. already-cased text shares the buffer |
+| `str::ucfirst` / `lcfirst` `(const string&) : string` | titlecase / lowercase of the first codepoint |
 
 ## Next
 
 - [Strings](/collections/strings) for `string` and `string::view`, which is where the real surface is.
-- [Arrays](/collections/arrays) for `array<T>` itself.
-- [C interop](/projects/c-interop) for the `extern` blocks these two conversions exist to serve.
+- [Arrays](/stdlib/arr) for `arr::merge` and `arr::room`.
+- [C interop](/projects/c-interop) for the `extern` blocks these conversions exist to serve.

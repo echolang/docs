@@ -60,7 +60,7 @@ program using it. A single-file program cannot extend the hash set at all.
 
 Two ways to get the namespace wrong, both silent: `namespace app::hash;` is a different namespace, and an
 `of` at the root is invisible to the qualified name `hash::of` that `map`'s own body calls. See
-[Namespaces](/language/namespaces) and [hash](/stdlib/hash).
+[Namespaces](/language/namespaces) and [Hashing](/stdlib/hash).
 
 One honest warning: a key type missing either half reports a diagnostic pointing **inside `map.eco`**,
 once `K` is bound, rather than at your own code. That is not good and it is known.
@@ -337,5 +337,5 @@ on [the list](/reference/limitations) with the rest.
 ## Next
 
 - [Iteration](/collections/iteration) for `foreach ($m as $k => $v)` and what the cursor is doing.
-- [hash](/stdlib/hash) for `hash::of`, `hash::mix` and `hash::combine` in full.
+- [Hashing](/stdlib/hash) for `hash::of`, `hash::mix` and `hash::combine` in full.
 - [Arrays](/collections/arrays) for what `keys()` and `values()` hand back.

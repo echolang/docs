@@ -1,4 +1,4 @@
-# hash
+# Hashing
 
 `hash::` is what `map<K, V>` calls to turn a key into a bucket index. You will mostly never call it. You
 will call it the day you want your own type to be a map key, and the surprise is what that takes:

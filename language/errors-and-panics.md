@@ -9,6 +9,7 @@ Most of what exceptions get used for splits cleanly into two cases:
 |---|---|
 | This can fail, and the caller should deal with it | return `T?`, or `result<T, E>` |
 | This cannot fail unless something is broken | `assert`, or `die` |
+| I am not writing an arm for a value that has to be there | `guard expr;` with no `else` |
 
 The line between them is whether a correct program can hit it. A gate address that will not lock is the
 first. An index past the end of an array you just built is the second.
@@ -31,12 +32,14 @@ function dial(int32 $address) : Wormhole?
     return null;        // no such gate, or it is buried
 }
 
-Wormhole $open = guard dial(27) else { die("no lock"); }
+Wormhole $open = guard dial(27);
 echo $open->id;     // 1
 ```
 
-The type says the call can fail, and the compiler will not let you read the result without dealing with
-that. `guard` narrows it, `??` supplies a fallback, `?->` short-circuits a chain:
+The type says the call can fail. `guard` narrows it. Leave the `else` off and a missing value stops the
+program, the way an uncaught failure would. Write `else { die("no lock"); }` when you want your own
+message, or `else { return ... }` when the caller should deal with it. `??` supplies a fallback, `?->`
+short-circuits a chain:
 
 ```echo
 function chevronCount(int32 $address) : int32?

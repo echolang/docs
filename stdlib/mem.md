@@ -1,4 +1,4 @@
-# mem
+# Memory
 
 `mem::` is raw heap memory and the questions you can ask about a type. Most programs never touch it, and
 the ones that do are usually **writing a container**, which is exactly what the standard library uses it

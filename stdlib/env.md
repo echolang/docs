@@ -1,4 +1,4 @@
-# std::env
+# Environment
 
 `std::env` is the process: what it was started with, what it inherited, where it is, and how it stops.
 The thing worth knowing up front is what is *not* in it: **none of this needs a platform conditional in

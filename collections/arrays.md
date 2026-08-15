@@ -407,4 +407,5 @@ pass it in.
 
 - [Slices](/collections/slices) for handing out a window onto an array without copying it.
 - [Iteration](/collections/iteration) for `foreach`, and for the copy it does not make you pay for.
+- [`arr::merge` and `arr::room`](/stdlib/arr), which do not belong on the type.
 - [Ownership and moving](/memory/ownership) for what happens when `T` owns something.

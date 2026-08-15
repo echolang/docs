@@ -226,7 +226,22 @@ $open = guard dial() else { die("no gate"); }
 echo $open->id;     // 7
 ```
 
-### The else arm has to leave
+Or leave the `else` off. The program stops if `dial` answers nothing, with the `guard` line in the
+message. Same runtime as `die`.
+
+```echo
+class Wormhole { int32 $id; }
+
+function dial() : Wormhole?
+{
+    return Wormhole(7);
+}
+
+Wormhole $open = guard dial();
+echo $open->id;     // 7
+```
+
+### A written else arm has to leave
 
 ```echo
 class Wormhole { int32 $id; }
