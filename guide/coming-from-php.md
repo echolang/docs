@@ -19,7 +19,7 @@ you expected" rather than by topic.
 | Everything is a reference-ish object | `struct` is a value, `class` is reference counted |
 | Garbage collected | Ownership plus reference counting, no GC |
 | `function f($a)` | `function f(int32 $a) : void` |
-| `try` / `catch` / `throw` | No exceptions. `die`, `assert`, and `T?` |
+| `try` / `catch` / `throw` | No exceptions. `die`, `assert`, `T?`, and `result<T, E>` |
 | `require` / `use` | A `module.eco` manifest and qualified names |
 | Runs on a request, dies | Compiles to a native binary |
 
@@ -90,8 +90,9 @@ echo 'Hello';       // prints Hello and a newline
 echo 42;            // prints 42 and a newline
 ```
 
-No comma-separated list and no `printf`. Interpolation works the way you expect, though, and it is how you
-print more than one thing:
+No comma-separated list and no `printf`. Interpolation is how you print more than one thing, and the quote
+rule is PHP's with one extra constraint: `"` interpolates `{$...}`, `'` is verbatim, and the braces are
+required. `"Hi $name"` prints the dollar sign.
 
 ```echo
 $name = 'Ronon';
@@ -100,17 +101,11 @@ $rolls = 3;
 echo "{$name} rolled {$rolls} dice";
 ```
 
-The quote rule is PHP's: `"` interpolates and `'` does not. Unlike PHP, the braces are not optional.
-`"Hi $name"` prints the dollar sign, and `"Hi {$name}"` is the interpolation. There is also
-[`std::io`](/stdlib/io) when you want `print` without the newline, or stderr.
+`{$x:.2f}` asks for two decimals, `{$n:>8}` right-aligns, `{$n:x}` is hex. The `sprintf` you would reach
+for next is usually already there. [Strings](/collections/strings#interpolation) has the spec. There is
+also [`std::io`](/stdlib/io) when you want `print` without the newline, or stderr.
 
-And this does not work:
-
-```echo
-echo $point;        // error: 'echo' has no way to print a 'Point' - print its members instead
-```
-
-For debugging a whole value there is `dprint`:
+`echo` cannot print a struct. Use `dprint` for that:
 
 ```echo
 dprint($point);
@@ -119,22 +114,6 @@ dprint($point);
 //   [float64] $y = 2
 // }
 ```
-
-Building a string out of values is interpolation, and the quote rule is the one you already know:
-
-```echo
-$name = 'Ronon';
-
-string $line = "Hello, {$name}!";
-echo $line;
-```
-
-What PHP does not have is the format spec. `{$x:.2f}` asks for two decimals, `{$n:>8}` right-aligns in eight
-columns, and `{$n:x}` gives you hex, so the `sprintf` you would reach for next is usually already there.
-[Strings](/collections/strings#interpolation) has the full spec grammar.
-
-One difference to keep in mind: PHP's braces are optional and Echo's are not. `"Hi $name"` prints a dollar
-sign.
 
 ## struct or class, decided once
 
@@ -215,7 +194,7 @@ And `guard` is the one you will reach for most, because it unwraps into a plain 
 rest of the scope:
 
 ```echo
-guard int32 $v = halve($n) else {
+int32 $v = guard halve($n) else {
     return $fallback;
 }
 
@@ -228,13 +207,13 @@ The `else` arm has to leave the scope. That is what makes the guarantee afterwar
 
 There is no `throw`, no `try`, no `catch`.
 
-- For "this can fail and the caller should handle it", return a `T?`.
+- For "this can fail and the caller should handle it", return a `T?`, or a
+  [`result<T, E>`](/stdlib/result) when you need a reason.
 - For "this should never happen", `assert(...)`, which is compiled out in release builds.
 - For "this happened and there is no recovering", `die("message")`, which stops the program with a nonzero
   exit status.
 
-That is a smaller toolkit than PHP's and it is deliberate. A richer error type is something I want and have
-not designed yet.
+That is a smaller toolkit than PHP's and it is deliberate. There is no stack to unwind.
 
 ## Files and includes
 

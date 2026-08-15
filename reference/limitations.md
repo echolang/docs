@@ -30,7 +30,13 @@ has exactly the declared arity.
 
 **Multiple return values.** Documented in old notes, not implemented. Return a struct.
 
-**Enums.** `enum` is a lexer keyword with nothing behind it.
+**A `match` over a call result cannot hand back a place.** `match` yields a borrow when every arm does, which
+is what lets [`result<T, E>::unwrap()`](/stdlib/result) return a `T&`. It only works when the subject is
+something the program already stores: `match ($this)` yes, `match (compute())` no, because the borrow would
+point into a value the `match` itself owns and drops. Bind the call to a variable first.
+
+**A call is not an assignment destination.** `$r->unwrap() = 99;` does not parse, even though `unwrap()`
+returns a `T&`. Reading through the borrow and calling a method through it both work.
 
 **Fixed-size arrays.** `FixedArray<T, N>` is a design rather than a feature. Type parameters are types, and
 `N` is a value, so there is currently no way to spell it.
@@ -40,8 +46,9 @@ has exactly the declared arity.
 **A `use` / import statement.** Names from other namespaces are reached by qualifying them in full:
 `std::math::sqrt`, `geometry::Point`. There is no way to shorten that.
 
-**Exceptions.** No `throw`, no `try`, no `catch`, and no richer error type either. You get `T?` for
-recoverable failure, `assert` for "this should never happen", and `die` for "no recovering from this".
+**Exceptions.** No `throw`, no `try`, no `catch`. Recoverable failure is a `T?`, or a
+[`result<T, E>`](/stdlib/result) when you need a reason. `assert` for "this should never happen", `die`
+for "no recovering from this".
 
 **Visibility has two holes.** Assigning a whole struct copies a `const` property, because the target's own
 type is not const, so the field is write-once only through its own name. And a generic body is exempt from
@@ -70,41 +77,11 @@ int32 $small = $big;
 echo $small;            // 705032704
 ```
 
-**A narrow unsigned value beside a literal is treated as signed.** This one is nasty:
-
-```echo
-uint32 $u = 4294967280;
-echo $u / 2;            // -8
-echo $u > 2;            // 0
-```
-
-**An untyped literal argument can bind a type parameter and truncate.** Passing `0` alongside a `usize`
-binds `T = int32`. That is why a `foreach (0 .. $arr->count() as $i)` gives you an `int32` index rather than
-a `usize` one.
-
-**An integer literal at a `bool` destination is silently false.** `bool $b = 1;` gives you `false`.
-
-**A hex literal skips the range check entirely.** Every other literal is checked against its destination.
-A hex one never looks at the destination at all, so it truncates instead of being refused:
-
-```echo
-uint8 $x = 0xFFFF;
-echo $x;                // 255, and nothing was said
-
-int8 $y = 0xFF;
-echo $y;                // -1
-```
-
-The same values written in decimal are both clean compile errors. The width a hex literal takes on its own
-is also chosen by digit count rather than by value, so `0xFF` is a `uint8` and `0x00FF` is a `uint16`.
-
 **`++` and `--` evaluate their target twice.** `$arr[0]++` runs the element operator twice, and on a
 call-rooted target the increment is silently lost.
 
 **An array literal in a field-wise constructor loses its elements.** `Bag([7, 9])` and then reading it back
 is a use-after-destruction at every optimization level, with no diagnostic.
-
-**Element append skips the literal precision check.** `$ints[] = 2.5;` stores `2` and says nothing.
 
 **An uninitialised class declaration escapes the null rule.** `Node $n;` compiles and hands you a null handle
 through a non-nullable type.
@@ -118,7 +95,6 @@ A crash is at least loud. These are the ones I know about:
 - `$r = &f();`, taking the address of a call result.
 - A typo'd namespaced generic call in a constructor argument.
 - `foreach ($arr->iterate() as $x)`, passing an explicit cursor.
-- Binary literals (`0b1010`) fall off the end of the parser.
 - `void $x;` hangs the compiler. Nothing refuses a `void` variable, and laying one out never finishes.
 
 ## Correct code that is rejected
@@ -214,7 +190,12 @@ other editor.
 
 A git dependency parses, validates, and is then refused, because nothing fetches a repository yet.
 
-**No formatter, no test runner, no `echoc new`.** The CLI is three subcommands: `run`, `build`, `clean`.
+**No formatter and no `echoc new`.** The CLI is four subcommands: `run`, `build`, `test`, `clean`.
+
+**The test runner has three gaps worth knowing about.** There is no timeout, so a test that hangs hangs the
+run. There is no standalone test binary, so running a suite needs `echoc` rather than an artifact you can
+ship to CI on its own. And a test is not run under `--track-allocations` by default, so a leak inside one
+does not fail it. [Testing](/projects/testing) is the chapter.
 
 **`#[version:]` is recorded and resolves against nothing.** It is part of the build fingerprint and that is
 all it does.

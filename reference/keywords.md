@@ -1,8 +1,7 @@
 # Keywords
 
-Echo reserves thirty-one words, and the thing worth noticing is **how short that list is**. There is no
-`public`, no `static`, no `new`, no `this`, no `import`, no `use`, no `switch`, no `try`, no `throw` and no
-`sizeof`.
+Echo reserves thirty-seven words, and the thing worth noticing is **how short that list is**. There is no
+`new`, no `this`, no `import`, no `use`, no `switch`, no `try`, no `throw` and no `sizeof`.
 
 ```echo
 function greet(string $name) : void
@@ -41,7 +40,10 @@ identifiers, and nothing about them collides with `for`, `class`, `enum`, `null`
 | `private` | narrows a declaration to its file, or a member to its own type | [Visibility](/language/visibility) |
 | `internal` | narrows a declaration to its module, which is also the default | [Visibility](/language/visibility) |
 | `public` | widens a declaration to every module | [Visibility](/language/visibility) |
-| `enum` | nothing. See below | [What is missing](/reference/limitations) |
+| `static` | a method or property that belongs to the type, not to a value | [Structs](/language/structs) |
+| `test` | declares a test block, compiled only by `echoc test` | [Testing](/projects/testing) |
+| `enum` | declares a closed set of cases | [Enums](/language/enums) |
+| `case` | declares one case of an enum | [Enums](/language/enums) |
 
 ### Control flow
 
@@ -76,20 +78,9 @@ identifiers, and nothing about them collides with `for`, `class`, `enum`, `null`
 
 | Word | What it does | Covered in |
 |---|---|---|
+| `match` | read which case an enum is holding. An expression, and a statement when its arms are blocks | [Enums](/language/enums) |
 | `echo` | print one value and a newline. A statement, not a function | [Your first program](/guide/first-program) |
 | `unsafe` | open a block where raw storage may be promoted to a typed borrow | [Unsafe](/memory/unsafe) |
-
-## enum is reserved and does nothing
-
-`enum` is in the lexer and nowhere else. No parser accepts it, so writing one gets you a confused message
-about the token after it rather than "enums are not implemented":
-
-```echo
-enum Color { RED }      // error: Unexpected token 'identifier' found
-```
-
-The word is reserved so that adding the feature later does not break your code. Today it is a hole, and it
-is on [the list](/reference/limitations).
 
 ## Words that look reserved and are not
 
@@ -226,4 +217,4 @@ accident: `:$` is worth more than the compact attribute spelling.
 
 - [Primitive types](/reference/primitive-types) for the type names that are not keywords.
 - [Attributes](/reference/attributes) for what goes inside `#[ ]`.
-- [What is missing](/reference/limitations) for `enum` and the rest of the holes.
+- [What is missing](/reference/limitations) for the holes that are left.

@@ -81,8 +81,8 @@ read in one loop and written through in the next, and only the loop knows which.
 
 ## The copy you do not pay for
 
-Here is the nice part. **A by-value binding that nothing in the body writes is silently bound `const V&`
-instead.** You write the obvious thing and you get the borrow anyway:
+**A by-value binding that nothing in the body writes is silently bound `const V&` instead.** You write the
+obvious thing and you get the borrow anyway:
 
 ```echo
 array<int32> $numbers = [1, 2, 3];
@@ -153,7 +153,7 @@ foreach ($items as $item) {
 
 This is a bug, not a design, and it is on [the list](/reference/limitations).
 
-## Iterating something nobody may write
+## A const collection is a different contract
 
 A `const` collection reaches a **second** interface, `contract::const_iterable`, and gets a cursor over
 elements it may only read:
@@ -191,7 +191,7 @@ mutable one, and vice versa. Being able to iterate a value nobody may write is a
 capability from being able to iterate one you own, so it is a different contract.
 [Interfaces](/language/interfaces) has the general rule.
 
-## Writing your own iterable
+## Your type loops the same way
 
 Two pieces. A **cursor** conforming to `contract::iterator<V>`, which knows how to step and what it is
 looking at:
@@ -288,7 +288,7 @@ foreach ($bag as $e) { }
 // error: 'Bag' cannot be iterated - it declares neither 'contract::iterator' nor 'contract::iterable'
 ```
 
-## Looping over a cursor directly
+## foreach takes a cursor too
 
 `foreach` also takes something that already *is* a cursor, which is what makes an adaptor (a filter, a map)
 an ordinary struct rather than a language feature. There are two cases and the difference is visible:

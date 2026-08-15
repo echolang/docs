@@ -199,7 +199,7 @@ class Wormhole
 
 function shutdown(Wormhole? $active) : int32
 {
-    guard Wormhole $open = $active else { return -1; }
+    Wormhole $open = guard $active else { return -1; }
 
     echo $open->id;
     $open->close();
@@ -223,7 +223,7 @@ function dial() : Wormhole?
     return Wormhole(7);
 }
 
-guard $open = dial() else { die("no gate"); }
+$open = guard dial() else { die("no gate"); }
 echo $open->id;     // 7
 ```
 
@@ -237,7 +237,7 @@ function dial() : Wormhole?
     return null;
 }
 
-guard Wormhole $open = dial() else { echo "no gate"; }
+Wormhole $open = guard dial() else { echo "no gate"; }
 echo $open->id;
 // error: the 'else' of a guard has to leave - end it with 'return', 'break', 'continue' or 'die'
 ```
@@ -245,6 +245,169 @@ echo $open->id;
 Which is the only thing that could work. If the else arm could fall through, the line after the guard would
 read a binding for a value that turned out not to be there. `return`, `break`, `continue`, `die`, or an `if`
 whose branches all do one of those: any of them satisfies it.
+
+## Your own types can be guarded too
+
+`guard` is not a feature of `T?`. Anything that means "maybe a value" can be guarded, and a type says that
+it means it by declaring `contract::unwrappable<V>`:
+
+```echo
+struct ParsedInt : contract::unwrappable<int32>
+{
+    private int32 $value;
+    private bool $ok;
+
+    constructor(int32 $value)
+    {
+        $this->value = $value;
+        $this->ok = true;
+    }
+
+    constructor(bool $ok)
+    {
+        $this->value = 0;
+        $this->ok = $ok;
+    }
+
+    public const function has_value() : bool
+    {
+        return $this->ok;
+    }
+
+    public function unwrap() : int32&
+    {
+        return &$this->value;
+    }
+}
+
+function parse(int32 $n) : ParsedInt
+{
+    if ($n < 0) {
+        return ParsedInt(false);
+    }
+
+    return ParsedInt($n * 2);
+}
+
+function doubled(int32 $n) : int32
+{
+    $v = guard parse($n) else { return -1; }
+    return $v;
+}
+
+echo doubled(10);       // 20
+echo doubled(-1);       // -1
+```
+
+Two methods and that is the whole protocol. `has_value()` is asked first and its answer gates the unwrap, so
+`unwrap()` never has to check again. That is the same bargain `contract::iterator<V>` makes between
+`advance()` and `current()`.
+
+Note that `has_value()` is `const` and `unwrap()` is not. Reading *whether* a value is there promises nothing
+about the storage, while taking it out hands back a borrow somebody may write through. So a `const` subject
+is refused, and the message says why.
+
+### A reason, not just an absence
+
+A `T?` records that a value is missing and nothing about why. When the why matters, declare
+`contract::failable<E>` beside it. The else arm can then bind the reason:
+
+```echo
+struct ParseError
+{
+    public usize $at;
+    public int32 $code;
+}
+
+struct ParsedInt : contract::unwrappable<int32>, contract::failable<ParseError>
+{
+    private int32 $value;
+    private bool $ok;
+    private ParseError $error;
+
+    constructor(int32 $value)
+    {
+        $this->value = $value;
+        $this->ok = true;
+        $this->error = ParseError(0, 0);
+    }
+
+    constructor(ParseError $error)
+    {
+        $this->value = 0;
+        $this->ok = false;
+        $this->error = $error;
+    }
+
+    public const function has_value() : bool
+    {
+        return $this->ok;
+    }
+
+    public function unwrap() : int32&
+    {
+        return &$this->value;
+    }
+
+    public function failure() : ParseError&
+    {
+        return &$this->error;
+    }
+}
+
+function parse(int32 $n) : ParsedInt
+{
+    if ($n < 0) {
+        return ParsedInt(ParseError(3, 22));
+    }
+
+    return ParsedInt($n * 2);
+}
+
+function doubled(int32 $n) : int32
+{
+    $v = guard parse($n) else ($error) {
+        echo $error->at;            // 3
+        return -$error->code;
+    }
+
+    return $v;
+}
+
+echo doubled(10);       // 20
+echo doubled(-1);       // -22
+```
+
+`else ($error)` binds a borrow of whatever `failure()` hands back, scoped to the arm, the same way a
+`foreach` binding is scoped to its body.
+
+Two interfaces rather than one, because they are two separate capabilities. A type that unwraps but declares
+no `failable` has no reason to give, so writing `else ($e)` against one is a compile error that says exactly
+that. The same goes for a plain `T?`, where there is genuinely nothing to bind.
+
+`ParsedInt` above is a teaching example, and you do not have to write it. The library ships
+[`result<T, E>`](/stdlib/result), which declares both interfaces over any `T` and any `E` you like:
+
+```echo
+function parse_port(const string& $text) : result<int32, string>
+{
+    int64 $n = guard str::parse_int($text) else {
+        return .error('not a number');
+    }
+
+    return .ok($n);
+}
+
+int32 $port = guard parse_port('8080') else ($why) {
+    echo "bad port: {$why}";
+    die('stop');
+}
+
+echo $port;    // 8080
+```
+
+Use `T?` when there is nothing to say about why the value is missing, and `result<T, E>` when there is. That
+is the whole of the choice.
 
 ## Asking whether it is there
 
@@ -320,7 +483,7 @@ class Stargate
 Stargate $sgc = Stargate(7);
 weak<Stargate> $watcher = &$sgc;
 
-guard Stargate $stillThere = strong($watcher) else { die("gate is gone"); }
+Stargate $stillThere = guard strong($watcher) else { die("gate is gone"); }
 echo $stillThere->lockedChevrons;       // 7
 ```
 

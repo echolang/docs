@@ -67,7 +67,7 @@ foreach ($r as $v) {
 }
 ```
 
-A `const` one loops too, and still yields a value you may write. That is worth a sentence because a
+A `const` one loops too, and still yields a writable value. That is worth a sentence because a
 container cannot do it: a range's cursor borrows *its own* field rather than storage the range owns, so
 there is nothing to protect and a `const range<int32>` can honestly hand out an `int32&`.
 
@@ -135,25 +135,19 @@ foreach (0 .. $xs->count() as $i) {
 }
 ```
 
-`count()` returns a `usize`, but `0` is an untyped literal, and the literal is what binds `T`. You get
-`range<int32>`, and the `usize` count is converted down to meet it. That works fine here and will keep
-working right up until a count exceeds `int32`'s range.
+`count()` returns a `usize` and `0` is an untyped literal, so **the count is what binds `T`** - the literal
+is the operand with no opinion, and it is written at whatever the other one decided. You get `range<usize>`
+and an index you can hand straight back to `$xs[...]`, with nothing converted down on the way.
 
-If you want a `usize` index, say so:
+Both ends being literals is the case with nothing to defer to, and there `int32` is still the answer:
 
 ```echo
-array<int32> $xs = [11, 22, 33];
-
-usize $start = 0;
-
-foreach ($start .. $xs->count() as $i) {
-    echo $xs[$i];       // 11, 22, 33
+foreach (0 .. 3 as $i) {
+    echo $i;            // 0, 1, 2
 }
 ```
 
-I do not like that this is the default, and it is on [the list](/reference/limitations) with the other
-literal-binding surprises. It is a consequence of untyped literals being allowed to bind a type parameter,
-which is a wider question than ranges.
+Which is what you want - `-2 ..= 2` would be a strange thing to have to spell as a signed type.
 
 ## Precedence
 

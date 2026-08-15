@@ -1,13 +1,13 @@
 # Errors and panics
 
-**There are no exceptions in Echo.** No `throw`, no `try`, no `catch`, and no `Result` type either.
+**There are no exceptions in Echo.** No `throw`, no `try`, no `catch`. Recoverable failure is a `T?`, or a
+[`result<T, E>`](/stdlib/result) when you need a reason. Bugs are `assert` and `die`.
 
-That is a smaller loss than it sounds, because most of what exceptions get used for splits cleanly into two
-cases, and Echo has a different answer for each:
+Most of what exceptions get used for splits cleanly into two cases:
 
 | The situation | What to use |
 |---|---|
-| This can fail, and the caller should deal with it | return `T?` |
+| This can fail, and the caller should deal with it | return `T?`, or `result<T, E>` |
 | This cannot fail unless something is broken | `assert`, or `die` |
 
 The line between them is whether a correct program can hit it. A gate address that will not lock is the
@@ -31,7 +31,7 @@ function dial(int32 $address) : Wormhole?
     return null;        // no such gate, or it is buried
 }
 
-guard Wormhole $open = dial(27) else { die("no lock"); }
+Wormhole $open = guard dial(27) else { die("no lock"); }
 echo $open->id;     // 1
 ```
 
@@ -52,7 +52,7 @@ echo chevronCount(99) ?? -1;   // -1
 ```
 
 The obvious limitation: a `T?` tells you that something failed and nothing about **why**. If you need a
-reason, return a struct carrying one. A richer error type is on [the list](/reference/limitations).
+reason, return a [`result<T, E>`](/stdlib/result), or a struct of your own.
 
 [Nullability](/memory/nullability) covers the optional forms properly.
 
@@ -217,11 +217,11 @@ echo "all good";
 std::env::exit(0);
 ```
 
-## Putting it together
+## Which one
 
 A rough guide for choosing:
 
-- The caller can reasonably recover: return `T?`.
+- The caller can reasonably recover: return `T?`, or `result<T, E>` when the reason matters.
 - A bug in the caller: `assert`, so it is loud in development and free in production.
 - A bug in the caller that would corrupt something if execution continued: `die`, so it is loud everywhere.
 - Nothing is wrong, the program is simply finished: `std::env::exit`.

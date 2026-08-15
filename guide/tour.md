@@ -399,8 +399,8 @@ A function signature cannot quietly eat something you thought you still had. Eve
 yours is spelled out, in your own source.
 
 Most of the time you do not want to give the thing away, you just want the function to look at it. That is a
-borrow, written `&` on the parameter. The call site says nothing — a borrow takes nothing, so it does not
-need announcing the way `mv` does:
+borrow, written `&` on the parameter. The call site says nothing, because a borrow takes nothing and so does
+not need announcing the way `mv` does:
 
 ```echo
 function total(const array<int32>& $xs) : int32
@@ -470,7 +470,7 @@ after the guard the compiler knows the value is there:
 ```echo
 function halveOr(int32 $n, int32 $fallback) : int32
 {
-    guard int32 $v = halve($n) else {
+    int32 $v = guard halve($n) else {
         return $fallback;
     }
 

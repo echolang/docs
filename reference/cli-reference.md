@@ -1,6 +1,6 @@
 # CLI reference
 
-`echoc` has three subcommands and twenty-six options, and **every one of those options is a single
+`echoc` has four subcommands and twenty-seven options, and **every one of those options is a single
 declarative row inside the compiler**. Parsing reads that row, validation reads it, the usage line reads it,
 the help page reads it, and a refusal spells the flag back out of it. There is no second list anywhere that
 can drift out of step with this one.
@@ -8,6 +8,7 @@ can drift out of step with this one.
 ```bash
 echoc run app.eco
 echoc build -o app src/*.eco
+echoc test --filter group:parsing
 echoc clean -n
 ```
 
@@ -18,6 +19,7 @@ echoc clean -n
 ```bash
 echoc run   [options] <sources...> [-- <program arguments>]
 echoc build [options] -o <file> <sources...>
+echoc test  [options] <sources...>
 echoc clean [options]
 ```
 
@@ -25,9 +27,12 @@ echoc clean [options]
 |---|---|---|
 | `run` | compile and run through the JIT. Nothing is written beside your sources | `--debug` |
 | `build` | compile and link a native executable. Needs `clang` on your PATH | `--release` |
+| `test` | compile and run the `test` blocks, one process each, through the JIT | `--debug` |
 | `clean` | remove what a build produced. Parses no source and runs no pass | n/a |
 
-`run` is the only one that takes `--`. `clean` is the only one that takes no sources.
+`run` is the only one that takes `--`. `clean` is the only one that takes no sources. `test` is the only one
+that compiles a `test` block at all: every other invocation drops one before it is parsed. See
+[Testing](/projects/testing).
 
 Name no sources at all and your program is whatever manifest the invocation points at: the one `--module`
 names, or the `module.eco` in your working directory. A `*` in a source path is expanded by echoc itself,
@@ -38,7 +43,8 @@ them. See [More than one program](/projects/modules#more-than-one-program).
 
 ## Every option
 
-`run+build` in the third column means the option is refused on `clean`, by name.
+`compiling` in the third column means `run`, `build` and `test`, and that the option is refused on `clean` by
+name.
 
 ### What is built
 
@@ -46,22 +52,23 @@ them. See [More than one program](/projects/modules#more-than-one-program).
 |---|---|---|---|---|---|
 | `--output <file>` | `-o` | build | path | the target's name, or required | where the executable is written. A manifest declaring targets names its own, so this overrides for one of them and is refused for several |
 | `--module <manifest>` | `-m` | all | path, repeatable | | build a module from its manifest. A file or a directory holding one |
-| `--target <name>` | | run+build | name, repeatable | every target declared | which of the programs a manifest declares to build. `run` takes exactly one |
+| `--target <name>` | | compiling | name, repeatable | every program declared | which of the programs a manifest declares to build. `run` takes exactly one. On `test` it names a `#[target: test]` instead, and an unnamed one narrows nothing |
+| `--filter <spec>` | | test | tagged word, repeatable | every test | which tests to run. A bare word is a name; `group:`, `file:` and `module:` are the tags. One matching nothing is refused |
 | `--build-dir <dir>` | | all | path | `ecobuild` beside the manifest | where build artifacts are written. Outranks `#[build_dir:]` |
-| `--link <requirement>` | | run+build | `<scheme>:<value>`, repeatable | | add a link requirement. Merged after the manifest's, so a declaration wins |
+| `--link <requirement>` | | compiling | `<scheme>:<value>`, repeatable | | add a link requirement. Merged after the manifest's, so a declaration wins |
 
 ### How it is built
 
 | Option | Short | Commands | Value | Default | Does |
 |---|---|---|---|---|---|
-| `--debug` | | run+build | flag | on for `run` | keep `assert` and the runtime checks |
-| `--release` | | run+build | flag | on for `build` | drop `assert` and the runtime checks |
-| `--optimize <mode>` | | run+build | `none\|module\|whole` | `module` | how hard, and over how much at once |
-| `--debug-symbols` | `-g` | run+build | flag | off | emit DWARF. Implies `--optimize none` unless you stated one |
-| `--no-tbaa` | | run+build | flag | off | emit no type-based alias metadata |
-| `--track-allocations` | | run+build | flag | off | count outstanding allocations. What `mem::live_allocations()` needs |
-| `--no-stdlib` | | run+build | flag | off | compile without the standard library |
-| `--emit-stdlib-header` | | run+build | flag | off | regenerate the embedded stdlib header |
+| `--debug` | | compiling | flag | on for `run` | keep `assert` and the runtime checks |
+| `--release` | | compiling | flag | on for `build` | drop `assert` and the runtime checks |
+| `--optimize <mode>` | | compiling | `none\|module\|whole` | `module` | how hard, and over how much at once |
+| `--debug-symbols` | `-g` | compiling | flag | off | emit DWARF. Implies `--optimize none` unless you stated one |
+| `--no-tbaa` | | compiling | flag | off | emit no type-based alias metadata |
+| `--track-allocations` | | compiling | flag | off | count outstanding allocations. What `mem::live_allocations()` needs |
+| `--no-stdlib` | | compiling | flag | off | compile without the standard library |
+| `--emit-stdlib-header` | | compiling | flag | off | regenerate the embedded stdlib header |
 
 `--debug` and `--release` are one question and so are `--no-stdlib` and `--emit-stdlib-header`. Writing both
 halves of either pair is a refusal, not a last-one-wins.
@@ -73,8 +80,8 @@ halves of either pair is a refusal, not a last-one-wins.
 | `--target-os <name>` | | all | name | the host | evaluate `#[if:]` as if targeting this OS |
 | `--target-arch <name>` | | all | name | the host | the same for the architecture |
 | `--define <name>` | | all | bare name, repeatable | | declare a flag `#[if: NAME]` can test |
-| `--target-cpu <name>` | | run+build | name | a per-platform baseline | which CPU to select instructions for |
-| `--target-features <list>` | | run+build | comma list of `+f` / `-f` | empty | features to enable or disable |
+| `--target-cpu <name>` | | compiling | name | a per-platform baseline | which CPU to select instructions for |
+| `--target-features <list>` | | compiling | comma list of `+f` / `-f` | empty | features to enable or disable |
 
 `--define` takes a bare name only. There is no `NAME=value` form, because a condition tests presence rather
 than equality.
@@ -88,11 +95,17 @@ for the host CPU is an illegal instruction on the machine next door rather than 
 
 | Option | Short | Commands | Value | Default | Does |
 |---|---|---|---|---|---|
-| `--print <what>` | `-p` | run+build | see below, repeatable | | dump what the compiler built, by layer |
-| `--explain <what>` | | run+build | see below, repeatable | | explain a decision the compiler made |
+| `--print <what>` | `-p` | compiling | see below, repeatable | | dump what the compiler built, by layer |
+| `--explain <what>` | | compiling | see below, repeatable | | explain a decision the compiler made |
 | `--diagnostics <mode>` | | all | `auto\|pretty\|ascii\|json` | `auto` | how a diagnostic is drawn |
 | `--color <when>` | | all | `auto\|always\|never` | `auto` | colourise diagnostics. Also spelled `--colour` |
 | `--silent` | | all | flag | off | do not draw the progress checklist. Silences that and nothing else |
+| `--verbose` | | test | flag | off | list every test, with how long each one took |
+
+`--verbose` replaces the per-test lines with a listing: every test under the file it is written in, its group
+and its duration, a count and a total per file, and whatever a test printed. That last part includes a
+passing test's output, which is the one thing no other rendering keeps. What a terminal shows is then what a
+pipe records.
 
 ### What clean removes
 
@@ -134,7 +147,7 @@ There are exactly seven short options: `-h`, `-v`, `-o`, `-m`, `-p`, `-g`, `-n`.
 | | `symbols` | the registered symbol table |
 | | `instances` | generic instances and rewired call sites |
 | `--explain` | `cache` | each module's key, whether its artifact is present, and on a miss which input changed |
-| | `prune` | what the JIT prune dropped. `run` only |
+| | `prune` | what the JIT prune dropped. `run` and `test` only |
 | | `memory` | live allocations when the program ended. Implies `--track-allocations` |
 | | `time` | where the compile spent its time, as a tree |
 | `--diagnostics` | `auto` | `pretty` when stderr is a terminal that can draw it, `ascii` otherwise |
@@ -150,7 +163,7 @@ There are exactly seven short options: `-h`, `-v`, `-o`, `-m`, `-p`, `-g`, `-n`.
 ## The mask is per value, not just per option
 
 A subcommand can accept an option and still refuse one of its values. Exactly one value is narrower than its
-option today, because only the JIT prunes:
+option today, because only the JIT prunes, and it is narrower to the *two* commands that do:
 
 ```
 error: 'build --explain prune' is not something 'build' can answer. It accepts: cache|memory|time.
@@ -249,6 +262,9 @@ Colour and box drawing are two separate answers on purpose. A Windows console dr
 
 `0` when the compile succeeded, and for `run`, when your program also returned `0`. `1` when anything was
 refused. `run` passes your program's exit code straight through, so `std::env::exit(2)` gives you `2`.
+
+`test` is `0` only when every test it ran passed. A test that failed, was killed by a signal, or a `--filter`
+matching nothing all give you `1`.
 
 ## Next
 

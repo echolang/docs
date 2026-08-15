@@ -175,7 +175,7 @@ function lookup(int32 $key) : int32?
 
 function doubled(int32 $key) : int32
 {
-    guard int32 $value = lookup($key) else { return -1; }
+    int32 $value = guard lookup($key) else { return -1; }
 
     return $value;
 }
@@ -193,7 +193,7 @@ Two rules keep that promise honest.
 tells you so:
 
 ```echo
-guard int32 $v = 5 else { die("nope"); }
+int32 $v = guard 5 else { die("nope"); }
 // error: 'guard' needs a value that may be absent, and 'int32' always is one - write 'int32?'
 //        if it may not be, or drop the guard
 ```
@@ -203,7 +203,7 @@ guard int32 $v = 5 else { die("nope"); }
 ```echo
 int32? $maybe = null;
 
-guard int32 $value = $maybe else { echo "absent"; }
+int32 $value = guard $maybe else { echo "absent"; }
 // error: the 'else' of a guard has to leave - end it with 'return', 'break', 'continue' or 'die'.
 //        otherwise '$value' would be read after the value it names turned out not to be there
 ```
@@ -224,7 +224,7 @@ function pick(int32 $i) : int32?
 
 int32 $i = 0;
 while ($i < 10) {
-    guard int32 $v = pick($i) else { break; }
+    int32 $v = guard pick($i) else { break; }
     echo $v;            // 0, 1, 2
     $i = $i + 1;
 }

@@ -359,18 +359,34 @@ echo $a->count();           // 3
 `merge` reserves the total up front, so the whole result is one allocation, and both inputs are `const`
 borrows so neither is consumed.
 
-## Two things that compile and are wrong
+## An element is a destination like any other
 
-Both of these are real, both are silent, and both are on [the list](/reference/limitations).
+A literal written into an element is checked against the element type, exactly as one written into a
+declaration is. A value that does not survive the trip is refused rather than truncated:
 
-**An element append skips the literal precision check.** Everywhere else Echo checks a literal against the
-type it is going into. Here it does not:
-
-<!-- verify: skip -->
 ```echo
 array<int32> $ints = [];
-$ints[] = 2.5;      // stores 2, says nothing
+$ints[] = 2.5;
+// error: The floating point number literal '2.5' cannot be implicitly converted to an integer type
+//        due to non zero decimal values.
 ```
+
+One that converts exactly still converts, and says nothing, because nothing was lost:
+
+```echo
+array<int64> $wide = [1, 2.0];
+
+echo $wide[0];      // 1
+echo $wide[1];      // 2
+```
+
+The same goes for a literal inside the brackets, since `[1, 2.5]` is those appends written another way.
+Note that the element type comes from the **first** element, so `[2.5, 1]` is an `array<float64>` holding
+`2.5` and `1.0` - that ordering rule is deliberate.
+
+## One thing that compiles and is wrong
+
+It is real, it is silent, and it is on [the list](/reference/limitations).
 
 **An array literal inside a field-wise constructor loses its elements.** `Bag([7, 9])` and then reading it
 back is a use-after-destruction at every optimization level, with no diagnostic. Build the array first and

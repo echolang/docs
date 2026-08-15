@@ -1,7 +1,7 @@
 # Unsafe
 
-`unsafe` sounds like a mode. It is not. **It unlocks exactly one operation: turning a raw address into a
-trusted borrow.**
+`unsafe` sounds like a mode. It is not. **It is permission for exactly one operation: turning a raw
+address into a trusted borrow.**
 
 ```echo
 ptr<int32> $slots = mem::alloc<int32>(4);

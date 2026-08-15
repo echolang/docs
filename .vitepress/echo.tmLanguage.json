@@ -573,9 +573,9 @@
 		"constants": {
 			"patterns": [
 				{
-					"comment": "Binary literals are NOT a feature. There is no BinaryLiteral lexer function, so '0b1010' reads as the integer 0 followed by an identifier 'b1010' and the parser gives up on it. Flagged rather than coloured, because the resulting error names the wrong thing.",
-					"name": "invalid.illegal.numeric.binary.eco",
-					"match": "\\b0[bB][01_]+\\b"
+					"comment": "A binary literal takes its width from its destination, and from its digit count when there is none - the same rule as hex, counted in bits. Digit separators are still not a feature, so the character class is [01] alone.",
+					"name": "constant.numeric.binary.eco",
+					"match": "\\b0[bB][01]+\\b"
 				},
 				{
 					"comment": "A hex literal takes an unsigned type sized to the digit count, so 0xFF is a uint8 and 0x00FF is a uint16.",

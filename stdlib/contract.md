@@ -1,8 +1,9 @@
 # contract
 
-`contract::` holds interfaces and nothing else. Four of them matter, and between them they are the entire
-iteration protocol: **`foreach` uses these interfaces and nothing else.** `array<T>` gets no special
-treatment from it, and neither does anything else in the library.
+`contract::` holds interfaces and nothing else. Six of them matter, and they split into two protocols:
+four for iteration, two for unwrapping. **`foreach` uses the first four and nothing else, and `guard` uses
+the other two and nothing else.** `array<T>` gets no special treatment from either, and neither does
+anything else in the library.
 
 ```echo
 array<string> $gates = ["Abydos", "Chulak"];
@@ -15,7 +16,7 @@ foreach ($gates as $name) {
 That loop resolved against an interface `array<T>` declares in ordinary Echo. A type of your own conforms
 exactly the same way and loops exactly as well. The rest of this page is how.
 
-## The four interfaces, in full
+## The iteration interfaces, in full
 
 <!-- verify: skip -->
 ```echo
@@ -222,6 +223,73 @@ The error is on line one of the struct, not at some far-away `foreach`. That is 
 being declared rather than inferred: the type either says it can do this or it does not, and the compiler
 checks the claim where the claim is made.
 
+## unwrappable and failable
+
+The other two are what `guard` resolves against. Same idea as iteration: no special case anywhere, the
+library's own [`result<T, E>`](/stdlib/result) declares them and so can you.
+
+<!-- verify: skip -->
+```echo
+namespace contract;
+
+interface unwrappable<V>
+{
+    const function has_value() : bool;
+    function unwrap() : V&;
+}
+
+interface failable<E>
+{
+    function failure() : E&;
+}
+```
+
+`has_value()` is asked first and its answer gates `unwrap()`, exactly the way `advance()` gates `current()`.
+So `unwrap()` never has to re-check anything, and it is allowed to stop the program when called on a value
+that has none.
+
+Declare `unwrappable<V>` and `guard` works:
+
+```echo
+struct maybe_port : contract::unwrappable<int32>
+{
+    bool $present;
+    int32 $port;
+
+    const function has_value() : bool
+    {
+        return $this->present;
+    }
+
+    function unwrap() : int32&
+    {
+        return &$this->port;
+    }
+}
+
+maybe_port $p = maybe_port(true, 8080);
+
+int32 $port = guard $p else { die('no port'); }
+
+echo $port;    // 8080
+```
+
+### failable is separate on purpose
+
+`failable<E>` is what makes `else ($e)` spellable, and it is a **second** interface rather than a second
+method on the first. That is not tidiness. A type that means "maybe a value" often has nothing to say about
+why, and a `T?` is exactly that: it records that a value is absent and nothing at all about the reason. So a
+subject that does not declare `failable<E>` has no reason to bind, and writing `else ($e)` against one is a
+compile error at the `$e` rather than a hole in the protocol.
+
+Declare both and the `else` block can name the reason. [Nullability](/memory/nullability#your-own-types-can-be-guarded-too)
+walks a full worked example, and [`result<T, E>`](/stdlib/result) is the one the library ships.
+
+Note: `T?` does not conform to `unwrappable<V>` and cannot. Over a pointer or a class handle it is a
+per-level flag with no declaration anywhere, and the tagged form is a layout the compiler interns. The
+compiler answers for `T?` directly, before these interfaces are consulted at all, which is why `guard` over a
+`T?` still works with `--no-stdlib`.
+
 ## The protocol is genuinely open
 
 Your own type loops as well as `array<T>` does, and that is not generosity. It is because `array<T>` never
@@ -242,6 +310,9 @@ program compiled without the library has no iteration protocol and `foreach` say
 | `contract::const_iterable<V>` | `type Iter : iterator<V>` | as above |
 | | `const function iterate() : Iter` | the const receiver's cursor, usually over `const T` |
 | `contract::keyed<K>` | `key() : K` | where the cursor is, valid after `advance()` said true |
+| `contract::unwrappable<V>` | `const function has_value() : bool` | is there a value. Asked first, and it gates the next one |
+| | `unwrap() : V&` | the value, valid only after `has_value()` said true |
+| `contract::failable<E>` | `failure() : E&` | why there is no value, valid only after `has_value()` said false |
 
 ## Next
 

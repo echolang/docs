@@ -1,16 +1,21 @@
 # The echoc CLI
 
-`echoc` has three subcommands and no others. There is no `echoc new`, no `echoc test`, no `echoc fmt`. What
+`echoc` has four subcommands and no others. There is no `echoc new`, no `echoc fmt`, no `echoc publish`. What
 there is instead: **`run` and `build` are not the same build**, and most of this page is about the ways they
 differ.
 
 ```bash
 echoc run app.eco               # compile in memory, execute now
 echoc build -o app app.eco      # compile and link a native binary
+echoc test                      # compile and run the test blocks, one process each
 echoc clean                     # remove what a build produced
 ```
 
 That is the whole surface. Everything below is flags.
+
+`test` is `run` with a different thing to run, and it gets a chapter of its own in
+[Testing](/projects/testing). Everything on this page about how a program is compiled applies to it
+unchanged, because it is the same compile.
 
 ## `run` is the loop, `build` is the artifact
 
@@ -30,7 +35,7 @@ echoc run --release app.eco     # the release semantics, without linking
 echoc build --debug -o app app.eco
 ```
 
-## Choosing what to compile
+## What to compile
 
 Three ways, and you will use all of them.
 
@@ -161,7 +166,7 @@ Most of the time you should need neither. A module says what it needs with `#[li
 `#[depends:]`. This flag is for the half that belongs to your machine rather than to the module, like a
 library installed somewhere nobody could have predicted. [Linking](/projects/linking) covers the four kinds.
 
-## Looking inside with `-p`
+## `-p` dumps the tree
 
 Repeatable, so two layers means two dumps rather than only the last one:
 
@@ -187,7 +192,7 @@ module, so what you are reading describes the `--optimize whole` build even when
 
 Each dump writes a `[section]` header, so the output greps cleanly.
 
-## Measuring with `--explain`
+## `--explain` measures
 
 ```bash
 echoc build --explain cache --explain time -o app app.eco

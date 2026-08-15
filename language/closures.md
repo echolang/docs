@@ -12,7 +12,7 @@ echo $increment(41);    // 42
 `function<R(P...)>` is the type of a callable value, and it behaves like any other type. You can put one in
 a variable, pass it, return it, store it in a struct property, or make it a generic type argument.
 
-## Reading the type
+## The type
 
 The type reads outside in: the return type, then the parameters in parentheses.
 
@@ -29,7 +29,7 @@ Note the third one. In a closure literal the return type may be left off when it
 place Echo relaxes the rule that [functions](/language/functions) must always state their return type. A
 named function still has to say `: void` out loud.
 
-## Passing one to a function
+## A parameter
 
 This is the reason the feature exists:
 
@@ -44,7 +44,7 @@ echo apply(function(int32 $a) : int32 { return $a * 2; }, 21);      // 42
 
 The literal is written inline at the call site. There is nothing to declare first.
 
-## Returning one
+## A return value
 
 A function that returns a callable is how you build a small factory:
 
@@ -175,7 +175,7 @@ function outer() : int32
 
 Both of these are on [the list](/reference/limitations).
 
-## Storing one
+## A property
 
 A closure is an ordinary value, so it can be a struct or class property:
 

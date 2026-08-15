@@ -69,6 +69,7 @@ $b = 0.5;       // float64
 $c = true;      // bool
 $d = "hi";      // string
 $e = 0xFF;      // uint8, and it is 255
+$g = 0b1011;    // uint8 too, and it is 11
 $f = 3.14f;     // float32, and that is the f talking
 ```
 
@@ -76,9 +77,10 @@ An untyped integer literal is an `int32`. An untyped float literal is a `float64
 not agree about width, which is deliberate: an integer that needs more than 32 bits is unusual, and a float
 that wants less precision than a `float64` is a decision you should have to write down.
 
-A hex literal is the exception, and not a deliberate one. It takes an unsigned type sized to the number of
-digits you wrote, so `0xFF` is a `uint8` and `0x00FF` is a `uint16` despite being the same number.
-[Primitive types](/reference/primitive-types) has the width table and the range check it skips.
+A `0x` or `0b` literal is the exception, and this one is deliberate: with nothing else to go on it takes an
+unsigned type sized to the number of digits you wrote, so `0xFF` is a `uint8` and `0x00FF` is a `uint16`
+despite being the same number. Write the zeros when you mean the width.
+[Primitive types](/reference/primitive-types) has the table.
 
 Writing it down usually means putting the type in front:
 
@@ -132,7 +134,7 @@ negative.** `$numbers->count() - 5` is a very large number, not `-2`.
 
 This is the one place where PHP habits will genuinely hurt you.
 
-`bool` is its own type. It is not an integer that happens to hold 0 or 1, and integers do not convert to it:
+`bool` is its own type. It is not an integer that happens to hold 0 or 1:
 
 ```echo
 bool $ready = true;
@@ -140,10 +142,34 @@ echo $ready;        // 1
 echo !$ready;       // 0
 ```
 
-`echo` prints a `bool` as `1` or `0`, because `echo` prints numbers and that is the number.
+`echo` prints a `bool` as `1` or `0`, because `echo` prints numbers and that is the number. Those two
+integers are also what a `bool` destination accepts as a literal: `1` is `true`, `0` is `false`.
 
-A condition has to actually be a `bool`. There is no truthiness, no zero-is-false, no empty-string-is-false,
-none of it:
+```echo
+bool $on = 1;
+bool $off = 0;
+echo $on;           // 1
+echo $off;          // 0
+```
+
+Anything else is not a bool. `3` is not `true`. There is no truthiness, no zero-is-false for the rest of
+the integers, no empty-string-is-false, none of it:
+
+```echo
+bool $ready = 3;
+// error: a literal of type 'int32' cannot be written where a 'bool' is expected - Echo has no
+//        truthiness in a written literal, so say which of the two you meant
+```
+
+The other direction is refused outright. There is no number `true` means:
+
+```echo
+int32 $n = true;
+// error: a literal of type 'bool' cannot be written where a 'int32' is expected - Echo has no
+//        truthiness in a written literal, so say which of the two you meant
+```
+
+A condition has to actually be a `bool` too:
 
 ```echo
 $count = 5;
@@ -156,16 +182,9 @@ if ($count > 0) {       // fine, the comparison produces a bool
 Writing `if ($count)` with an integer is not valid Echo, and right now it fails as a compiler crash rather
 than a polite diagnostic. That is on [the list](/reference/limitations).
 
-Note: there is a live trap here. An integer literal at a `bool` destination is accepted and silently gives
-you `false`:
-
-```echo
-bool $wrong = 1;
-echo $wrong;        // 0
-```
-
-That is a bug, not a rule. `bool $wrong = true;` is what you meant, and until it is fixed the compiler will
-not stop you from writing the other thing.
+A **variable** still converts either way, as [Primitive types](/reference/primitive-types) sets out. An
+`int32` into a `bool` is compared against zero at runtime. It is only a written literal other than `0` or
+`1` that has to say which of the two it meant.
 
 ## There is no cast
 

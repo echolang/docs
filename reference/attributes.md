@@ -13,9 +13,9 @@ function double(int32 $n) : int32
 echo double(21);        // 42
 ```
 
-Thirteen names in total: six you can write on a declaration, seven that only mean something in a
-`module.eco` manifest. The four conditional directives look like attributes and are not on that list at all,
-for a reason worth a section of its own.
+Fifteen names in total: seven on a declaration (four of yours, three for the library), eight that only
+mean something in a `module.eco` manifest. The four conditional directives look like attributes and are
+not on that list at all, for a reason worth a section of its own.
 
 ## The value grammar
 
@@ -65,13 +65,14 @@ scheme with two libraries rather than two schemes.
 
 ## Declaration attributes
 
-Six names. Three of them are yours:
+Seven names. Four of them are yours:
 
 | Attribute | Value | What it does |
 |---|---|---|
 | `#[inline]` | none | asks for the function to be emitted into every unit that calls it, so it can be inlined without a whole-program build |
 | `#[implicit]` | none | on a method, declares that its owner converts to the method's return type at an argument position |
 | `#[unique]` | none | on a struct, says exactly one value may name this storage. The type is moved, never copied |
+| `#[group: "..."]` | string | on a `test`, names the group a test run can select on |
 
 And three belong to the standard library. They are documented here so that reading `stdlib/` makes sense, not
 so you write them:
@@ -139,6 +140,25 @@ struct Celsius
 }
 ```
 
+### #[group:]
+
+Names the group a `test` belongs to, so a test run can select on it:
+
+<!-- verify: test -->
+```echo
+#[group: "arithmetic"]
+test adds_up
+{
+    assert(1 + 1 == 2);
+}
+```
+
+The compiler reads nothing else out of it. It is a tag for `echoc test --filter group:arithmetic`, and it is
+the only attribute here whose value is free text checked against nothing. Written on something that is not a
+test it does nothing at all, per the section below on placement.
+
+[Testing](/projects/testing) is the whole of what it is for.
+
 ### #[unique]
 
 `#[unique]` closes the accidental half of duplication. A unique struct has no implicit copy at all, so the
@@ -188,13 +208,43 @@ this is the value shapes.
 | `#[version: "0.1.0"]` | string | no | recorded, folded into the build fingerprint, resolves against nothing |
 | `#[sources: "src/*.eco"]` | string or list | yes | relative to the manifest. A pattern matching nothing is an error |
 | `#[depends: ...]` | string, `path "..."`, `git { }`, or a list | yes | a path to a manifest file, or to a directory holding one |
-| `#[target: <tag> { }]` | tagged record, or a list | yes | tags: `exe`. Fields `name` and `entry`, both required; `entry` must be one of this module's own `sources` |
+| `#[target: <tag> { }]` | tagged record, a bare tag, or a list | yes | tags: `exe`, `test`. An `exe` wants `name` and `entry`, both required, and `entry` must be one of this module's own `sources`. A `test` takes `name`, `groups` and `files`, all optional, and is refused for writing an `entry`; `#[target: test]` on its own is the whole selection |
 | `#[link: <tag> "..."]` | tagged | yes | tags: `lib`, `framework`, `search`, `object` |
 | `#[cc: <tag> ...]` | tagged | yes | tags: `sources`, `include`, `define`, `flag` |
 | `#[build_dir: "target"]` | string | no | where artifacts go. Refused if it names the manifest's own directory or an ancestor |
 
 Declaring one of the three no-repeat attributes twice gets you `'module' is declared twice.` and the same
 sentence for `version` and `build_dir`.
+
+### A target's scope
+
+`#[target: ...]` is the one attribute that may be followed by a `{ ... }`. What is inside belongs to that
+target rather than to the module, and takes effect only for a program that builds it:
+
+```
+#[target: test] {
+    #[sources: "tests/*.eco"]
+    #[depends: "../mocklib"]
+    #[link: lib "check"]
+    #[cc: sources "c/stubs/*.c"]
+}
+```
+
+Those four are the whole vocabulary, and each means inside a scope exactly what it means outside one. A
+scoped `#[sources:]` is expanded by the same expander, with the same "a pattern matching nothing is an
+error" rule. A scoped `#[cc:]` is refused for options with no `sources:` in the same words.
+
+The four refusals:
+
+| Written | |
+|---|---|
+| a scope on anything but `#[target:]` | `'sources' cannot carry a '{ ... }' scope - only a '#[target: ...]' can, a scope being what one target says for itself.` |
+| a `#[target:]` inside a scope, nested braces included | `'target' cannot be written inside a '{ ... }' scope - a scope is one target speaking for itself, so it holds no targets of its own.` |
+| `#[module:]`, `#[version:]` or `#[build_dir:]` inside one | `'version' describes the module, not one of its targets - write it at file scope.` |
+| a scope on a `#[target: [ ... ]]` declaring several | `a '{ ... }' scope belongs to one target, and this '#[target: ...]' declares 2 - write each of them its own.` |
+
+A scope on a target is the one thing in a manifest that changes a module's cache key per target, and it does
+so for the module that declares it and for no other module in the build.
 
 ### #[cc:] in full, because nothing else tabulates it
 
@@ -236,7 +286,7 @@ I would like the first case to be an error too. It is not today, and if you find
 ## When the name is wrong
 
 ```
-unknown attribute 'bultin', expected one of: inline, implicit, intrinsic, builtin, core, unique, module, version, depends, sources, target, link, cc, build_dir
+unknown attribute 'bultin', expected one of: inline, implicit, intrinsic, builtin, core, unique, group, module, version, depends, sources, target, link, cc, build_dir
 ```
 
 The attribute is then skipped and the declaration after it still parses, which is the point: the error you
@@ -305,7 +355,16 @@ with one.
 | `os` | `darwin`, `linux`, `windows` |
 | `arch` | `arm64`, `x86_64` |
 
-Plus any bare name passed with `--define`. The two behave in opposite ways deliberately:
+Plus one flag the compiler sets itself, and any bare name you pass with `--define`:
+
+| Flag | True when |
+|---|---|
+| `tests` | this invocation is compiling the module's `test` blocks, which is `echoc test` and nothing else |
+
+`tests` is reserved: `--define tests` is refused, because whatever compiles your test blocks has to be the
+thing that also runs them. [Testing](/projects/testing) is where that matters.
+
+An axis and a flag behave in opposite ways, deliberately:
 
 - **An axis vocabulary is closed.** `os == darwn` is an error, because otherwise it is a block that vanishes
   in silence.

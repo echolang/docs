@@ -29,6 +29,7 @@ const sidebar = [
       { text: 'Structs', link: '/language/structs' },
       { text: 'Classes', link: '/language/classes' },
       { text: 'Interfaces', link: '/language/interfaces' },
+      { text: 'Enums', link: '/language/enums' },
       { text: 'Generics', link: '/language/generics' },
       { text: 'Operators', link: '/language/operators' },
       { text: 'Namespaces', link: '/language/namespaces' },
@@ -63,6 +64,7 @@ const sidebar = [
     items: [
       { text: 'Modules', link: '/projects/modules' },
       { text: 'The echoc CLI', link: '/projects/cli' },
+      { text: 'Testing', link: '/projects/testing' },
       { text: 'Conditional compilation', link: '/projects/conditional-compilation' },
       { text: 'Linking', link: '/projects/linking' },
       { text: 'C interop', link: '/projects/c-interop' },
@@ -75,6 +77,7 @@ const sidebar = [
       { text: 'Overview', link: '/stdlib/' },
       { text: 'mem', link: '/stdlib/mem' },
       { text: 'contract', link: '/stdlib/contract' },
+      { text: 'result', link: '/stdlib/result' },
       { text: 'hash', link: '/stdlib/hash' },
       { text: 'str and arr', link: '/stdlib/str-arr' },
       { text: 'std::io', link: '/stdlib/io' },

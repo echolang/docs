@@ -144,6 +144,16 @@ short-circuit a chain.
 Note: `Stargate $sgc;` with no initializer currently compiles and hands you a null handle, which slips past
 this rule. That is a hole, not a feature, and it is on [the list](/reference/limitations).
 
+## Statics work here on exactly the struct's terms
+
+A `static function` called on the type, a `static` property the type owns one of, the leading-dot shorthand,
+all of it. The rules do not change for a class, so they are written up once, on
+[the struct page](/language/structs#a-static-belongs-to-the-type-not-to-a-value).
+
+The one thing worth repeating here is what a class adds. A `static` property holding a class handle owns a
+reference like any other and gives it back when the program ends, so a class parked in a static stays alive
+for the whole run. Usually that is the point. Occasionally it is the bug.
+
 ## instanceof
 
 Because a class object carries a type pointer, you can ask what it is:
@@ -337,7 +347,7 @@ class Stargate
 Stargate $sgc = Stargate(7);
 weak<Stargate> $watcher = &$sgc;
 
-guard Stargate $stillThere = strong($watcher) else { die("gate is gone"); }
+Stargate $stillThere = guard strong($watcher) else { die("gate is gone"); }
 echo $stillThere->lockedChevrons;     // 7
 ```
 
@@ -355,7 +365,7 @@ Stargate $sgc = Stargate(7);
 weak<Stargate> $watcher = &$sgc;
 
 echo $watcher?->lockedChevrons ?? -1;      // 7
-guard Stargate $stillThere = $watcher else { die("gate is gone"); }
+Stargate $stillThere = guard $watcher else { die("gate is gone"); }
 echo $stillThere->lockedChevrons;         // 7
 ```
 

@@ -7,7 +7,7 @@ this namespace exists.
 ```echo
 std::io::println('Chevron seven, locked.');
 
-guard string $line = std::io::read_line() else {
+string $line = guard std::io::read_line() else {
     std::io::eprintln('nothing on stdin');
     return 0;
 }
@@ -71,7 +71,7 @@ stops early, so `%s` or `strlen` would run off the end of one.
 about:
 
 ```echo
-guard string $name = std::io::read_line() else {
+string $name = guard std::io::read_line() else {
     std::io::println('no name given');
     return 0;
 }

@@ -60,7 +60,8 @@ That is the whole reason copying a `string` is cheap, and it is the only thing a
 is not a type to build yourself. It has to be `public`, because `string` holds one as a property and anyone
 holding a `string` can already name the type, so hiding it would be incoherent. What is actually enforced is
 the shape: every mutator is `private` on `string`'s side, so no caller reaches one through the owner it holds.
-Constructing a `buf` directly is left to you not to do. See [Visibility](/language/visibility).
+The type is public. The mutators are private. Do not construct one. See
+[Visibility](/language/visibility).
 
 You will meet the name in two places: in a debugger, and in `mem::ref_count<str::buf>` if you want to see
 the sharing for yourself.
@@ -88,7 +89,7 @@ A literal is a window over bytes baked into your binary, with no buffer behind i
 them costs nothing, which is the number worth remembering: **passing strings around is free, building them
 is not.**
 
-## Crossing the C boundary: copy, or borrow
+## C strings: copy or borrow
 
 An `extern` function that hands you a `ptr<const uint8>` has given you a NUL-terminated C string and no
 claim on it. Two functions turn that into something Echo can use, and the choice between them is one
@@ -163,7 +164,7 @@ simply has no two-argument overload, and `"{$c:>8}"` says so by name rather than
 `str::from` uses the shortest form that reads well in a sentence: six significant digits for a `float`,
 fifteen for a `float64`. Ask for `{$x:.17g}` when you need a value to round-trip.
 
-## Splitting, joining, trimming
+## split / join / trim
 
 ```echo
 array<string> $parts = str::split('SG-1,SG-9,SG-11', ',');
@@ -187,10 +188,10 @@ is ordinary text rather than a call, and the result has to be bound before you c
 `trim_start` and `trim_end` do one side each. All three answer a **window** rather than a copy, so trimming
 is free. Call `->clone()` on the result if you want the parent's buffer released.
 
-## Reading a number back
+## parse_int and parse_float
 
 ```echo
-guard int64 $n = str::parse_int('42') else {
+int64 $n = guard str::parse_int('42') else {
     die('not a number');
 }
 
@@ -209,12 +210,6 @@ echo str::parse_int('9223372036854775808') ?? -1;    // -1, overflow rather than
 
 `str::parse_float` goes through C's `strtod` and requires the whole text to be consumed, which is the
 difference between it and calling `strtod` yourself.
-
-## Why this page is short
-
-Because `string` got there first. Concatenation, slicing, searching, `starts_with`, `char_count`, the
-mutators, all of it is on the type itself. What is left over here is the buffer nobody should touch, the
-conversions that need a namespace to live in, and the formatting surface interpolation is built on.
 
 ## The whole surface
 

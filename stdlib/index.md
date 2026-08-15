@@ -30,7 +30,7 @@ range<int32> $seven = 0 .. 7;
 assert($chevrons->count() == 3);
 ```
 
-`array`, `map`, `ordered_map`, `string`, `slice`, `range`, plus `die`, `assert` and `dprint`. You write
+`array`, `map`, `ordered_map`, `string`, `slice`, `range`, `result`, plus `die`, `assert` and `dprint`. You write
 these every day, so they cost you no namespace at all.
 
 **Tier two is still about the language, but you do not write it every line.** A short namespace:
@@ -50,7 +50,7 @@ echo std::math::sqrt(9.0);      // 3.000000
 echo std::env::argc() > 0;      // 1
 ```
 
-`std::math::` and `std::env::`.
+`std::math::`, `std::env::` and `std::io::`.
 
 ## Nothing in the library is special-cased
 
@@ -135,7 +135,8 @@ echo $c->bump(5);       // 7
 | Namespace | Holds | Page |
 |---|---|---|
 | root | `array`, `map`, `ordered_map`, `string`, `slice`, `range`, `die`, `assert`, `dprint` | [Collections](/collections/arrays) |
-| `contract::` | `iterator`, `iterable`, `const_iterable`, `keyed` | [contract](/stdlib/contract) |
+| root | `result` | [result](/stdlib/result) |
+| `contract::` | `iterator`, `iterable`, `const_iterable`, `keyed`, `unwrappable`, `failable` | [contract](/stdlib/contract) |
 | `mem::` | allocation, type queries, `take` / `init`, `buffer<T>` | [mem](/stdlib/mem) |
 | `hash::` | `of` and the composition primitives | [hash](/stdlib/hash) |
 | `str::`, `arr::` | `str::from` and the formatting surface, splitting and joining, `str::buf`, the C string boundary, two array helpers | [str and arr](/stdlib/str-arr) |

@@ -1,10 +1,8 @@
 # Debugging
 
-Two tools, and the small one first. `dprint` prints a value with its whole structure and needs nothing from
-the build; a debugger steps through your `.eco` file line by line and needs `-g`. Most of the time the print
-is the faster answer, so start there and reach for the debugger when it stops being enough.
+`dprint` dumps a value with its shape. `-g` puts your `.eco` in the object. Start with the print.
 
-## `dprint`, for when a debugger is more than you need
+## `dprint` dumps the value, no `-g`
 
 `dprint` is a builtin that prints any value with its structure and its types, recursively:
 
@@ -63,7 +61,7 @@ dprint($nums);
 For a container, `foreach` and `echo` will tell you more. The debugger's answer to the same problem is
 [the formatters](#containers-need-the-formatters), further down.
 
-## Stepping through your own source
+## `-g` steps through `.eco`
 
 `echoc build -g` puts real DWARF in the object, which means **a debugger steps through your `.eco` file**, one
 line at a time, with your own variable names. Not the IR, not the generated assembly. The file you wrote.
@@ -166,8 +164,7 @@ echoc build -g --optimize module -o plot plot.eco
 
 ## Containers need the formatters
 
-Here is the part that decides whether debugging Echo is pleasant. Out of the box, an `array<T>` reads as its
-internals:
+Out of the box, an `array<T>` reads as its internals:
 
 ```
 (lldb) frame variable

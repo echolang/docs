@@ -54,7 +54,7 @@ string::view $nope = std::env::arg(99);
 One caveat on the cursor: `args()` stores the current view and overwrites it on every `advance()`. A view
 taken from one step is stale on the next, so copy it if you mean to keep it.
 
-## Passing arguments through `echoc run`
+## `--` is how `run` gets argv
 
 Everything after a bare `--` belongs to your program rather than to `echoc`:
 
@@ -127,7 +127,7 @@ They are not three spellings of one:
 echo std::env::has('PATH');                             // 1
 
 // what is it, if anything? absence is in the type
-guard string::view $path = std::env::var('PATH') else {
+string::view $path = guard std::env::var('PATH') else {
     die('PATH is not set');
 }
 echo $path->is_empty();                                 // 0
@@ -204,8 +204,8 @@ oversight:
 - **A mistake in your code** is an `assert`. `arg` past the end, a key that is not NUL terminated.
 - **A platform failure** is a `die`. `getcwd` refusing a buffer it asked for, a path over 64 KiB.
 
-There is no error value to check anywhere, and there is no silent zero. Echo has no exceptions and no
-`Result` type yet, and how that eventually changes is on [the list](/reference/limitations).
+There is no error value to check anywhere, and there is no silent zero. This module uses `null`, `assert`
+and `die`. It does not return a [`result<T, E>`](/stdlib/result).
 
 ## The whole surface
 

@@ -28,9 +28,10 @@ echo $samples:$[2];                                 // 0.000000
 mem::free($samples);
 ```
 
-The only exceptions are `alloc_bytes`, `realloc_bytes` and `free_bytes`, which say so in their names. Do not
-call those. They exist for the library's own use, and the typed functions above give you the same memory
-with the arithmetic done for you.
+There is no exception to that, and there used to be three. `alloc_bytes`, `realloc_bytes` and `free_bytes`
+are the byte-level allocator underneath all of this, and they are `private` to the file they are written in.
+So calling one is a located error rather than one more thing to remember not to write. The typed functions
+above hand you the same memory with the arithmetic already done.
 
 ## alloc hands back a pointer, and that is the point
 

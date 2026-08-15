@@ -88,33 +88,38 @@ a variable. See [Generics](/language/generics).
 
 The last row is the one that surprises people, so it gets its own section.
 
-### A hex literal picks its width from how you wrote it
+### A radix literal picks its width from how you wrote it
 
-`parse_literal_hex` counts the digits after `0x` and picks an unsigned type to fit them. Nothing about the
-value, and nothing about the destination:
+With no type in front, a `0x` or `0b` literal counts its digits and picks an unsigned type to fit them.
+Nothing about the value:
 
-| Digits | Type |
-|---|---|
-| 1 to 2 | `uint8` |
-| 3 to 4 | `uint16` |
-| 5 to 8 | `uint32` |
-| 9 or more | `uint64` |
+| Hex digits | Binary digits | Type |
+|---|---|---|
+| 1 to 2 | 1 to 8 | `uint8` |
+| 3 to 4 | 9 to 16 | `uint16` |
+| 5 to 8 | 17 to 32 | `uint32` |
+| 9 or more | 33 or more | `uint64` |
 
-So `0xFF` is a `uint8` and `0x00FF` is a `uint16`, despite being the same number.
+So `$e = 0xFF;` is a `uint8` and `$f = 0x00FF;` is a `uint16`, despite being the same number. Write the
+zeros when you mean the width.
 
-**A hex literal also skips the range check that every other literal gets.** The destination type is never
-consulted, so instead of being refused, the value is quietly truncated on the way in:
+That is only what happens when nothing else has an opinion. **A destination outranks it**, exactly as it
+does for a decimal literal, and the range check comes with it:
+
+```echo
+int32 $x = 0xFF;        // an int32 holding 255, not a uint8
+uint64 $b = 0b1011;     // a uint64 holding 11
+
+echo $x;
+echo $b;
+```
 
 ```echo
 uint8 $x = 0xFFFF;
-echo $x;                // 255, and nothing was said about it
-
-int8 $y = 0xFF;
-echo $y;                // -1
+// error: The literal '0xFFFF' is too large for the integer type 'uint8'. The maximum value is '255'.
 ```
 
-Both of those are bugs rather than rules. `uint8 $x = 65535;` written in decimal is a clean compile error.
-Write hex when you mean a bit pattern, and put the type in front when the width matters.
+Write hex or binary when you mean a bit pattern, and put the type in front when the width matters.
 
 ## Every literal form
 
@@ -126,13 +131,12 @@ Exists:
 | decimal float | `0.5`, `1.` | a trailing dot gets an implicit zero, so `1.` is `1.0` |
 | float suffix | `3.14f` | `f` is the only suffix in the language, and only on floats |
 | hexadecimal | `0xFF`, `0Xff` | see the width rule above |
-| string | `"hi"`, `'hi'` | both quotes are accepted and mean the same thing |
+| binary | `0b1011`, `0B1011` | same width rule as hex, counted in bits |
+| string | `"hi"`, `'hi'` | `"` interpolates `{$...}`, `'` is verbatim |
 | bool | `true`, `false` | |
 
 Does not exist:
 
-- **Binary literals.** `0b101` lexes as `0` followed by an identifier `b101` and the parser gives up on it.
-  The token type exists in the compiler and nothing ever produces one.
 - **Octal.** No `0o17`, no leading-zero form.
 - **Digit separators.** `1_000` is `1` followed by an identifier `_000`.
 - **Exponent notation.** `1e9` stops at the `e`.
@@ -187,7 +191,9 @@ checked at all, because it cannot.
 | `float64` literal into a `float32` that loses bits | warning |
 | float literal with a fraction into an integer type | error |
 | any literal into a struct or class | error |
-| hex literal | not checked at all, see above |
+| `0` or `1` into a `bool` | `false` or `true` |
+| any other number literal into a `bool`, or `true`/`false` into a number | error |
+| hex or binary literal | checked at its destination, like a decimal one |
 
 The exact wording, so you can recognise it:
 
@@ -205,9 +211,17 @@ uint8 $n = -1;
 
 ```echo
 float64 $x = true;
-// error: Invalid type conversion: The boolean literal 'true' cannot be implicitly converted to the
-//        expected type 'float64'.
+// error: Invalid type conversion: a literal of type 'bool' cannot be written where a 'float64' is
+//        expected - Echo has no truthiness in a written literal, so say which of the two you meant
 ```
+
+`true` into a number is refused. The other direction is not quite a mirror: `bool $ready = 1;` is `true`,
+`bool $ready = 0;` is `false`, and `bool $ready = 3;` is the error above. `0` and `1` are what `echo`
+prints for a bool. `3` is not either of those.
+
+A **variable** still converts either way, as the next section says. An integer into a `bool` is compared
+against zero at runtime. It is only a written literal other than `0` or `1` that has to say which of the
+two it meant.
 
 The one warning:
 

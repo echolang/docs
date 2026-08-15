@@ -242,7 +242,7 @@ $p:$ = &$b;
 // error: cannot re-seat 'const ptr<int32>' - the pointer is const, only its pointee may be written
 ```
 
-**A const pointee** is the mirror. You may move the pointer, you may not write through it:
+**A const pointee** is the mirror. The pointer can be re-seated. The pointee cannot be written:
 
 ```echo
 const int32 $a = 1;

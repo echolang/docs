@@ -1,7 +1,7 @@
 # Your first program
 
-Let's write something, run it, and then turn it into a binary. This takes about five minutes and by the end
-you will have met most of the things you need to read the rest of the docs.
+A file is a program. `echoc run` compiles it in memory and executes it. `echoc build` leaves a binary
+behind. Start with the first one.
 
 ## Hello
 
@@ -44,7 +44,8 @@ Hello,
 Echo
 ```
 
-Two `echo` statements, two lines, because of that automatic newline. We will fix that in a moment.
+Two `echo` statements, two lines, because of that automatic newline. Interpolation is how you put both
+on one: `"Hello, {$name}"`.
 
 The type goes in front of the name, and you can leave it out when it is obvious:
 
@@ -127,36 +128,7 @@ $people[] = 42;     // error: cannot assign 'int32' to 'string'
 You also get methods on the array itself, because it is an object rather than a magic builtin: `count()`,
 `push()`, `pop()`, `clear()` and a good few more. [Arrays](/collections/arrays) has the full surface.
 
-## Putting it together
-
-```echo
-function greet(string $who) : void
-{
-    string $line = "Hello, ";
-    $line->append($who);
-    $line->append("!");
-
-    echo $line;
-}
-
-array<string> $people = ["Mario", "Ray", "Ronon"];
-
-foreach ($people as $person) {
-    greet($person);
-}
-```
-
-```bash
-echoc run hello.eco
-```
-
-```
-Hello, Mario!
-Hello, Ray!
-Hello, Ronon!
-```
-
-## Making a binary
+## A binary
 
 `run` compiles in memory and executes immediately. That is the loop you want while writing code, but it does
 not leave anything behind. To get an actual executable:
@@ -170,6 +142,7 @@ echoc build -o hello hello.eco
 Hello, Mario!
 Hello, Ray!
 Hello, Ronon!
+3
 ```
 
 `hello` is a native binary. Copy it to another machine of the same platform and it runs, with no Echo

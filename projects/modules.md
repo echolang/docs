@@ -30,6 +30,7 @@ module.eco:2: unknown manifest attribute 'source', expected one of: module, vers
 | `#[sources: "src/*.eco"]` | the files this module is made of |
 | `#[depends: "../geometry"]` | another module, by path |
 | `#[target: exe { ... }]` | a program this module produces. See [More than one program](#more-than-one-program) |
+| `#[target: test] { ... }` | and what belongs to that target alone. See [A target can have things of its own](#a-target-can-have-things-of-its-own) |
 | `#[link: lib "m"]` | a native library this module needs. See [Linking](/projects/linking) |
 | `#[cc: sources "c/*.c"]` | C sources that ship beside the Echo. See [C interop](/projects/c-interop) |
 | `#[build_dir: "target"]` | where artifacts go instead of `ecobuild` |
@@ -172,6 +173,64 @@ One trade worth knowing: each target is compiled on its own, so the code they sh
 target. Their `#[depends:]` libraries are cached and shared between them, the module's own sources are not.
 For two programs over one `src/` that is a rounding error. If it ever stops being one, the shared half wants to
 be its own module, which is the thing `#[depends:]` was for all along.
+
+## A target can have things of its own
+
+Everything above belongs to the whole module. Sooner or later one target needs something the others have no
+use for: a directory of test files, a mocking library, a native library exactly one program links.
+
+Write a `{ ... }` after the target, and what is inside belongs to that target alone:
+
+<!-- verify: skip -->
+```echo
+#[module: "plotter"]
+
+#[sources: "src/*.eco"]
+
+#[target: exe { name: "plot", entry: "src/main.eco" }]
+
+#[target: test] {
+    #[sources: "tests/*.eco"]
+    #[depends: "../mocklib"]
+}
+```
+
+`echoc test` compiles `tests/` as part of `plotter` and links `mocklib` beside it. `echoc build` and
+`echoc run` do neither. Those files are never read, and `mocklib` is never compiled. Not compiled and then
+discarded: if `tests/` held a file that does not even lex, a normal build would not notice.
+
+That is what makes it worth the braces. Putting the tests in a plain `#[sources:]` line works too, and is
+what most projects do at first, because a `test` block is dropped before parsing on any run but
+`echoc test` and so costs the program nothing. But everything *around* the tests is still compiled into it:
+the fixture struct, the helper, the stub. A scope is how you say the whole directory is the test target's
+business.
+
+Four attributes may go in one:
+
+| | |
+|---|---|
+| `#[sources:]` | files this target is made of, on top of the module's |
+| `#[depends:]` | a module only this target needs |
+| `#[link:]` | a native library only this target links |
+| `#[cc:]` | C sources only this target ships |
+
+`#[module:]`, `#[version:]`, `#[build_dir:]` and `#[target:]` itself may not. Those describe the module, and
+a scope is one target speaking for itself:
+
+```
+module.eco:6: 'version' describes the module, not one of its targets - write it at file scope.
+```
+
+Scopes do not nest, and one scope belongs to one target. If you wrote `#[target: [ ... ]]` with several
+targets inside, give each of them its own line instead.
+
+### It changes what gets cached, and that is on purpose
+
+Two targets of one module normally compile the identical file list, so they share every cached object
+between them. A scope breaks that tie for the module that declares one: its two targets are now made of
+different files, so they get different objects. Which is exactly right, and is why a scope is something you
+opt into rather than the default. Every other module in the build, your dependencies and the standard
+library included, is untouched and still shared.
 
 ## A dependency is a directory on disk
 

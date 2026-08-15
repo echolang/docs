@@ -234,6 +234,47 @@ echo "connected";
 `connected`, then a single `7`. The same applies to `$this` at the end of a constructor, which is why a
 constructor can build something owning without it being destroyed on the way out.
 
+And it applies through a call in the same statement. `return wrap($w)` is `return $w` with something in
+between, so `$w` is handed to `wrap` rather than copied for it. The `return` was going to end its life
+either way:
+
+```echo
+struct Cargo { int32 $mass; destructor() { echo $this->mass; } }
+
+function stow(Cargo $c) : int32
+{
+    echo "stowed";
+    return $c->mass;
+}
+
+function launch() : int32
+{
+    Cargo $hold = Cargo(3);
+    return stow($hold);
+}
+
+echo launch();
+```
+
+`stowed`, then `3` as the cargo is destroyed inside `stow`, then `3` again as the result. One `Cargo`, one
+destructor. `Cargo` never had to say what a copy of it would mean, because none is taken.
+
+Write the same call one line earlier and it is refused, which is the rule showing you its edge:
+
+```echo
+function unloaded() : int32
+{
+    Cargo $hold = Cargo(4);
+    int32 $mass = stow($hold);      // error: 'Cargo' owns a resource and cannot be copied
+                                    // implicitly at this argument
+    return $mass;
+}
+```
+
+Here `$hold` is still yours on the next line, so the call needs a value of its own and `Cargo` has not said
+how to make one. `mv $hold` is the answer if you meant to hand it over. In the `return` above you did
+not have to write it, because there was nothing left for it to be.
+
 ## mv is not a performance hint
 
 `mv` does not exist to make a call cheaper, and reaching for it because a value looks expensive is the wrong
@@ -409,7 +450,7 @@ function watch() : weak<Stargate>
 
 weak<Stargate> $dangling = watch();
 
-guard Stargate $stillThere = strong($dangling) else {
+Stargate $stillThere = guard strong($dangling) else {
     echo "the gate is gone";
     die("nothing to report");
 }

@@ -225,6 +225,280 @@ $sealed->drain(500);
 The habit worth forming: mark a method `const` whenever it only reads. It costs nothing and it is what makes
 your type usable in a `const` position, including inside somebody else's `const` method.
 
+## A static belongs to the type, not to a value
+
+Everything so far needs a value to exist. A method needs one to be called on, a property lives inside each
+one. Sometimes what you want belongs to the type itself, and `static` is how you say so.
+
+A `static function` is called on the type and takes no `$this`:
+
+```echo
+struct GateAddress
+{
+    public int32 $destination;
+    public int32 $origin;
+
+    static function earth() : GateAddress
+    {
+        return GateAddress(1, 1);
+    }
+
+    static function outbound(int32 $to) : GateAddress
+    {
+        return GateAddress($to, 1);
+    }
+}
+
+$home = GateAddress::earth();
+$away = GateAddress::outbound(27);
+
+echo $home->destination;        // 1
+echo $away->destination;        // 27
+```
+
+This is the natural home for the *named constructors* a type wants. `earth()` and `outbound(27)` say what
+they build. Two plain constructors taking one `int32` each would not, and could not both exist anyway.
+
+A static and a method may share a name. They are told apart at the call site, so they never collide:
+
+```echo
+struct GateAddress
+{
+    public int32 $destination;
+
+    static function unknown() : int32
+    {
+        return 0;
+    }
+
+    function unknown() : int32
+    {
+        return $this->destination;
+    }
+}
+
+echo GateAddress::unknown();            // 0
+echo GateAddress(27)->unknown();        // 27
+```
+
+## A static property is one value the whole type shares
+
+```echo
+struct Chevron
+{
+    static int32 $locked = 0;
+
+    public int32 $index;
+
+    static function lock() : Chevron
+    {
+        Chevron::$locked = Chevron::$locked + 1;
+        return Chevron(Chevron::$locked);
+    }
+}
+
+$first = Chevron::lock();
+$second = Chevron::lock();
+
+echo $first->index;         // 1
+echo $second->index;        // 2
+echo Chevron::$locked;      // 2
+```
+
+It is not in the layout, so it costs a `Chevron` value nothing. Three things about it are worth knowing,
+because all three are visible from the outside.
+
+**The initializer runs the first time something reads or writes it**, not when the program starts. A static
+nothing ever names is never initialized, so its initializer's side effects never happen:
+
+```echo
+function calibrate() : int32
+{
+    echo 99;
+    return 7;
+}
+
+struct Dhd
+{
+    static int32 $calibration = calibrate();
+    public int32 $x;
+}
+
+echo 1;                     // 1, and calibrate() has not run
+
+echo Dhd::$calibration;     // 99, then 7
+echo Dhd::$calibration;     // 7, it only runs once
+```
+
+**It is torn down at the end of `main`, in reverse order of initialization.** A static may hold anything a
+value can, including something that owns memory, and it is given back the same way:
+
+```echo
+struct Log
+{
+    static string $prefix = 'gate';
+    public int32 $x;
+}
+
+echo Log::$prefix;          // gate
+```
+
+`die`, a failed `assert` and `std::env::exit` stop the program without running those teardowns, which is the
+same thing they already do to values in scope.
+
+**An initializer may name statics declared before it, and nothing else.** That is what makes it impossible
+to write two statics that wait on each other:
+
+```echo
+struct Limits
+{
+    static int32 $base = 2;
+
+    // $base is above it, so this is fine
+    static int32 $doubled = Limits::$base * 2;
+
+    public int32 $x;
+}
+
+echo Limits::$doubled;      // 4
+```
+
+Statics work on a generic type too, and each instantiation gets its own:
+
+```echo
+struct Box<T>
+{
+    static int32 $made = 0;
+
+    public T $v;
+
+    static function of(T $value) : Box<T>
+    {
+        Box<T>::$made = Box<T>::$made + 1;
+        return Box<T>($value);
+    }
+}
+
+$a = Box<int32>::of(1);
+$b = Box<int32>::of(2);
+$c = Box<bool>::of(true);
+
+echo Box<int32>::$made;     // 2
+echo Box<bool>::$made;      // 1
+```
+
+`static` is a member modifier, so it only means something inside a type. On a free function or a local
+variable there is no type to do the owning, and the compiler says so.
+
+## The leading dot lets the destination name the type
+
+Writing the type twice gets tiring where it is already obvious:
+
+```echo
+struct Response
+{
+    public int32 $status;
+    public bool $ok;
+
+    static function accepted() : Response
+    {
+        return Response(202, true);
+    }
+
+    static function failed(int32 $status) : Response
+    {
+        return Response($status, false);
+    }
+}
+
+function handle(bool $good) : Response
+{
+    if ($good) {
+        return .accepted();
+    }
+
+    return .failed(500);
+}
+
+echo handle(true)->status;      // 202
+echo handle(false)->status;     // 500
+```
+
+`.accepted()` is `Response::accepted()`. The leading dot means *the type this value is going into*, and
+there are exactly three places that can say what that is:
+
+- a **return type**, as above
+- a **declared variable's type**, `Response $r = .accepted();`
+- a **parameter** of a call, `send(.failed(404));`
+
+It nests, which is where it earns its keep:
+
+```echo
+struct Failure
+{
+    public int32 $code;
+
+    static function timeout(int32 $seconds) : Failure
+    {
+        return Failure($seconds);
+    }
+}
+
+struct Outcome
+{
+    public Failure $why;
+    public bool $ok;
+
+    static function failed(Failure $why) : Outcome
+    {
+        return Outcome($why, false);
+    }
+}
+
+function attempt() : Outcome
+{
+    return .failed(.timeout(30));
+}
+
+echo attempt()->why->code;      // 30
+```
+
+The outer `.failed(...)` takes its type from the return type, and the inner `.timeout(30)` then takes its
+own from `failed`'s parameter.
+
+The one place this will not work is where the destination is the thing you were asking the compiler to work
+out. A shorthand has no type of its own until an overload is chosen, so it cannot be what chooses one. Write
+the type when that happens:
+
+```echo
+struct Metres
+{
+    public float64 $v;
+
+    static function of(float64 $v) : Metres
+    {
+        return Metres($v);
+    }
+}
+
+struct Feet
+{
+    public float64 $v;
+
+    static function of(float64 $v) : Feet
+    {
+        return Feet($v);
+    }
+}
+
+function show(Metres $m) : float64 { return $m->v; }
+function show(Feet $f) : float64 { return $f->v; }
+
+// show(.of(3.0)) cannot work: naming the type is what picks the overload
+echo show(Metres::of(3.0));     // 3.000000
+echo show(Feet::of(3.0));       // 3.000000
+```
+
 ## Destructors
 
 If your struct owns something that has to be given back, a destructor is where that happens. It runs when
