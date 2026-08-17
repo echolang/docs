@@ -12,6 +12,8 @@ foreach ($numbers as $value) {
 }
 ```
 
+The `as` here is the binding. `$x as T` is a cast, a different job. [Casts](/language/casts) is that page.
+
 The catch is the copy you don't pay for, and that a type of yours loops the same way.
 
 ## Keys, when the source has them

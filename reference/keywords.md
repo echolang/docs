@@ -54,7 +54,7 @@ identifiers, and nothing about them collides with `for`, `class`, `enum`, `null`
 | `while` | loop while a condition holds | [Control flow](/language/control-flow) |
 | `for` | initializer, condition, step | [Control flow](/language/control-flow) |
 | `foreach` | walk anything iterable, with `as` | [Iteration](/collections/iteration) |
-| `as` | a written destination (`$x as T`), and the binding half of a `foreach` | [Types](/language/types), [Iteration](/collections/iteration) |
+| `as` | a written destination (`$x as T`), and the binding half of a `foreach` | [Casts](/language/casts), [Iteration](/collections/iteration) |
 | `break` / `continue` | leave the loop, or jump to its next step | [Control flow](/language/control-flow) |
 | `guard` | bind a nullable value or leave the scope | [Nullability](/memory/nullability) |
 
@@ -163,7 +163,7 @@ Three things are missing from that table on purpose.
 usually reach for a ternary to write.
 
 **`$x as T` is a written destination.** `(int32)$x` does not parse and `int32($x)` is not a function.
-See [Types](/language/types).
+See [Casts](/language/casts).
 
 **`..` and `..=` are not tokens.** They are ordinary operator declarations in `stdlib/core/range.eco`:
 

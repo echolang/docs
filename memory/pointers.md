@@ -190,7 +190,8 @@ save you from walking off the end of an allocation.
 ## Casting a pointer needs no ceremony
 
 A pointer type converts to another pointer type when you write the destination. `$x as T` is the usual
-spelling. `ptr<T>(...)` is the same conversion written the other way around:
+spelling. [Casts](/language/casts) is the page for every other kind of `as`. `ptr<T>(...)` is the same
+conversion written the other way around:
 
 ```echo
 ptr<int32> $ints = mem::alloc<int32>(2);

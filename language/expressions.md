@@ -150,9 +150,9 @@ int32 $multiplier = 2;
 float32 $val = 3.14f * ($multiplier as float32);
 ```
 
-That `$multiplier as float32` is a written destination. The compiler inserts the same conversion when a
-typed slot is already waiting. An optimizer will often make it disappear, but assume it is there when you
-are reasoning about a hot loop.
+That `$multiplier as float32` is a written destination. [Casts](/language/casts) is the page for the
+spelling. The compiler inserts the same conversion when a typed slot is already waiting. An optimizer will
+often make it disappear, but assume it is there when you are reasoning about a hot loop.
 
 ## What the compiler refuses
 

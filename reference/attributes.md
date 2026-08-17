@@ -165,6 +165,8 @@ function put(Quantity $q) : void
 put(7);                 // 7
 ```
 
+A written `$x as T` finds the same conversion. [Casts](/language/casts) is the spelling.
+
 Same rank as the outbound form. An overload that already takes `int32` still wins. The conversion still
 has to return a declared type, and for inbound that type has to be the owner.
 

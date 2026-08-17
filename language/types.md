@@ -187,9 +187,8 @@ A **variable** still converts either way, as [Primitive types](/reference/primit
 
 ## `$x as T`
 
-A destination usually decides the type: a typed variable, a parameter, a field. Sometimes there is no
-destination. A `return` whose expression is wider than the function asked for. An operand of `<`. Then you
-write the destination next to the value:
+A destination usually decides the type. Sometimes there is no destination. Then you write it next to the
+value:
 
 ```echo
 function wide(uint8 $b) : int32
@@ -200,58 +199,8 @@ function wide(uint8 $b) : int32
 echo (200 as int32) > 57;       // 1
 ```
 
-`(int32)$x` does not parse, and `int32($x)` is not a function. `as` is postfix, the same way `instanceof`
-is: `$n as int32 + 1` is `($n as int32) + 1`.
-
-A typed slot still converts without it:
-
-```echo
-float64 $precise = 3.9;
-int32 $rounded = $precise;
-echo $rounded;      // 3
-```
-
-That narrowing still happens without a word of complaint. `as` is for the sites that have nowhere to land,
-not a requirement on every conversion. [Expressions](/language/expressions) has the full conversion rules.
-
-Anything the compiler would have converted at a destination, you can write. A type that declared
-`#[implicit]` participates too:
-
-```echo
-struct Quantity
-{
-    int64 $n;
-
-    #[implicit]
-    static function from(int32 $n) : Quantity
-    {
-        return Quantity($n);
-    }
-}
-
-function put(Quantity $q) : void
-{
-    echo $q->n;
-}
-
-put(7 as Quantity);         // 7
-```
-
-`put(7)` would have done the same thing. The `as` just says it out loud.
-
-Here is the catch: it doesn't invent a conversion, and it doesn't unwrap.
-
-```echo
-int32? $maybe = 1;
-int32 $x = $maybe as int32;
-// error: 'int32?' does not narrow through 'as' - unwrap it with guard, ?? or ?->
-```
-
-`$w as T` on a `weak<T>` is the same kind of refusal. That's `strong($w)`. Two unrelated structs refuse it
-too: `'Alpha' cannot be read as a 'Beta'`.
-
-Pointer reinterpretation and the `T&` promotion are the two things that are only legal when written, and
-the promotion still needs `unsafe`. See [Pointers](/memory/pointers) and [Unsafe](/memory/unsafe).
+`(int32)$x` does not parse, and `int32($x)` is not a function. [Casts](/language/casts) is the page: what
+it will convert, what it will not (no unwrap, no `strong`), and why `foreach` still owns `as`.
 
 ## Values and references
 
@@ -315,6 +264,7 @@ write yourself.
 
 ## Next
 
+- [Casts](/language/casts) for `$x as T`, the written destination.
 - [Expressions](/language/expressions) for what happens when you mix these types in one expression.
 - [Structs](/language/structs) and [Classes](/language/classes) for the value/reference split.
 - [Primitive types](/reference/primitive-types) for the table on its own, without the prose.

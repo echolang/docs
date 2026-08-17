@@ -265,7 +265,7 @@ on [the list](/reference/limitations). Until then the literal check is the only 
 
 `$x as T` writes the destination next to the value, for the sites that have none: a `return`, an operand of
 `<`, a field of a constructor about to be called. `(int32)$x` does not parse and `int32($x)` is not a
-function. [Types](/language/types) has the spelling. Narrowing at a typed destination still happens
+function. [Casts](/language/casts) has the spelling. Narrowing at a typed destination still happens
 silently. `as` is the escape hatch, not a requirement.
 
 The other written form is inside an `unsafe` block, where `$bytes:$ as uint8&` (or `uint8&($bytes:$)`)

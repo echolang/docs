@@ -22,6 +22,7 @@ const sidebar = [
     items: [
       { text: 'Variables', link: '/language/variables' },
       { text: 'Types', link: '/language/types' },
+      { text: 'Casts', link: '/language/casts' },
       { text: 'Expressions', link: '/language/expressions' },
       { text: 'Control flow', link: '/language/control-flow' },
       { text: 'Functions', link: '/language/functions' },

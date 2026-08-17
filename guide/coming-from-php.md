@@ -16,6 +16,7 @@ you expected" rather than by topic.
 | `new Foo()` | `Foo()`. There is no `new` |
 | `$obj->method()`, `$arr['k']`, `Foo::bar()` | `->` for members, `[]` for indexing, `::` for namespaces |
 | `echo "Hi $name"` | `echo "Hi {$name}"`. Interpolation is `{$...}`, and `'` is verbatim as it is in PHP |
+| `(int)$x` | `$x as int32`. There is no C cast, and `int32($x)` is not a function. [Casts](/language/casts) |
 | Everything is a reference-ish object | `struct` is a value, `class` is reference counted |
 | Garbage collected | Ownership plus reference counting, no GC |
 | `function f($a)` | `function f(int32 $a) : void` |
