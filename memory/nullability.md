@@ -16,12 +16,12 @@ $active = Wormhole(7);
 echo $active == null;       // 0
 ```
 
-If you never write a `?`, null never enters your program. The rest of this page is for when absence is a real
-state and you want the type to say it out loud.
+If you never write a `?`, null never enters your program. Absence is a real state, and the type says it
+out loud.
 
 ## null needs permission
 
-Writing `null` at a type that did not ask for it is a compile error, not a runtime surprise:
+Writing `null` at a type that didn't ask for it is a compile error, not a runtime surprise:
 
 ```echo
 class Wormhole { int32 $id; }
@@ -39,11 +39,12 @@ int32& $locked = null;
 // error: 'int32&' cannot be null - declare it as a nullable pointer instead
 ```
 
-`T&` is the type that promises there is something there. If you need "maybe an address", that is `ptr<T>`.
+`T&` is the type that promises there is something there. If you need "maybe an address", that's `ptr<T>`.
 
 ## What the question mark costs
 
-It depends on what it is sitting on, and the split is worth knowing before you put a `?` on a hot struct.
+It depends on what it is sitting on, and the split is the thing to have in your head before you put a `?`
+on a hot struct.
 
 **Free** over anything that is already one machine address: a class handle, a `ptr<T>`, a `weak<T>`. A null
 address *is* the absent case, so `Wormhole?` is the same size as `Wormhole` and the same value flows through.
@@ -80,8 +81,7 @@ echo $active->id;
 //        absent, '??' to supply a replacement, or 'guard' to bind it once and read it plainly
 ```
 
-That message is the table of contents for the next three sections. There are exactly three ways through, and
-you pick by what you want to happen when the value is absent.
+That message names the three ways through. Pick by what you want to happen when the value is absent.
 
 ## ?? supplies a replacement
 
@@ -101,7 +101,7 @@ echo chevronCount(true) ?? -1;      // 7
 echo chevronCount(false) ?? -1;     // -1
 ```
 
-`B` runs **only** when `A` turned out to be absent, which is unusual enough to be worth proving:
+`B` runs **only** when `A` turned out to be absent. That's unusual enough that I want to prove it:
 
 ```echo
 function fallback() : int32
@@ -117,7 +117,7 @@ echo $present ?? fallback();    // 7, and nothing else was printed
 echo $absent ?? fallback();     // computing a fallback, then -1
 ```
 
-So the right side may be as expensive as it likes, and may have effects that must not happen on the common
+So the right side can be as expensive as it likes, and can have effects that must not happen on the common
 path.
 
 It chains to the right, so a run of fallbacks reads the way you would hope:
@@ -129,7 +129,7 @@ int32? $secondary = 5;
 echo $primary ?? $secondary ?? 42;      // 5
 ```
 
-If the right side is itself nullable, the answer still may be absent and the type says so. That is what makes
+If the right side is itself nullable, the answer still may be absent and the type says so. That's what makes
 the chain above legal rather than a type error in the middle.
 
 ## ?-> reaches through, or stops
@@ -183,7 +183,7 @@ $gone?->close();            // nothing
 ## guard binds it once
 
 `??` and `?->` handle a value at one use site. When you want to check once and then read the thing plainly
-for the rest of the function, that is `guard`:
+for the rest of the function, that's `guard`:
 
 ```echo
 class Wormhole
@@ -313,8 +313,8 @@ echo doubled(10);       // 20
 echo doubled(-1);       // -1
 ```
 
-Two methods and that is the whole protocol. `has_value()` is asked first and its answer gates the unwrap, so
-`unwrap()` never has to check again. That is the same bargain `contract::iterator<V>` makes between
+Two methods and that's the whole protocol. `has_value()` is asked first and its answer gates the unwrap, so
+`unwrap()` never has to check again. That's the same bargain `contract::iterator<V>` makes between
 `advance()` and `current()`.
 
 Note that `has_value()` is `const` and `unwrap()` is not. Reading *whether* a value is there promises nothing
@@ -399,7 +399,7 @@ Two interfaces rather than one, because they are two separate capabilities. A ty
 no `failable` has no reason to give, so writing `else ($e)` against one is a compile error that says exactly
 that. The same goes for a plain `T?`, where there is genuinely nothing to bind.
 
-`ParsedInt` above is a teaching example, and you do not have to write it. The library ships
+`ParsedInt` above is a teaching example, and you don't have to write it. The library ships
 [`result<T, E>`](/stdlib/result), which declares both interfaces over any `T` and any `E` you like:
 
 ```echo
@@ -420,8 +420,8 @@ int32 $port = guard parse_port('8080') else ($why) {
 echo $port;    // 8080
 ```
 
-Use `T?` when there is nothing to say about why the value is missing, and `result<T, E>` when there is. That
-is the whole of the choice.
+Use `T?` when there is nothing to say about why the value is missing, and `result<T, E>` when there is. That's
+the whole of the choice.
 
 ## Asking whether it is there
 
@@ -517,7 +517,7 @@ The upgrade is balanced: the reference exists for the duration of the read and i
 none of those forms quietly extends the object's life past the statement. A `guard` is the exception on
 purpose, since the whole point is that the binding lives on.
 
-What you cannot do is read a weak reference directly. `$watcher->lockedChevrons` is refused, and the message
+What you can't do is read a weak reference directly. `$watcher->lockedChevrons` is refused, and the message
 tells you to upgrade it first. [Classes](/language/classes) covers why weak references exist at all.
 
 ## Where a written null gets its type

@@ -17,12 +17,12 @@ if ($unit == DistanceUnit::kilometer) {
 }
 ```
 
-That is the whole thing for the common case. The rest of this page is what a case can carry, and what
-[`match`](#match-reads-which-case-you-are-holding) does with it.
+Three names, three values, and the compiler can check you handled all of them. A case can also carry data,
+and [`match`](#match-reads-which-case-you-are-holding) is how you read it back.
 
 ## Why not an int32 and a comment
 
-Because that is what you end up writing otherwise, and it holds until the day somebody passes `7`. Or until
+Because that's what you end up writing otherwise, and it holds until the day somebody passes `7`. Or until
 you add a fourth unit and forget one of the four places that switch on it, which is worse, because nothing
 tells you.
 
@@ -57,11 +57,11 @@ DistanceUnit $unit = .kilometer;   // the declaration named the type
 echo describe(.meter);             // 1, the parameter named it
 ```
 
-That is the same shorthand
+That's the same shorthand
 [static functions](/language/structs#the-leading-dot-lets-the-destination-name-the-type) use, and the same
-machinery underneath. A case is not a special kind of thing, which is a theme on this page.
+machinery underneath. A case is not a special kind of thing, which is a theme here.
 
-`==` and `!=` compare which case a value is holding, because that is all an enum's identity ever is. Nobody
+`==` and `!=` compare which case a value is holding, because that's all an enum's identity ever is. Nobody
 declares that operator and nobody can write one that disagrees.
 
 ## A case can carry a backing value
@@ -95,8 +95,8 @@ enum DistanceUnit : string
 echo DistanceUnit::kilometer->value();   // km
 ```
 
-`value()` is a function rather than a field, and that is deliberate. For an integer backing the value
-genuinely *is* the discriminant, so reading it costs nothing. A string cannot be a discriminant, and storing
+`value()` is a function rather than a field, and that's deliberate. For an integer backing the value
+genuinely *is* the discriminant, so reading it costs nothing. A string can't be a discriminant, and storing
 one in every value would mean `DistanceUnit::meter` allocated. So the value lives with the declaration,
 `value()` fetches it, and both backings are spelled the same way.
 
@@ -123,8 +123,7 @@ is nothing to say about it.
 A payload and a backing value are mutually exclusive. A case is one or the other, and an enum picks one for
 all of its cases.
 
-Reading a payload back needs `match`, which is the next section and the reason the rest of this holds
-together.
+Reading a payload back needs `match`. That's the next section, and it's what holds the rest of this together.
 
 ## match reads which case you are holding
 
@@ -253,8 +252,8 @@ echo to_int(Side::right);      // 1
 ```
 
 An arm may also simply never come back. `die` returns `void`, which would normally clash with an arm
-handing back an `int32`, and it does not: an arm that never returns contributes no type to the unification
-at all. That is what makes `unwrap()` writable, where one arm has a `T` and the other only has an `E`:
+handing back an `int32`, and it doesn't: an arm that never returns contributes no type to the unification
+at all. That's what makes `unwrap()` writable, where one arm has a `T` and the other only has an `E`:
 
 <!-- verify: dies -->
 ```echo
@@ -452,7 +451,7 @@ interfaces that any enum of yours can declare.
 
 ## What an enum is, underneath
 
-A discriminant, plus one slot per payload field:
+A discriminant, plus the payload of whichever case you are holding:
 
 ```
 enum CurlError {
@@ -462,17 +461,14 @@ enum CurlError {
 }
 ```
 
-That becomes a value holding a tag and the fields of *every* case, not only the live one. The size is at
-least the sum of those fields, plus the tag and whatever padding their alignment wants, rather than the
-largest of them. A plain enum is one byte; one with three fat cases is as wide as all three sitting side
-by side.
+The size is the tag plus the widest case, plus whatever padding their alignment wants. A `cannot_connect`
+is not as wide as `http`. A plain enum is one byte. Copy and teardown still only touch the live case, so
+an `http` being copied does not retain a timeout that is not there.
 
-That is a real cost, and it is the honest trade for the rest of the feature being ordinary. The payload
-slots are properties like any others, so member access, debug info, aliasing metadata and the copy rules all
-reach an enum with no special case anywhere in the compiler. Overlapping them is an optimisation that can
-land later without changing a line of Echo.
+The payload slots are still ordinary properties as far as the rest of the compiler is concerned. That's
+what keeps copy, drop, `match` and debug info from growing an arm per case. The overlay is the lowering.
 
-The layout is otherwise unspecified. Do not `mem::bit_cast` an enum and expect a stable shape.
+The layout is otherwise unspecified. Don't `mem::bit_cast` an enum and expect a stable shape.
 
 ## Next
 

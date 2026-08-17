@@ -1,6 +1,6 @@
 # Visibility
 
-Every declaration decides who is allowed to name it, and there is one catch worth knowing before you write a
+Every declaration decides who is allowed to name it, and there's one catch before you write a
 second file: **no modifier does not mean public. It means "my module, and no further."**
 
 ```echo
@@ -12,9 +12,9 @@ public function dial() : int32
 echo dial();        // 7
 ```
 
-In a single-file program that is the whole thing, and none of it costs you anything: your module and your
-program are the same thing, so nothing is ever refused and `public` buys you nothing. The rest of this page is
-what happens once there is a second file, and what the same word means inside a type.
+In a single-file program none of this costs you anything: your module and your program are the same thing,
+so nothing is ever refused and `public` buys you nothing. Once there is a second file, and once the same
+word sits inside a type, the three rungs start to matter.
 
 ## Three rungs, and you are standing on the middle one
 
@@ -55,7 +55,7 @@ echo address();     // 9
 
 `internal` and writing nothing are the same rung, so adding the word never changes what compiles. It is there
 because "I checked, and there is no modifier" is a lousy way to find out that something is deliberately not part
-of a library's surface. Write it where that answer matters and skip it where it does not.
+of a library's surface. Write it where that answer matters and skip it where it doesn't.
 
 ## The default points inward, and that costs you something
 
@@ -65,7 +65,7 @@ a line somebody had to type, and a library of yours that forgets one gets "the f
 rather than anything about visibility.
 
 I still prefer it, for one reason. A declaration that is public by default is part of your interface the second
-you type it, and you cannot take it back out later without breaking somebody who was never meant to reach it in
+you type it, and you can't take it back out later without breaking somebody who was never meant to reach it in
 the first place. Defaulting to the module makes your surface something you chose, one `public` at a time. That
 cost is paid once per name you actually meant to export. The other one is paid by everybody who depends on you,
 forever.
@@ -95,7 +95,7 @@ Chevron $c = lock(1);       // error: 'Chevron' is private to 'gate.eco', so it 
                             //        its module, or write 'public' to reach it from anywhere.
 ```
 
-Note: `private` narrows who may *name* a declaration, not whether the name is taken. Two files still cannot each
+Note: `private` narrows who may *name* a declaration, not whether the name is taken. Two files still can't each
 declare their own `Chevron`. That is an ordinary redeclaration, and visibility has nothing to say about it.
 
 ## Inside a type, private means the type
@@ -129,7 +129,7 @@ $gate = Gate();
 echo $gate->lock();     // 1
 ```
 
-`lock()` reaches `bump()` because they belong to the same type. Now here is the part worth slowing down for.
+`lock()` reaches `bump()` because they belong to the same type. Now here's the part that trips people.
 It is the *type*, and nothing but the type:
 
 ```echo
@@ -153,27 +153,44 @@ struct Dialer
 }                           //        what 'Gate' offers, drop the 'private'.
 ```
 
-`Dialer` sits in the same file, the same module and the same namespace as `Gate`, and it still does not get in.
+`Dialer` sits in the same file, the same module and the same namespace as `Gate`, and it still doesn't get in.
 Privacy is per type. Being a neighbour counts for nothing. A private *property* refuses the same way, with its
 own wording, and a statement at file scope is refused too, being inside no type at all.
 
-The file and module rungs do not exist down here, so `internal` on a member is refused and points you at the
-type instead:
+`internal` on a member is the other axis, and it is the one a type split across files actually wants. The
+same word as at the top level, the same rung: this module, and no further. A `public` type may have
+`internal` fields. A second module that can name the type still cannot name those members.
 
 ```echo
-struct Gate
+public class Node
 {
-    internal int32 $locked;     // error: 'internal' cannot be written here. A member has no module of
-}                               //        its own - it is reachable exactly where the type that owns
-                                //        it is.
+    internal int32 $kind;
+    internal string $body;
+
+    public const function text() : string
+    {
+        return $this->body;
+    }
+}
+
+function write(const Node& $n) : int32
+{
+    return $n->kind;            // same module: visible
+}
+
+echo write(Node(1, "hi"));
 ```
 
-That also means `public struct Gate` publishes its constructor and its methods without a word on any of them.
-You mark the type, not every line inside it.
+A consumer of the module compiles `$n->text()` and is refused on `$n->kind` and `$n->body`. The sentence names
+the member and the module, not "unknown property".
+
+That also means `public struct Gate` still publishes its constructor and every member that said nothing.
+You mark the type, then you mark the inside. `private` stays the type, not the file: neighbours in the same
+module still don't get in.
 
 One consequence people trip over: a single `private` property suppresses the field-wise constructor outright,
-because that constructor writes every property from outside the type. [Structs](/language/structs) has that
-case in full.
+because that constructor writes every property from outside the type. An `internal` property does not:
+the type is still constructible where it is today. [Structs](/language/structs) has the private case in full.
 
 ## public const is the read-only field you actually wanted
 
@@ -215,10 +232,10 @@ There is no third rule making that work. `const` on a property is simply the pro
 field's first write, which it needs in order to exist at all.
 
 The `public` in `public const` is doing nothing, since a member is public anyway. Write it where it helps the
-reader and drop it where it does not.
+reader and drop it where it doesn't.
 
 Note: assigning a whole struct still copies a `const` property, because the target's own type is not const.
-That is a hole, and it is on [the list](/reference/limitations).
+That's a hole, and it's on [the list](/reference/limitations).
 
 ## Seven shapes take no modifier
 
@@ -268,11 +285,11 @@ echo scale(1);      // error: 'scale(int32)' is internal to the module 'sealedli
                     //        part of what 'sealedlib' offers.
 ```
 
-`scale(int32)` is the better match, so that is what the call resolves to, and *then* it gets refused. The
+`scale(int32)` is the better match, so that's what the call resolves to, and *then* it gets refused. The
 alternative is a program that silently calls the `int64` one because the overload you meant was invisible. I
 would rather read an error message than debug that on a Friday.
 
-Worth keeping straight: this is not the hiding that [Namespaces](/language/namespaces) describes, where an
+Keep these two apart: this is not the hiding that [Namespaces](/language/namespaces) describes, where an
 outer overload set genuinely never joins the candidates. Here the candidate is right there, wins, and is then
 turned down.
 
@@ -302,8 +319,8 @@ echo hash::of(Glyph(7));    // 1346066267577507604
 ```
 
 Judging that call against the standard library would refuse a program whose author did nothing wrong, so a
-generic instantiation is exempt from the module rung entirely. That is a hole, since you can reach another
-module's internals by routing a call through a generic, and it is on [the list](/reference/limitations).
+generic instantiation is exempt from the module rung entirely. That's a hole, since you can reach another
+module's internals by routing a call through a generic, and it's on [the list](/reference/limitations).
 
 ## Next
 

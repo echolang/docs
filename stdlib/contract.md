@@ -1,9 +1,8 @@
 # Contracts
 
-`contract::` holds interfaces and nothing else. Six of them matter, and they split into two protocols:
-four for iteration, two for unwrapping. **`foreach` uses the first four and nothing else, and `guard` uses
-the other two and nothing else.** `array<T>` gets no special treatment from either, and neither does
-anything else in the library.
+`foreach` does not special-case `array<T>`. It resolves against four interfaces. `guard` resolves
+against two more. All six live in `contract::`, and **that's the only thing this namespace holds.**
+A type of yours declares them the same way the library does.
 
 ```echo
 array<string> $gates = ["Abydos", "Chulak"];
@@ -13,8 +12,8 @@ foreach ($gates as $name) {
 }
 ```
 
-That loop resolved against an interface `array<T>` declares in ordinary Echo. A type of your own conforms
-exactly the same way and loops exactly as well. The rest of this page is how.
+That loop resolved against an interface `array<T>` declares in ordinary Echo. Your own type conforms
+exactly the same way and loops exactly as well.
 
 ## The iteration interfaces, in full
 
@@ -48,7 +47,7 @@ interface keyed<K>
 }
 ```
 
-That is all of them. No properties, no bodies, no default implementations. An interface in Echo describes a
+That's all of them. No properties, no bodies, no default implementations. An interface in Echo describes a
 capability and has no storage and no behaviour of its own, which is what keeps conformance from being
 inheritance. See [Interfaces](/language/interfaces).
 
@@ -63,9 +62,9 @@ function current() : V&;        // the element. only valid after advance() answe
 ```
 
 `foreach` calls `advance()` first and gates the loop on its answer, so `current()` is only ever reached
-after a `true`. That is the whole promise, and it is worth more than it looks: it means `current()` can skip
-a bounds check that `advance()` has already performed. A cursor that tried to be safe to call in any order
-would pay for that on every element.
+after a `true`. That's the whole promise. It means `current()` can skip a bounds check that `advance()`
+has already performed. A cursor that tried to be safe to call in any order would pay for that on every
+element.
 
 `current()` returns `V&`, a borrow, so a loop over an owning element type copies nothing.
 
@@ -83,7 +82,7 @@ interface iterable<V>
 }
 ```
 
-`Iter` is chosen by the implementor, and the interface only constrains it. You do not declare it, bind it,
+`Iter` is chosen by the implementor, and the interface only constrains it. You don't declare it, bind it,
 or name it anywhere: **the compiler reads it off the return type of your `iterate()`.** If that return type
 does not conform to `iterator<V>`, the conformance is refused at your declaration rather than at the loop.
 
@@ -174,7 +173,7 @@ array<int32> $power = [1, 2, 3];
 echo total($power);         // 6
 ```
 
-The reason it is a separate interface rather than a second `iterate()` overload is that **a requirement's
+The reason it's a separate interface rather than a second `iterate()` overload is that **a requirement's
 receiver is part of the requirement.** An interface is answered by a method making exactly the promise it
 asked for, compared in both directions, so a `const function iterate()` cannot answer `iterable<V>` and a
 plain one cannot answer `const_iterable<V>`. Two interfaces, two answers, and no ranking to depend on.
@@ -186,7 +185,7 @@ travels all the way to the loop variable.
 
 ## `keyed<K>` is orthogonal on purpose
 
-It is what makes the two-variable form spellable:
+It's what makes the two-variable form spellable:
 
 ```echo
 map<string, int32> $power = map<string, int32>();
@@ -198,7 +197,7 @@ foreach ($power as $key => $level) {
 }
 ```
 
-`keyed<K>` sits beside `iterator<V>` rather than being folded into it, and that is what lets the capability
+`keyed<K>` sits beside `iterator<V>` rather than being folded into it, and that's what lets the capability
 set grow. A future `reversible` or `random_access<V>` is another interface next to these, and a cursor
 declares the ones it can honour. A cursor that cannot say where it is simply does not declare `keyed<K>`,
 and the `$k => $v` form is then refused for it.
@@ -219,8 +218,8 @@ struct bad_cursor : contract::iterator<int32>
 //        'advance() : bool' - it declares no 'advance'.
 ```
 
-The error is on line one of the struct, not at some far-away `foreach`. That is the payoff for conformance
-being declared rather than inferred: the type either says it can do this or it does not, and the compiler
+The error is on line one of the struct, not at some far-away `foreach`. That's the payoff for conformance
+being declared rather than inferred: the type either says it can do this or it doesn't, and the compiler
 checks the claim where the claim is made.
 
 ## unwrappable and failable
@@ -276,8 +275,8 @@ echo $port;    // 8080
 
 ### failable is separate on purpose
 
-`failable<E>` is what makes `else ($e)` spellable, and it is a **second** interface rather than a second
-method on the first. That is not tidiness. A type that means "maybe a value" often has nothing to say about
+`failable<E>` is what makes `else ($e)` spellable, and it's a **second** interface rather than a second
+method on the first. That's not tidiness. A type that means "maybe a value" often has nothing to say about
 why, and a `T?` is exactly that: it records that a value is absent and nothing at all about the reason. So a
 subject that does not declare `failable<E>` has no reason to bind, and writing `else ($e)` against one is a
 compile error at the `$e` rather than a hole in the protocol.
@@ -292,7 +291,7 @@ compiler answers for `T?` directly, before these interfaces are consulted at all
 
 ## The protocol is genuinely open
 
-Your own type loops as well as `array<T>` does, and that is not generosity. It is because `array<T>` never
+Your own type loops as well as `array<T>` does, and that's not generosity. It's because `array<T>` never
 had a shortcut available to it either: it declares these interfaces, and so do you. Anything the library can
 iterate, you can build.
 

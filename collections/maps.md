@@ -1,8 +1,8 @@
 # Maps
 
-Two types, two promises. `map<K, V>` is a hash table and its iteration order is **unspecified**;
-`ordered_map<K, V>` has the same surface plus one guarantee, that it hands entries back in the order they
-first arrived.
+A map is its own container, and there are two of them. `map<K, V>` is a hash table and its iteration
+order is **unspecified**; `ordered_map<K, V>` has the same surface plus one guarantee, that it hands
+entries back in the order they first arrived.
 
 ```echo
 map<string, int32> $ages = map<string, int32>();
@@ -24,7 +24,7 @@ Exactly two things: an overload of `hash::of`, and an `operator ==`. Every primi
 has both, so `map<string, V>`, `map<int32, V>` and friends need nothing from you.
 
 Notice what that is *not*: it is not an interface. A `contract::hashable` would be the obvious design and
-it does not work, because a primitive cannot declare a conformance. A constrained `K` would refuse
+it doesn't work, because a primitive cannot declare a conformance. A constrained `K` would refuse
 `map<int32, V>`, which is the first map anybody writes.
 
 For your own type, declare both:
@@ -54,7 +54,7 @@ function of(const sku& $k) : uint64
 }
 ```
 
-**That is two files, and the second one is a real cost rather than a style note.** A namespace is a
+**That's two files, and the second one is a real cost rather than a style note.** A namespace is a
 file-level statement, so a `namespace hash;` file cannot also hold the `struct sku` it is about, or the
 program using it. A single-file program cannot extend the hash set at all.
 
@@ -63,12 +63,12 @@ Two ways to get the namespace wrong, both silent: `namespace app::hash;` is a di
 [Namespaces](/language/namespaces) and [Hashing](/stdlib/hash).
 
 One honest warning: a key type missing either half reports a diagnostic pointing **inside `map.eco`**,
-once `K` is bound, rather than at your own code. That is not good and it is known.
+once `K` is bound, rather than at your own code. That's not good and it is known.
 
 ## The bracket that reads and the bracket that writes are two declarations
 
 `$m[$k] = $v` is not an assignment to a place. It is literally a call to an index-**write** operator, and
-that is what makes insertion possible: a map asked for a key it does not have has no slot to hand back, and
+that's what makes insertion possible: a map asked for a key it does not have has no slot to hand back, and
 the write is the thing that should create one.
 
 The read bracket is a separate declaration, so **reading through a mutable map neither inserts nor
@@ -202,7 +202,7 @@ nothing enforces either.
 
 ## A map owns its keys and its values
 
-Both, and both are destroyed exactly once. The two moments worth naming are a replace, where the old value
+Both, and both are destroyed exactly once. Two moments to name: a replace, where the old value
 has to end because nothing else will, and a copy, where the value has to be retained rather than bit-copied:
 
 ```echo
@@ -297,7 +297,7 @@ It also has no `shrink`. Everything else on `map`'s surface is here.
 
 ## Writing to a const map, or to a temporary
 
-Both are refused, and both messages are worth seeing once:
+Both are refused. The messages look like this:
 
 ```echo
 map<string, int32> $m = map<string, int32>();

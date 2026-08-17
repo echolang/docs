@@ -1,15 +1,17 @@
 # Variables
 
-Variables are declared the way you would expect from PHP, but with a catch: **every variable has a static
-type, decided at the declaration, and it never changes.**
+Variables start with `$`. The catch: **every variable has a static type, decided at the declaration, and
+it never changes.**
 
 ```echo
 $a = 25;
 echo $a;        // 25
 ```
 
-That is the whole thing for the common case. The rest of this page is what happens when the common case is
-not enough.
+```echo
+$a = 25;        // works fine
+$a = "hello";   // will not compile
+```
 
 ## Writing the type, or not
 
@@ -31,8 +33,8 @@ $ratio = 0.5;       // float64
 $ready = true;      // bool
 ```
 
-Both spellings produce the same variable. Inference is not a weaker form of declaration, it is the same
-declaration with the type worked out for you.
+Same variable either way. Inference is not a weaker form of declaration. It's the same declaration with the
+type worked out for you.
 
 An untyped integer literal is an `int32` and an untyped float literal is a `float64`. If you want something
 else, say so:
@@ -48,7 +50,8 @@ I think reads better anyway.
 
 ## Declaring without a value
 
-Writing the type lets you declare now and assign later:
+What you can't do is declare a variable with an unknown type. In the examples above, the type comes from the
+value. Write the type if you want to assign later:
 
 ```echo
 string $b;
@@ -56,17 +59,14 @@ $b = "later";
 echo $b;        // later
 ```
 
-What you cannot do is skip both. With no type and no initializer there is nothing to infer from, so it is not
-a declaration and the parser says so:
-
 ```echo
-$c;             // error: unexpected token 'varname'
+$c;             // invalid: the type was unknown at declaration
 $c = 25;
 ```
 
 ## The type never changes
 
-This is the part that catches people coming from PHP.
+This is the part that catches people.
 
 ```echo
 $name = "Echo";
@@ -75,8 +75,8 @@ $name = 42;     // error: cannot assign 'int32' to 'string'
 
 Nothing was compiled. The type of `$name` was settled on line one and line two contradicts it.
 
-Note the wording: `int32` to `string`. Echo is not refusing to convert, it is refusing to *reassign the
-type*. `$name` is a `string` and will be one until it goes out of scope.
+Echo is not refusing to convert here. It's refusing to *reassign the type*. `$name` is a `string` and will
+be one until it goes out of scope.
 
 ## Conversions between number types
 
@@ -90,7 +90,7 @@ int64 $b = $a;      // fine
 Narrowing is where it gets interesting, and the rule depends on whether the compiler can see the value.
 
 **A literal is checked against the actual value.** The compiler knows what `256` is, so it can tell you it
-does not fit:
+doesn't fit:
 
 ```echo
 uint8 $ok = 255;    // fine
@@ -107,7 +107,7 @@ float $x = 3.14;
 
 Write `3.14f` when you meant a `float32` and the warning goes away.
 
-**A variable is not checked.** The compiler does not know what is in it at compile time, so a narrowing
+**A variable is not checked.** The compiler doesn't know what's in it at compile time, so a narrowing
 assignment is accepted and truncates at runtime:
 
 ```echo
@@ -122,12 +122,12 @@ float32 $f = $pi;
 echo $f;            // 3.141593
 ```
 
-To be clear: that is the current behaviour, not a design I am happy with. C does the same thing and I have
-never once been glad about it. I would rather narrowing needed an explicit cast, and that is on
-[the list](/reference/limitations). Until then, know that the literal check is the only one you get.
+To be clear: that's the current behaviour, not a design I am happy with. C does the same thing and I have
+never once been glad about it. I'd rather narrowing needed something written down, and that's on
+[the list](/reference/limitations). Until then, the literal check is the only one you get.
 
-[Expressions](/language/expressions) has the conversion rules for what happens when you mix types inside an
-expression rather than across an assignment.
+[Expressions](/language/expressions) has the conversion rules for mixing types inside an expression rather
+than across an assignment.
 
 ## const variables
 
@@ -138,7 +138,7 @@ const usize $max = 100;
 $max = 200;     // error: cannot assign to '$max' - it is declared const
 ```
 
-It is still a variable. It has storage, it lives in the scope you wrote it in, and it goes away with that
+It's still a variable. It has storage, it lives in the scope you wrote it in, and it goes away with that
 scope. All `const` does is stop you writing to it.
 
 You can infer the type of a `const` too:
@@ -158,10 +158,10 @@ const usize MAX = 100;      // a constant, has none
 ```
 
 A constant has no storage at all. Its expression is copied into each place the name is used, before anything
-else happens. That is how `std::math::PI` is declared, and it is why a constant can live at file scope,
-namespace scope or struct scope where a variable cannot.
+else happens. That's how `std::math::PI` is declared, and it's why a constant can live at file scope,
+namespace scope or struct scope where a variable can't.
 
-[Constants](/language/constants) covers the rest, including the surprising consequence that a constant whose
+[Constants](/language/constants) covers the rest, including the slightly surprising bit: a constant whose
 expression calls a function calls it once per use site.
 
 ## Scope
@@ -187,8 +187,7 @@ for (int32 $i = 0; $i < 3; $i++) {
 echo $i;        // error
 ```
 
-There is no hoisting and no function-wide scope. If you have been bitten by a PHP `foreach` variable outliving
-its loop, that does not happen here.
+No hoisting. No function-wide scope. A loop variable belongs to the loop.
 
 ## When the value owns something
 
@@ -211,9 +210,8 @@ array<int32> $b = mv $a;
 echo $a->count();   // error: '$a' has been moved out of
 ```
 
-Reading a moved-from variable is a compile error, not a runtime surprise. That is the entire safety
-guarantee, and it is worth understanding properly before you write anything large:
-[Ownership and moving](/memory/ownership).
+Reading a moved-from variable is a compile error, not a runtime surprise. That's the entire safety
+guarantee. [Ownership and moving](/memory/ownership) is the chapter.
 
 ## Next
 

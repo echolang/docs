@@ -1,7 +1,7 @@
 # Keywords
 
-Echo reserves thirty-seven words, and the thing worth noticing is **how short that list is**. There is no
-`new`, no `this`, no `import`, no `use`, no `switch`, no `try`, no `throw` and no `sizeof`.
+Echo reserves thirty-eight words. The list is short on purpose. There is no
+`new`, no `this`, no `import`, no `switch`, no `try`, no `throw` and no `sizeof`.
 
 ```echo
 function greet(string $name) : void
@@ -12,12 +12,12 @@ function greet(string $name) : void
 greet("Echo");      // Echo
 ```
 
-Six words in that program and two of them are reserved. The rest of this page is the full list, plus the
-words that look reserved and are not, plus every token that means something on its own.
+Six words in that program and two of them are reserved. Below is the full list, the words that look
+reserved and aren't, and every token that means something on its own.
 
 ## The reserved words
 
-Reserved means the lexer takes the word before anything else gets a look at it, so it cannot be a function
+Reserved means the lexer takes the word before anything else gets a look at it, so it can't be a function
 name, a struct name or a member name. Variables are safe either way, because a variable always carries a `$`.
 
 Matching is whole-word. `forward`, `classify`, `enumerate`, `nullable` and `constructor` are all ordinary
@@ -35,6 +35,7 @@ identifiers, and nothing about them collides with `for`, `class`, `enum`, `null`
 | `destructor` | declares the method that runs when a value dies | [Structs](/language/structs) |
 | `operator` | declares an operator, infix, prefix or `[]` | [Operators](/language/operators) |
 | `namespace` | puts the rest of the file in a namespace | [Namespaces](/language/namespaces) |
+| `use` | binds a shorter name for a namespace, type, function or constant, for this file | [Namespaces](/language/namespaces) |
 | `extern` | opens a block of C declarations, or the C function-pointer type `extern function<R(P...)>` | [C interop](/projects/c-interop) |
 | `const` | a read-only variable, a constant, or a `const if` | [Constants](/language/constants) |
 | `private` | narrows a declaration to its file, or a member to its own type | [Visibility](/language/visibility) |
@@ -53,7 +54,7 @@ identifiers, and nothing about them collides with `for`, `class`, `enum`, `null`
 | `while` | loop while a condition holds | [Control flow](/language/control-flow) |
 | `for` | initializer, condition, step | [Control flow](/language/control-flow) |
 | `foreach` | walk anything iterable, with `as` | [Iteration](/collections/iteration) |
-| `as` | the binding half of a `foreach` | [Iteration](/collections/iteration) |
+| `as` | a written destination (`$x as T`), and the binding half of a `foreach` | [Types](/language/types), [Iteration](/collections/iteration) |
 | `break` / `continue` | leave the loop, or jump to its next step | [Control flow](/language/control-flow) |
 | `guard` | bind a nullable value or leave the scope | [Nullability](/memory/nullability) |
 
@@ -115,7 +116,7 @@ echo Point(3)->x;       // 3
 
 `destructor` is a real keyword so that no member can be named `destructor` and collide with the mangled name
 of the actual one. `constructor` is an ordinary identifier the type parser recognises by value, which means a
-struct is free to have a property called `constructor` and nothing breaks.
+struct can have a property called `constructor` and nothing breaks.
 
 Four more words are contextual in the same way, recognised only in one position and ordinary identifiers
 everywhere else:
@@ -127,12 +128,12 @@ everywhere else:
 
 ## Primitive type names are not keywords either
 
-`int32`, `usize`, `bool` and the rest are plain identifiers that the type parser matches by string. That is
-why they can never be shadowed (the primitive is checked first) and also why they do not appear in the tables
+`int32`, `usize`, `bool` and the rest are plain identifiers that the type parser matches by string. That's
+why they can never be shadowed (the primitive is checked first) and also why they don't appear in the tables
 above. [Primitive types](/reference/primitive-types) has the full list.
 
-`string`, `array`, `map`, `slice` and `range` are not even that. They are structs in `stdlib/core/`, and with
-`--no-stdlib` they simply do not exist.
+`string`, `array`, `map`, `slice` and `range` aren't even that. They are structs in `stdlib/core/`, and with
+`--no-stdlib` they simply don't exist.
 
 ## The tokens
 
@@ -161,8 +162,8 @@ Three things are missing from that table on purpose.
 **There is no ternary operator.** `?` is the nullable suffix and nothing else. `??` covers the case people
 usually reach for a ternary to write.
 
-**There is no cast operator.** `(int32)$x` does not parse. Conversion happens by assigning to a typed
-destination. See [Types](/language/types).
+**`$x as T` is a written destination.** `(int32)$x` does not parse and `int32($x)` is not a function.
+See [Types](/language/types).
 
 **`..` and `..=` are not tokens.** They are ordinary operator declarations in `stdlib/core/range.eco`:
 
@@ -173,7 +174,7 @@ foreach (0 .. 3 as $i) {
 ```
 
 `0 .. 3` lexes as an integer, a dot, a dot and an integer, and the parser puts them back together the same
-way it does for any symbol a user declares. That is not a trick played for ranges. Declare `<=>` yourself and
+way it does for any symbol a user declares. That's not a trick played for ranges. Declare `<=>` yourself and
 it goes through the identical path.
 
 ## & is the one place whitespace changes meaning
@@ -195,7 +196,7 @@ something starting with `1`, and the message you get will be about the wrong thi
 around a binary `&`.
 
 Unpicking this would be a lexer change, not a parser one, and it would change what `&$a[$i]` means
-everywhere. I would rather write the space.
+everywhere. I'd rather write the space.
 
 ## Two more places spacing matters
 

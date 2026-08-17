@@ -12,8 +12,7 @@ foreach ($numbers as $value) {
 }
 ```
 
-That is the common case. The rest of this page is the binding modes, the copy you do not pay for, and how
-to make your own type work here.
+The catch is the copy you don't pay for, and that a type of yours loops the same way.
 
 ## Keys, when the source has them
 
@@ -76,7 +75,7 @@ foreach ($numbers as const &$x) {
 }
 ```
 
-The mode is decided at the loop rather than by the collection, and that is deliberate: the same array is
+The mode is decided at the loop rather than by the collection, and that's deliberate: the same array is
 read in one loop and written through in the next, and only the loop knows which.
 
 ## The copy you do not pay for
@@ -172,7 +171,7 @@ foreach ($frozen as const &$y) {
 }
 ```
 
-By value works, because the copy is yours. The read-only borrow works, because that is what the elements
+By value works, because the copy is yours. The read-only borrow works, because that's what the elements
 are. A **writable** borrow is refused, and the message names both halves:
 
 ```echo
@@ -218,7 +217,7 @@ interface iterable<V>
 ```
 
 `advance()` is called first and its answer gates the loop, so `current()` is only ever reached after a
-`true`. That is the whole contract, and it is what lets `current()` skip a bounds check `advance()` already
+`true`. That's the whole contract, and it is what lets `current()` skip a bounds check `advance()` already
 did.
 
 Put together, a countdown:

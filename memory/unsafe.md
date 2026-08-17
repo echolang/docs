@@ -16,13 +16,15 @@ echo $slots:$[0];       // 7
 mem::free($slots);
 ```
 
-That is the whole feature. An `unsafe` block is an ordinary block in every other respect: it opens a scope,
+That's the whole feature. An `unsafe` block is an ordinary block in every other respect: it opens a scope,
 its locals are destroyed at the brace, and it compiles to exactly the same thing. The only difference is what
 the type checker will accept inside it.
 
+Useful in the right hands and very dangerous in the wrong ones. You know the drill.
+
 ## Everything you expected to be behind it is not
 
-None of this needs the word, and that is the design rather than an oversight:
+None of this needs the word, and that's the design rather than an oversight:
 
 ```echo
 ptr<int32> $ints = mem::alloc<int32>(2);
@@ -43,7 +45,7 @@ all of it. Nothing has been claimed, so nothing can be violated.
 
 **A `T&` is the opposite.** It is a trusted typed view, and once you have one the type is the contract: every
 access through it is optimized as a `T`, here and in every function the borrow is passed to. That claim
-travels, it cannot be checked, and it is exactly the thing only you can know. So that is where the word goes.
+travels, it cannot be checked, and it is exactly the thing only you can know. So that's where the word goes.
 
 ## The promise you are signing
 
@@ -52,14 +54,14 @@ Do the promotion outside a block and the compiler spells the deal out:
 ```echo
 $n = 0;
 ptr<int32> $ints = &$n;
-ptr<uint8> $bytes = ptr<uint8>($ints:$);
+ptr<uint8> $bytes = $ints:$ as ptr<uint8>;
 
-uint8& $r = uint8&($bytes:$);
+uint8& $r = $bytes:$ as uint8&;
 // error: cannot form 'uint8&' from a raw address outside an 'unsafe' block
 ```
 
-The `help:` line under it is the actual contract, and it is worth reading once in full rather than skimming.
-Inside `unsafe { }` you assert that the address:
+The `help:` line under it is the actual contract. Read it once, properly, rather than skimming. Inside
+`unsafe { }` you assert that the address:
 
 - is non-null
 - is aligned for the type
@@ -76,13 +78,13 @@ were.
 
 ## One operation, four spellings
 
-The promotion is easy to write by accident, because three of its four forms do not contain a cast. All four
+The promotion is easy to write by accident, because three of its four forms don't contain a cast. All four
 of these are the same thing:
 
 ```echo
 $n = 0;
 ptr<int32> $ints = &$n;
-ptr<uint8> $bytes = ptr<uint8>($ints:$);
+ptr<uint8> $bytes = $ints:$ as ptr<uint8>;
 
 function takes(uint8& $b) : void
 {
@@ -90,13 +92,15 @@ function takes(uint8& $b) : void
 }
 
 unsafe {
-    uint8& $one = uint8&($bytes:$);     // the explicit narrowing
-    ptr<uint8> $two = &$bytes:$[0];     // the address of a raw element
-    takes($bytes:$[0]);                 // the implicit borrow at an argument
+    uint8& $one = $bytes:$ as uint8&;    // the explicit narrowing
+    ptr<uint8> $two = &$bytes:$[0];      // the address of a raw element
+    takes($bytes:$[0]);                  // the implicit borrow at an argument
 }
 
 echo $bytes:$[0];                       // 1
 ```
+
+`uint8&($bytes:$)` is the same explicit narrowing written the other way around.
 
 And the fourth, which is the one that catches people, because it looks like an ordinary method call:
 
@@ -129,8 +133,7 @@ source you are looking at, and a body written somewhere else is not one.
 
 ## Raw storage, and why mem::init exists
 
-There is a second thing the compiler does not account for, and it is worth understanding even though it is
-not gated by the word.
+There is a second thing the compiler does not account for, and it is not gated by the word.
 
 Storage reached through a pointer has no owner. A local gets a destructor at the end of its scope, a property
 gets one from its owner's teardown, but `$slots:$[0]` is a slot in an allocation and nothing walks it. So an
@@ -173,7 +176,7 @@ Which is right: the scope already owes `$address` a teardown, so taking it here 
 variable the operation you want is `mv`. See [Ownership and moving](/memory/ownership).
 
 `array<T>` never needs any of this, because its append operator says "fresh slot" by its shape. A container
-that seats an element at an index a probe chose has no shape to say it with, and that is the whole reason
+that seats an element at an index a probe chose has no shape to say it with, and that's the whole reason
 these two exist.
 
 ## Two borrows of one thing
@@ -217,7 +220,7 @@ so nothing outside the file can put them in a state where the assertion is false
 so exactly one value can ever name that allocation. The `unsafe` block is where the invariant is *cashed in*,
 not where it is established.
 
-That is the shape to copy. One type, keeping one invariant, with the promotion in a method small enough to
+That's the shape to copy. One type, keeping one invariant, with the promotion in a method small enough to
 check by eye. Everything above it is ordinary safe code.
 
 ## How to not need it

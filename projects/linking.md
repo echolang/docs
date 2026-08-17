@@ -15,7 +15,7 @@ requirement travels with the module that declares it**, so whoever depends on th
 #[sources: "src/*.eco"]
 ```
 
-That is a module that knows it needs `libpalette`. Nothing downstream of it has to know.
+That's a module that knows it needs `libpalette`. Nothing downstream of it has to know.
 
 ## Four kinds, and the tag is not optional
 
@@ -82,7 +82,7 @@ makefiles by hand you already know what it is worth.
 
 ## Where a library lives is a fact about your machine
 
-There is a split here that is worth being deliberate about. **What** a module needs belongs in the manifest.
+There's a split here I want to be deliberate about. **What** a module needs belongs in the manifest.
 **Where** it happens to be installed on this particular computer usually does not:
 
 ```bash
@@ -90,7 +90,7 @@ echoc build -o plot --link search:../vendor
 echoc build -o plot --link lib:sqlite3 --link search:/opt/homebrew/lib
 ```
 
-On the command line the tag is spelled with a colon, because an argv word cannot carry a quoted payload
+On the command line the tag is spelled with a colon, because an argv word can't carry a quoted payload
 without a shell quoting it first. Same four kinds, same meanings.
 
 `--link` is repeatable and merges *after* every manifest's requirements, so a declaration wins and a search
@@ -184,7 +184,7 @@ the question you actually have in that moment.
 
 ## What is not here yet
 
-Two gaps worth knowing before you plan around this. There is no pkg-config integration, so a library whose
+Two gaps, before you plan around this. There is no pkg-config integration, so a library whose
 flags come out of `pkg-config --libs` has to be spelled out by hand. And there is no way to ask for static
 rather than dynamic linkage for a particular dependency: you get the platform linker's default. Both are on
 [the list](/reference/limitations).

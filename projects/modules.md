@@ -1,8 +1,8 @@
 # Modules
 
-Once a program outgrows a handful of loose files you give it a `module.eco`, and from then on `echoc` knows
-what your project is made of. The part worth knowing up front: **a manifest is Echo**, read by the same lexer
-and the same parser your own code goes through.
+Once a program outgrows a handful of loose files, you give it a `module.eco`. From then on `echoc` knows
+what your project is made of. And here's the bit that still feels a little weird the first time: **a
+manifest is Echo**, read by the same lexer and the same parser your own code goes through.
 
 <!-- verify: skip -->
 ```echo
@@ -12,36 +12,39 @@ and the same parser your own code goes through.
 #[sources: "src/*.eco"]
 ```
 
-That is a complete project. Run `echoc run` in that directory and it finds the manifest, expands the pattern
-and compiles what it matched. The rest of this page is what happens when one module is not enough.
+That's a complete project. Run `echoc run` in that directory and it finds the manifest, expands the pattern
+and compiles what it matched.
 
-## Eight attributes, and most days you write three
+## Nine attributes, and most days you write three
 
-A manifest has exactly eight attributes. Misspell one and you get the list back:
+A manifest has a closed list of nine names. Misspell one and you get the list back:
 
 ```
-module.eco:2: unknown manifest attribute 'source', expected one of: module, version, depends, sources, target, link, cc, build_dir
+module.eco:2: unknown manifest attribute 'source', expected one of: module, version, depends, sources, target, link, cc, build_dir, requires
 ```
+
+A name with a namespace the compiler doesn't own is not on that list and is not refused. `#[epm::license: "MIT"]` is carried so a tool can read it back. See [Packages](/projects/packages).
 
 | | |
 |---|---|
 | `#[module: "name"]` | the module's name. The only required one |
 | `#[version: "0.1.0"]` | recorded, and part of the build fingerprint |
 | `#[sources: "src/*.eco"]` | the files this module is made of |
-| `#[depends: "../geometry"]` | another module, by path |
+| `#[depends: "../geometry"]` | another module, already on disk, by path |
+| `#[requires: "lib" { git:, version: }]` | a package, optionally `org/name`. epm puts it in `vendor/`; the compiler resolves the name. See [Packages](/projects/packages) |
 | `#[target: exe { ... }]` | a program this module produces. See [More than one program](#more-than-one-program) |
 | `#[target: test] { ... }` | and what belongs to that target alone. See [A target can have things of its own](#a-target-can-have-things-of-its-own) |
 | `#[link: lib "m"]` | a native library this module needs. See [Linking](/projects/linking) |
 | `#[cc: sources "c/*.c"]` | C sources that ship beside the Echo. See [C interop](/projects/c-interop) |
 | `#[build_dir: "target"]` | where artifacts go instead of `ecobuild` |
 
-`#[version:]` is optional and the standard library's own manifest omits it. It is also worth being honest
-about what it does, which is nothing: nothing resolves against it, nothing compares two of them. It is part of
-what a build is fingerprinted on and that is the whole job. See [the list](/reference/limitations).
+`#[version:]` is optional and the standard library's own manifest omits it. Here's the honest bit: it
+does nothing. Nothing resolves against it, nothing compares two of them. It sits in the fingerprint of
+a build, and that's the job. See [the list](/reference/limitations).
 
 ## The manifest is Echo, which is why `#[if:]` works in it
 
-There is no separate manifest grammar. That is not a design flourish, it is what lets a manifest gate its own
+There is no separate manifest grammar. That's not a flourish, it's why a manifest can gate its own
 source list with no new syntax at all:
 
 <!-- verify: skip -->
@@ -60,7 +63,7 @@ Conditions here see what `--target-os` said, not what the machine underneath you
 
 ## A source pattern is relative to the manifest, and has to match something
 
-Patterns resolve against the directory the `module.eco` is in, never against your working directory. That is
+Patterns resolve against the directory the `module.eco` is in, never against your working directory. That's
 what lets a library be depended on from anywhere.
 
 Anywhere one value is accepted, a list of them is:
@@ -90,10 +93,10 @@ the right way round: a new directory is a decision and a new file usually is not
 ## More than one program
 
 A module is one program by default: run `echoc run` in it and the top level of every file it is made of runs,
-in filename order. That is fine right up until you want two of them, and then it is not fine at all. The tool
+in filename order. That's fine right up until you want two of them, and then it isn't fine at all. The tool
 and the server that share its guts. The app and the benchmark that measures it. Splitting those into two
 modules to get two binaries means inventing a third one to hold what they share, which is a lot of manifest
-for a problem you did not have.
+for a problem you didn't have.
 
 `#[target:]` is how a manifest says so. It names one of the module's own files as the entry point:
 
@@ -118,10 +121,10 @@ top level of `clock_main.eco` and nothing of `serve_main.eco`; building `serve` 
 other file (`canvas.eco`, `face.eco`, whatever else `src/*.eco` matched) contributes its functions, its types
 and its constants to both.
 
-That is the same rule a library module follows: only the program's own file root becomes `main`. A target is
+That's the same rule a library module follows: only the program's own file root becomes `main`. A target is
 just a manifest saying which file that is.
 
-Note the entry has to be a file the module is already made of. It is shared code's neighbour, not a stranger
+Note the entry has to be a file the module is already made of. It's shared code's neighbour, not a stranger
 beside it:
 
 ```
@@ -163,15 +166,15 @@ clock/
 
 So `.gitignore` still needs the one `ecobuild/` line however many programs you grow, and `echoc clean`
 reaches them. `-o` overrides for a single target and is refused when several are being built, because one
-path cannot name two files:
+path can't name two files:
 
 ```bash
 echoc build --target clock -o /usr/local/bin/clock
 ```
 
-One trade worth knowing: each target is compiled on its own, so the code they share is compiled once per
+Here's the catch: each target is compiled on its own, so the code they share is compiled once per
 target. Their `#[depends:]` libraries are cached and shared between them, the module's own sources are not.
-For two programs over one `src/` that is a rounding error. If it ever stops being one, the shared half wants to
+For two programs over one `src/` that's a rounding error. If it ever stops being one, the shared half wants to
 be its own module, which is the thing `#[depends:]` was for all along.
 
 ## A target can have things of its own
@@ -197,9 +200,9 @@ Write a `{ ... }` after the target, and what is inside belongs to that target al
 
 `echoc test` compiles `tests/` as part of `plotter` and links `mocklib` beside it. `echoc build` and
 `echoc run` do neither. Those files are never read, and `mocklib` is never compiled. Not compiled and then
-discarded: if `tests/` held a file that does not even lex, a normal build would not notice.
+discarded: if `tests/` held a file that doesn't even lex, a normal build would not notice.
 
-That is what makes it worth the braces. Putting the tests in a plain `#[sources:]` line works too, and is
+That's why the braces exist. Putting the tests in a plain `#[sources:]` line works too, and is
 what most projects do at first, because a `test` block is dropped before parsing on any run but
 `echoc test` and so costs the program nothing. But everything *around* the tests is still compiled into it:
 the fixture struct, the helper, the stub. A scope is how you say the whole directory is the test target's
@@ -221,7 +224,7 @@ a scope is one target speaking for itself:
 module.eco:6: 'version' describes the module, not one of its targets - write it at file scope.
 ```
 
-Scopes do not nest, and one scope belongs to one target. If you wrote `#[target: [ ... ]]` with several
+Scopes don't nest, and one scope belongs to one target. If you wrote `#[target: [ ... ]]` with several
 targets inside, give each of them its own line instead.
 
 ### It changes what gets cached, and that is on purpose
@@ -244,8 +247,8 @@ library included, is untouched and still shared.
 #[sources: "src/*.eco"]
 ```
 
-The path names a **directory**, and the `module.eco` inside it is what gets read. You may name the file
-directly if you prefer; both spellings reach the same manifest.
+The path names a **directory**, and the `module.eco` inside it is what gets read. Naming the file itself
+works too. Both spellings reach the same manifest.
 
 You can also say out loud what a bare string already means:
 
@@ -257,15 +260,15 @@ You can also say out loud what a bare string already means:
 Identical behaviour. The tagged form exists so that a second kind of dependency can be added later without the
 common case growing a word.
 
-That "later" is the thing to know before you plan a project around this. **There is no package manager.** A
-dependency is a path, and that is all it is. A git dependency parses, validates, and is then refused:
+`#[depends:]` is still a path, and that's all it is. A git *dependency* (`#[depends: git { ... }]`)
+parses, validates, and is then refused, because the spelling that fetches is `#[requires:]`:
 
 ```
-module.eco:3: git dependencies are not resolved yet - a dependency is a path to a manifest that is already on disk. Vendor the module and name it with a path.
+module.eco:3: git dependencies are not resolved yet - write '#[requires: "name" { git: "...", version: "..." }]' and run `epm install`, or vendor the module and name it with a path.
 ```
 
-So today you vendor, or you use a submodule, or you keep your libraries in sibling directories. See
-[the list](/reference/limitations).
+A path you already have on disk stays `#[depends:]`. A package epm should put in `vendor/` is
+`#[requires:]`. [Packages](/projects/packages) is the chapter.
 
 ## A consumer writes one line and inherits the rest
 
@@ -273,7 +276,7 @@ So today you vendor, or you use a submodule, or you keep your libraries in sibli
 order that works, without naming it. The same is true of link requirements: a module that declares
 `#[link: lib "m"]` carries it to everything downstream, however many modules sit in between.
 
-That is the property the whole design is built around. A consumer writes `#[depends:]` and nothing else.
+That's the property the whole design is built around. A consumer writes `#[depends:]` and nothing else.
 
 ## Order is decided for you, and a cycle cannot be satisfied
 
@@ -391,12 +394,12 @@ Touch a file in `geometry` and it tells you which one:
 
 The program itself is never stored, because its unit is where the C `main` is created. Everything below it is.
 
-The invariant that makes this sound is worth stating plainly: **a module's object is a function of its own
-sources and its dependencies' keys, and never of who is using it.** A library built beside two different
-applications produces the same bytes both times. If that were not true the cache would be unsound rather than
-merely unhelpful, and a stale object would be a wrong program instead of a slow build.
+**A module's object is a function of its own sources and its dependencies' keys, and never of who is using
+it.** A library built beside two different applications produces the same bytes both times. If that weren't
+true the cache would be unsound rather than merely unhelpful, and a stale object would be a wrong program
+instead of a slow build.
 
-Two things it does not do. `echoc run` has no object cache at all, so every run recompiles everything:
+Two things it doesn't do. `echoc run` has no object cache at all, so every run recompiles everything:
 
 ```
 [cache]
@@ -404,7 +407,7 @@ Two things it does not do. `echoc run` has no object cache at all, so every run 
 ```
 
 And `--optimize whole` bypasses it for the same reason, because after the merge there are no per-module
-objects left to store. That is the trade in [the CLI page](/projects/cli): cross-module inlining, or a fast
+objects left to store. That's the trade in [the CLI page](/projects/cli): cross-module inlining, or a fast
 rebuild.
 
 ## `echoc clean`, and `-n` first
@@ -424,7 +427,7 @@ echoc clean -n
 
 `clean` parses no source and runs no pass, which is deliberate: which build directories exist follows from the
 manifests and from the flags that say where artifacts go, and reading a single `.eco` to work that out would
-make `clean` fail on exactly the program you most want to clean, the one that does not compile. So it takes
+make `clean` fail on exactly the program you most want to clean, the one that doesn't compile. So it takes
 the flags that *locate* a build (`-m`, `--build-dir`, `--target-os`) and refuses every flag that *describes*
 one.
 

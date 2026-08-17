@@ -1,9 +1,8 @@
 # CLI reference
 
-`echoc` has four subcommands and twenty-seven options, and **every one of those options is a single
-declarative row inside the compiler**. Parsing reads that row, validation reads it, the usage line reads it,
-the help page reads it, and a refusal spells the flag back out of it. There is no second list anywhere that
-can drift out of step with this one.
+`echoc` has four subcommands and twenty-eight options. That's the whole surface, and it's one list: what you
+type, what `--help` prints, and what a refusal names all come from the same place. There is no second table
+that can drift.
 
 ```bash
 echoc run app.eco
@@ -55,6 +54,7 @@ name.
 | `--target <name>` | | compiling | name, repeatable | every program declared | which of the programs a manifest declares to build. `run` takes exactly one. On `test` it names a `#[target: test]` instead, and an unnamed one narrows nothing |
 | `--filter <spec>` | | test | tagged word, repeatable | every test | which tests to run. A bare word is a name; `group:`, `file:` and `module:` are the tags. One matching nothing is refused |
 | `--build-dir <dir>` | | all | path | `ecobuild` beside the manifest | where build artifacts are written. Outranks `#[build_dir:]` |
+| `--package-dir <dir>` | | compiling | path | the nearest `vendor/` | directory that holds vendored packages. `#[requires: "libcurl"]` resolves to `<dir>/libcurl` |
 | `--link <requirement>` | | compiling | `<scheme>:<value>`, repeatable | | add a link requirement. Merged after the manifest's, so a declaration wins |
 
 ### How it is built
@@ -146,6 +146,7 @@ There are exactly seven short options: `-h`, `-v`, `-o`, `-m`, `-p`, `-g`, `-n`.
 | | `ir-units` | each unit, as the object writer gets it |
 | | `symbols` | the registered symbol table |
 | | `instances` | generic instances and rewired call sites |
+| | `manifest` | the named manifests as JSON, then stop. Does not resolve the graph. Cannot be combined with another `--print` |
 | `--explain` | `cache` | each module's key, whether its artifact is present, and on a miss which input changed |
 | | `prune` | what the JIT prune dropped. `run` and `test` only |
 | | `memory` | live allocations when the program ended. Implies `--track-allocations` |
@@ -171,7 +172,7 @@ error: 'build --explain prune' is not something 'build' can answer. It accepts: 
 
 A flag a subcommand accepts and silently ignores is worse than one it rejects, and a value is no different.
 
-`-g` is the near miss. `run` does accept it, and then tells you it cannot honour it rather than refusing the
+`-g` is the near miss. `run` does accept it, and then tells you it can't honour it rather than refusing the
 invocation:
 
 ```

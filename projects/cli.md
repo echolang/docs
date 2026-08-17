@@ -1,8 +1,8 @@
 # The echoc CLI
 
-`echoc` has four subcommands and no others. There is no `echoc new`, no `echoc fmt`, no `echoc publish`. What
-there is instead: **`run` and `build` are not the same build**, and most of this page is about the ways they
-differ.
+`echoc` has four subcommands and no others. There is no `echoc new`, no `echoc fmt`, no `echoc publish`.
+What there is instead: **`run` and `build` are not the same build**, and most of the surprises live in the
+ways they differ.
 
 ```bash
 echoc run app.eco               # compile in memory, execute now
@@ -11,7 +11,7 @@ echoc test                      # compile and run the test blocks, one process e
 echoc clean                     # remove what a build produced
 ```
 
-That is the whole surface. Everything below is flags.
+That's it. Everything below is flags.
 
 `test` is `run` with a different thing to run, and it gets a chapter of its own in
 [Testing](/projects/testing). Everything on this page about how a program is compiled applies to it
@@ -27,8 +27,7 @@ checks stay in.
 `--release`, so `assert` is compiled out.
 
 [Your first program](/guide/first-program) has the side-by-side table for what each default actually changes.
-The one thing worth repeating here, because it surprises people: the defaults go opposite ways on purpose, and
-either can be overridden.
+The bit that surprises people: the defaults go opposite ways on purpose, and either can be overridden.
 
 ```bash
 echoc run --release app.eco     # the release semantics, without linking
@@ -37,7 +36,7 @@ echoc build --debug -o app app.eco
 
 ## What to compile
 
-Three ways, and you will use all of them.
+Three ways, and you'll use all of them.
 
 Name files, and they become the `main` module:
 
@@ -48,7 +47,7 @@ echoc build -o app "src/*.eco"
 
 The `*` is expanded by echoc itself, through the same expander a manifest's `#[sources:]` uses, so a pattern
 means the same thing in both places. Quote it if your shell would rather expand it first. A file you name and
-echoc cannot find fails the build rather than being quietly left out.
+echoc can't find fails the build rather than being quietly left out.
 
 Name a manifest with `-m`:
 
@@ -63,7 +62,7 @@ cd plotter
 echoc run
 ```
 
-That last one is how you will run a real project most of the time. [Modules](/projects/modules) is what a
+That last one is how you'll run a real project most of the time. [Modules](/projects/modules) is what a
 manifest can say.
 
 A project whose manifest declares more than one program picks between them with `--target`:
@@ -88,21 +87,21 @@ echoc run app.eco -- --verbose report.txt
 `--` is not POSIX end-of-options here. It means "the rest is the program's", and everything past it is handed
 to your code untouched, flags included. `--silent` after the split is your program's argument and not echoc's.
 
-Two consequences. `argv[0]` under `run` is the source file rather than `echoc`, because that is the honest
+Two consequences. `argv[0]` under `run` is the source file rather than `echoc`, because that's the honest
 answer to what the program is called. And `build` refuses the separator outright rather than ignoring it:
 
 ```
 error: Only 'run' passes arguments to the program, so '--' means nothing to 'build'.
 ```
 
-A native binary takes its own arguments directly, so there is nothing for echoc to forward.
+A native binary takes its own arguments directly, so there's nothing for echoc to forward.
 
 ## `--debug` and `--release` decide what your program carries
 
 This pair is about the *program*. `--debug` keeps `assert` calls and the compiler's runtime checks, including
 the bounds check on an array index and the null check on a narrowing. `--release` drops both.
 
-That is all it decides. It is not an optimization level, and it does not change what a debugger can read.
+That's all it decides. It isn't an optimization level, and it doesn't change what a debugger can read.
 [Errors and panics](/language/errors-and-panics) has what each check does when it fires.
 
 ## `--optimize` decides how much the optimizer may see at once
@@ -120,10 +119,10 @@ Three values, and the middle one is the default:
 | `whole` | merge every unit into one module, then optimize the lot |
 
 `whole` is what gets you inlining across module boundaries, because the optimizer can only inline a body it
-can see. The catch is real and worth stating: after the merge there are no per-module objects left, so it
-bypasses the build cache and every build starts over.
+can see. Here's the catch: after the merge there are no per-module objects left, so it bypasses the build
+cache and every build starts over.
 
-That is why `module` is the default rather than `whole`. If you only need one function to stay inlinable
+That's why `module` is the default rather than `whole`. If you only need one function to stay inlinable
 across a module boundary, mark it `#[inline]` and keep your fast rebuilds.
 
 Note: this used to be two flags, `-O` and `--no-optimize`. They read like opposites and were not, so writing
@@ -140,7 +139,7 @@ are orthogonal, and a release build with no assertions that you can still step t
 you tend to want a debugger for.
 
 `-g` does turn `--optimize` down to `none`, unless you asked for a level yourself, because a line table over
-optimized output describes a program nobody wrote. And `run` takes the flag and then tells you it cannot
+optimized output describes a program nobody wrote. And `run` takes the flag and then tells you it can't
 honour it: the JIT emits no object for a debugger to open. [Debugging](/projects/debugging) is the rest.
 
 ## `--define` and `--link`
@@ -184,10 +183,10 @@ echoc run -p ast-resolved -p ir app.eco
 | `instances` | generic instances, and which call sites were rewired to them |
 
 `ast-resolved` is how you find out what echoc decided about a reference count without going near the IR. When
-a generic goes wrong, start at `instances` rather than in the IR: it is almost always faster.
+a generic goes wrong, start at `instances` rather than in the IR: it's almost always faster.
 
-One trap in `ir`, and it is a real one. Printing it implies the merge, because one dump can only look at one
-module, so what you are reading describes the `--optimize whole` build even when you did not ask for one.
+One trap in `ir`, and it's a real one. Printing it implies the merge, because one dump can only look at one
+module, so what you're reading describes the `--optimize whole` build even when you didn't ask for one.
 `ir-units` is the dump that describes an ordinary build.
 
 Each dump writes a `[section]` header, so the output greps cleanly.
@@ -262,7 +261,7 @@ echoc build --help optimize
 The last form is where the paragraphs live, including the trade-offs each value carries. It takes the option
 name bare, without dashes, and a short spelling works too (`echoc build --help g`).
 
-A subcommand refuses a flag it does not accept rather than ignoring it, and says so by name:
+A subcommand refuses a flag it doesn't accept rather than ignoring it, and says so by name:
 
 ```
 error: 'clean' does not take '-g, --debug-symbols'.

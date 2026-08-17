@@ -1,7 +1,7 @@
 # C interop
 
 Most of what a real program needs already exists, and most of it is a C library. Echo's way in is an `extern`
-block, and the thing to internalise is that **a binding is a declaration, not a wrapper the compiler has to
+block. The thing to get is that **a binding is a declaration, not a wrapper the compiler has to
 know about.** There is no binding generator, no header parser, no `#[c_import]`. You write the signature, and
 the name goes to the linker.
 
@@ -13,8 +13,8 @@ extern {
 echo c_abs(-42);        // 42
 ```
 
-That is a complete program. The rest of this page is the boundary: names, types, strings, structs, and how to
-ship C sources inside a module.
+That's a complete program. From here it's names, types, strings, structs, and how to ship C sources inside
+a module.
 
 ## The C name comes first, `as` renames it locally
 
@@ -40,7 +40,7 @@ extern {
 echo sqrt(9.0);     // 3.000000
 ```
 
-Renaming is worth doing more often than you would think. C's namespace is flat and its names are terse, so
+Renaming is worth doing more often than you'd think. C's namespace is flat and its names are terse, so
 `c_time` and `raw_alloc` and `measure` say something at the call site that `time` and `malloc` and `strlen`
 do not.
 
@@ -53,7 +53,7 @@ Nothing checks your declaration against the real header. There is no header to c
 `size_t` and you write `int32`, that compiles, links, and then misbehaves on the first value above two
 billion.
 
-The mapping you will use most:
+The mapping you'll use most:
 
 | C | Echo |
 |---|---|
@@ -67,8 +67,8 @@ The mapping you will use most:
 | `void (*)(int)` | `extern function<void(int32)>` |
 | `void` | `void` |
 
-This is the one part of Echo where the compiler cannot help you at all, and it is worth being deliberate
-about: get the signature right once, in one place, and never write it again.
+This is the one part of Echo where the compiler can't help you at all. Get the signature right once, in one
+place, and never write it again.
 
 ## Gather the bindings, then wrap them
 
@@ -139,13 +139,13 @@ ptr<tm> $raw = c_localtime(&$epoch);
 echo $raw->hour >= 0 && $raw->hour < 24;     // 1
 ```
 
-Two things in there are worth pointing at.
+Two things in there I want to point at.
 
 `->` reaches through the pointer directly. A plain read of `$raw` would deref it and copy the whole struct
 out of libc's storage, which works and is a waste.
 
 And this `tm` is **only ever read**. Real `struct tm` has two more fields after these nine; nothing of ours
-writes through the pointer, so leaving them unspelled cannot overrun anything. A binding that asked libc to
+writes through the pointer, so leaving them unspelled can't overrun anything. A binding that asked libc to
 *fill* a `tm` of ours would have to declare all of them, and get every one right.
 
 ## Strings out: `cstr()`
@@ -190,7 +190,7 @@ Calling `cstr()` on the unterminated one is an assertion failure rather than a s
 assertion failed: string is not NUL terminated - clone it first
 ```
 
-Ask `terminated()` when you would rather branch than die.
+Ask `terminated()` when you'd rather branch than die.
 
 `data()` is the same pointer without that assert. Use it when C already has a length, which is most of
 the interesting APIs (`CURLOPT_POSTFIELDS` plus `CURLOPT_POSTFIELDSIZE`, `write(2)`, anything that is
@@ -320,7 +320,7 @@ Note that the `sources` pattern is `c/*.c` and deliberately does not reach `c/in
 translation unit, and picking one up would compile it as one.
 
 A consumer depends on `palette` and writes nothing else. Both build modes work, including `run`: the JIT
-cannot open an object file, so echoc gathers the module's C objects into a loadable library and `dlopen`s
+can't open an object file, so echoc gathers the module's C objects into a loadable library and `dlopen`s
 that.
 
 ```bash
@@ -331,10 +331,10 @@ echoc build -o plot && ./plot
 
 ## `#[cc:]` contributes objects, and nothing else
 
-This is worth stating plainly because the intuition from other languages points the wrong way. **No include
+Here's the bit that other languages train you to expect the wrong way around. **No include
 path and no macro from `#[cc:]` reaches Echo's front end.** `PALETTE_BASE` is not a constant your Echo can
-see, and `c/include` is not somewhere Echo looks for anything. The C build produces object files. That is the
-entire contribution.
+see, and `c/include` is not somewhere Echo looks for anything. The C build produces object files. That's
+the entire contribution.
 
 The one loose flag, `#[cc: flag "-O0"]`, is safe untyped where a link flag was not: it reaches one known tool
 and is never re-read.
@@ -383,10 +383,10 @@ mem::free($buffer);
 ```
 
 Four parameters, four arguments. The brackets are what C receives as its variadic tail, and the call still
-has exactly the arity its declaration states. That is the whole reason it is spelled this way rather than
+has exactly the arity its declaration states. That's why it is spelled this way rather than
 with an ellipsis: you can read a call site's arity without going to look at the declaration.
 
-**The list has to be written right there.** That is not a style rule I am imposing on you. A C variadic call
+**The list has to be written right there.** That's not a style rule I am imposing on you. A C variadic call
 decides where each argument goes from its type *at the call site*, so a collection assembled at runtime could
 not be unpacked without building a `va_list` by hand, which is not portable. An empty list is fine and means
 no varargs at all.
@@ -394,7 +394,7 @@ no varargs at all.
 **Each element is promoted the way C promotes an argument with no parameter to match it.** A `float`
 becomes a `float64`, and anything narrower than 32 bits becomes an `int32` or a `uint32`. The compiler does
 that, not your declaration, which is also where a C compiler does it. You never write the widening
-yourself and you cannot get it wrong.
+yourself and you can't get it wrong.
 
 What may be in the list is primitives and pointers. A struct is refused, because how C's variadic
 convention unpacks one is platform specific. A `string` is a struct, so pass its `->cstr()`:
@@ -410,13 +410,29 @@ string $name = 'Ronon';
 c_printf($format->cstr(), [$name->cstr()]);
 ```
 
+**A pointer in the list is the pointer.** This is the one place the language's usual rule would say
+otherwise: everywhere else a plain read of a `ptr<T>` gives you the value
+at the other end, and you write `:$` when you mean the address itself. A variadic tail has no parameters
+opposite it to read *toward*, so each element is passed as its own type and a pointer variable arrives as
+an address, the same thing `->cstr()` has always given you.
+
+```echo
+ptr<uint8> $buffer = mem::alloc<uint8>(64);
+ptr<uint8> $text = mem::alloc<uint8>(8);
+
+string $format = '<%s>';
+
+c_snprintf($buffer, 64, $format->cstr(), [$text]);      // the address, as C wants
+c_snprintf($buffer, 64, $format->cstr(), [$text:$]);    // the same address, said explicitly
+```
+
 `variadic_args` is legal in exactly one place: the last parameter of an `extern` declaration, with at
 least one parameter before it. Everywhere else is a compile error naming the position.
 
 ## Callbacks: passing a function to C
 
 C libraries are mostly callback registration. GLFW's `glfwSetKeyCallback`, a signal handler, a
-`qsort` comparator: they all take a function pointer, and they all take **C's** function pointer —
+`qsort` comparator: they all take a function pointer, and they all take **C's** function pointer:
 one word, no environment.
 
 Echo's own callable, `function<R(P...)>`, is two words. C has no declaration for the second one.
@@ -441,14 +457,14 @@ A struct by value is refused, because that is where echoc's lowering and clang's
 come apart silently. Pass a `ptr<T>`.
 
 A C callback has no environment. State it needs is a static, or arrives through the parameters C
-gives it. That is the honest answer, not a limitation to apologise for. A closure literal at an
-`extern function<...>` destination is refused for the same reason — name it and pass `&name`.
+gives it. That's the honest answer, not a limitation to apologise for. A closure literal at an
+`extern function<...>` destination is refused for the same reason: name it and pass `&name`.
 
 `extern function<...>?` is the nullable form, and `null`, `guard`, `??` and `?->` work on it the
 way they work on every other type that can be absent.
 
 An `extern` *declaration* is still a promise about someone else's function, and is still not
-checked against a header. A `extern function<...>` is a promise **echoc keeps** — it hands out
+checked against a header. A `extern function<...>` is a promise **echoc keeps**: it hands out
 the address of a function it compiled.
 
 ## Next

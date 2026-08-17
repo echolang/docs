@@ -1,8 +1,7 @@
 # Files
 
-You have a path and you want the bytes in it, or you want to put bytes there. In PHP that is
-`file_get_contents` / `file_put_contents`, or `fopen` when you need to stay in the file. Echo's answers
-live in `std::io`. A path is a `string`. There is no path type.
+You have a path and you want the bytes in it, or you want to put bytes there. The answers live in
+`std::io`. A path is a `string`. There is no path type.
 
 ```echo
 usize $n = guard std::io::writefile('gate.txt', "chevron seven\nlocked");
@@ -152,7 +151,7 @@ one is the mode for "write, then seek back, then read" on a single handle.
 ## The last handle closes
 
 `std::io::file` is a class in `std::io`. Copying one is another handle to the same descriptor, and the
-last one to go runs `close`. You usually do not call it. The append example did, because something else
+last one to go runs `close`. You usually don't call it. The append example did, because something else
 needed to see the bytes before the end of the scope.
 
 A [`stream`](/stdlib/io/) is the opposite: one `int32`, no destructor, it never closes anything.
@@ -194,7 +193,7 @@ bool $ok = guard std::io::remove('gate.txt') else ($e) {
 `seek($offset, $from)` counts from `.start`, `.current` or `.end`. `position()` is where the next read or
 write will land. `size()` is seek-to-end then seek back, so it is not free.
 
-Do not `readall` on a `create()` handle. `.write` is write-only, and the kernel answers with a bad file
+Don't `readall` on a `create()` handle. `.write` is write-only, and the kernel answers with a bad file
 descriptor rather than with the bytes you just wrote.
 
 ## exists, remove, rename
@@ -244,7 +243,7 @@ bool $ok = guard std::io::remove('chulak.txt') else ($e) {
 
 ## The window
 
-Every `std::io::file` has an 8 KiB read window and an 8 KiB write window. That is why `readline` on a file is not
+Every `std::io::file` has an 8 KiB read window and an 8 KiB write window. That's why `readline` on a file is not
 one syscall per byte, and why [`stdin->readline()`](/stdlib/io/) is: a `stream` has nowhere to keep
 leftover bytes.
 
@@ -252,7 +251,7 @@ Writes land on disk at `flush`, `seek`, `close`, or when the window fills. A wri
 with the window empty, goes straight to the kernel, so `writefile` of a large string is still one syscall.
 
 `fd()` is the raw descriptor. The kernel's offset may disagree with `position()` until you `flush`: unread
-bytes have already been pulled, unflushed writes have not been pushed. Do not wrap a live file's `fd()`
+bytes have already been pulled, unflushed writes have not been pushed. Don't wrap a live file's `fd()`
 in a [`reader` or a `writer`](/stdlib/io/buffering). A `std::io::file` already has both windows.
 
 ## The whole surface

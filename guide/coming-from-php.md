@@ -34,8 +34,8 @@ $name = "Echo";
 $name = 42;         // error: cannot assign 'int32' to 'string'
 ```
 
-The type is decided at the declaration and cannot change. You can write it out or let it be inferred from the
-initializer, but you cannot skip the initializer and decide later:
+The type is decided at the declaration and can't change. You can write it out or let it be inferred from the
+initializer, but you can't skip the initializer and decide later:
 
 ```echo
 $a = 25;            // fine, int32
@@ -157,7 +157,7 @@ echo consume(mv $nums);
 echo $nums->count();        // error: '$nums' has been moved out of
 ```
 
-Most of the time you do not want to hand it over, you want to lend it:
+Most of the time you don't want to hand it over, you want to lend it:
 
 ```echo
 function total(const array<int32>& $xs) : int32
@@ -192,7 +192,7 @@ echo halve(8) ?? -1;
 echo $node?->next?->tag ?? -1;
 ```
 
-And `guard` is the one you will reach for most, because it unwraps into a plain non-nullable value for the
+And `guard` is the one you'll reach for most, because it unwraps into a plain non-nullable value for the
 rest of the scope:
 
 ```echo
@@ -220,7 +220,7 @@ That is a smaller toolkit than PHP's and it is deliberate. There is no stack to 
 
 ## Files and includes
 
-There is no `require` and no `use`. A project is a directory with a `module.eco` manifest:
+There is no `require`. A project is a directory with a `module.eco` manifest:
 
 ```echo
 #[module: "greeter"]
@@ -229,8 +229,9 @@ There is no `require` and no `use`. A project is a directory with a `module.eco`
 #[sources: "src/*.eco"]
 ```
 
-Everything in the module sees everything else in the module, regardless of file order, with no imports. Names
-from other namespaces are reached by qualifying them: `geometry::Point`, `std::math::sqrt`.
+Everything in the module sees everything else in the module, regardless of file order. Names from
+other namespaces are reached by qualifying them, or by a `use` that binds a shorter name for this
+file: `use geometry::Point;`, `use std::math;`. There is no `require` and no autoloader.
 
 Depending on another module is one line:
 
@@ -238,12 +239,13 @@ Depending on another module is one line:
 #[depends: "../lib_geometry"]
 ```
 
-No Composer, no packagist, no lockfile. A dependency is a path on disk. Git dependencies parse and are then
-refused, because nothing fetches a repository yet.
+A path on disk is `#[depends:]`. A library that is not sitting next to you yet is `#[requires:]`, and epm
+is what fetches it. There is no Composer and no published index in v1, so every requirement still writes a
+`git:` URL. [Packages](/projects/packages) is the chapter.
 
 ## Things that are exactly the same
 
-It is worth saying what you get to keep, because it is most of the surface:
+It's worth saying what you get to keep, because it's most of the surface:
 
 - `$` on variables, `//` and `/* */` comments, semicolons, braces
 - `if` / `else` / `while` / `for` / `foreach` / `break` / `continue`, all spelled the way you expect

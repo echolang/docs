@@ -1,7 +1,6 @@
 # Control flow
 
-Branches and loops are the least surprising part of Echo. If you have written PHP, C, Java or anything in
-that family, you already know most of this page.
+Branches and loops look like this.
 
 ```echo
 $temperature = 30;
@@ -13,10 +12,10 @@ if ($temperature > 25) {
 }
 ```
 
-Two rules apply everywhere and are worth stating once:
+Two rules apply everywhere:
 
 **Braces are always required.** There is no single-statement form, so the `if ($x) doThing();` dangling-else
-class of bug does not exist here.
+class of bug doesn't exist here.
 
 **A condition must be a `bool`.** No truthiness, no zero-is-false. `if ($count)` on an integer is not valid
 Echo. Write the comparison you meant: `if ($count > 0)`.
@@ -51,7 +50,7 @@ while ($countdown > 0) {
 }
 ```
 
-That is the whole of it. There is no `do ... while` yet, so a loop that must run at least once needs its
+That's the whole of it. There is no `do ... while` yet, so a loop that must run at least once needs its
 condition arranged accordingly, or a `break` at the bottom.
 
 ## for
@@ -90,7 +89,7 @@ echo $i;
 // error: The variable '$i' is not declared in the current scope
 ```
 
-If you have been bitten by a loop variable outliving its loop in PHP, that does not happen here.
+A loop variable belongs to the loop. It does not leak out.
 
 ## foreach
 
@@ -105,7 +104,7 @@ foreach ($numbers as $value) {
 }
 ```
 
-Ranges are worth pointing out because they look like syntax and are not:
+Ranges look like syntax. They aren't:
 
 ```echo
 foreach (0 .. 3 as $i) {
@@ -117,8 +116,8 @@ foreach (0 .. 3 as $i) {
 declared in `stdlib/core/range.eco` that return a `range<T>`, and `foreach` accepts one for exactly the same
 reason it accepts your own types: it declares that it can be iterated.
 
-There is a lot more to say about that, and [Iteration](/collections/iteration) says it, including how to
-bind by reference and how to make your own type iterable.
+[Iteration](/collections/iteration) has the rest, including how to bind by reference and how to make your
+own type iterable.
 
 ## break and continue
 
@@ -138,7 +137,7 @@ two loops at once means a flag or a function you can `return` from.
 
 ### continue does not mean the same thing in both loops
 
-This is the one detail people get wrong, and it is the reason `for` exists as a separate statement rather
+This is the one detail people get wrong, and it's the reason `for` exists as a separate statement rather
 than as sugar over `while`.
 
 In a `while`, `continue` jumps to the **condition**. In a `for`, it jumps to the **step**, and the step then
@@ -154,7 +153,7 @@ for (int32 $i = 0; $i < 6; $i++) {
 ```
 
 That prints `0 1 2 4 5` and terminates. Write the same thing as a `while` with the increment at the bottom
-of the body and `continue` skips the increment, which is an infinite loop. The `for` form cannot make that
+of the body and `continue` skips the increment, which is an infinite loop. The `for` form can't make that
 mistake because the step is not part of the body.
 
 ## guard
@@ -211,7 +210,7 @@ echo $sure;     // 6
 If `$maybe` had been `null`, that would have printed `fatal error: unwrapped an absent value` and
 exited 1. Same runtime as `die`. No stack unwinding.
 
-A written arm that does not leave is still an error:
+A written arm that doesn't leave is still an error:
 
 ```echo
 int32? $maybe = null;
@@ -244,8 +243,8 @@ while ($i < 10) {
 echo "stopped";
 ```
 
-Note: an ordinary `if ($x != null)` does **not** narrow the type. Only `guard` does. That trips up everyone
-arriving from PHP at least once. [Nullability](/memory/nullability) covers the rest of `T?`, `??` and `?->`.
+Note: an ordinary `if ($x != null)` does **not** narrow the type. Only `guard` does.
+[Nullability](/memory/nullability) covers the rest of `T?`, `??` and `?->`.
 
 ## die
 
@@ -279,11 +278,11 @@ const if (mem::is_trivially_copyable<int32>()) {
 }
 ```
 
-The condition must be answerable at compile time. A variable cannot appear in one, because a variable does
-not have a value yet.
+The condition must be answerable at compile time. A variable can't appear in one, because a variable doesn't
+have a value yet.
 
 This is not an optimization you could have got from a normal `if`. The arm that loses is **discarded before
-type checking**, so it may contain code that would not even compile for the current type. That is what makes
+type checking**, so it may contain code that would not even compile for the current type. That's what makes
 it useful inside generic code:
 
 ```echo
@@ -311,7 +310,7 @@ const if (mem::size<int32>() == 4) {
 //        emitting code - so it cannot decide a 'const' expression.
 ```
 
-If you want a compile-time branch on the **platform** rather than on a type, that is a different feature
+If you want a compile-time branch on the **platform** rather than on a type, that's a different feature
 with a different spelling: `#[if: os == darwin]`. See
 [Conditional compilation](/projects/conditional-compilation).
 

@@ -124,7 +124,7 @@ assertion failed: seven chevrons required
 
 ## assert disappears in release, and that is a trap
 
-Here is the part to internalise. **`assert` is compiled out in a release build**, and a release build is
+Here's the part that actually matters. **`assert` is compiled out in a release build**, and a release build is
 what `echoc build` gives you by default.
 
 <!-- verify: dies -->
@@ -168,14 +168,14 @@ echo $drawn;
 Debug prints `1`. Release prints `0`. The call was never made, because the whole statement was removed
 before codegen.
 
-So: an assert condition must be a pure question. If a line does work your program needs, it does not belong
+So: an assert condition must be a pure question. If a line does work your program needs, it doesn't belong
 inside an `assert`.
 
 ## The compiler's own runtime checks
 
 Echo inserts checks of its own, and they follow the same rule: present in debug, gone in release.
 
-Array bounds are the one you will meet first:
+Array bounds are the one you'll meet first:
 
 <!-- verify: dies -->
 ```echo
@@ -189,9 +189,9 @@ garbage today, a crash tomorrow, and no complaint either way.
 
 The null narrowing check behaves the same way.
 
-This is a deliberate trade, and it is the usual one. You develop against a build that catches mistakes, and
-you ship a build that does not pay for the checks. It is worth knowing which build you are running when
-something misbehaves, and worth reaching for `echoc run` first when it does.
+This is a deliberate trade, and it's the usual one. You develop against a build that catches mistakes, and
+you ship a build that doesn't pay for the checks. Know which build you're running when something
+misbehaves, and reach for `echoc run` first when it does.
 
 If you want the checks in a shipped binary, ask for them:
 

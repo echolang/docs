@@ -38,12 +38,12 @@ you one line at a time.
 
 ## Who it is for
 
-At the very first, Echo is for me. I wanted a language that was more like PHP than C++, and more like C++ than PHP, I wanted something that I personally enjoyed writing...
+At the start, Echo is for me. I wanted a language that felt more like PHP than C++, and more like C++ than
+PHP. Something I actually enjoyed writing.
 
-But if you want a pitch:
-
-Echo is for people who write in a high-level dynamic language, are comfortable there, and occasionally want
-the thing they wrote to be fast without learning an entirely new set of ideas at the same time as an entirely new syntax.
+If you want a pitch: Echo is for people who write in a high-level dynamic language, are comfortable there,
+and occasionally want the thing they wrote to be fast without learning an entirely new set of ideas at the
+same time as an entirely new syntax.
 
 The syntax is the bridge. The type system, ownership and memory model are what you actually have to learn,
 and the documentation is arranged so you meet them one at a time rather than all at once.
@@ -58,8 +58,7 @@ echoc build -o hello hello.eco  # compile and link a native binary
 ```
 
 `run` is the fast feedback loop. Nothing is written next to your source, nothing is linked, and the program
-starts more or less instantly. It defaults to a debug build, so `assert` and the compiler's runtime checks
-stay in.
+starts more or less instantly. It defaults to a debug build, so `assert` and the runtime checks stay in.
 
 `build` is the real thing. It produces an executable you can copy to another machine. It defaults to a
 release build, so the checks are dropped and the optimizer runs.
@@ -68,9 +67,7 @@ release build, so the checks are dropped and the optimizer runs.
 
 Echo is a hobby. It is not production ready and I am not pretending otherwise.
 
-There is tons of stuff that is missing. There are holes in the type system, the standard library is tiny, the compiler probably has bugs..
-
-None of that is hidden. I would rather you
-bounce off this page than off a compiler error six hours in.
+Plenty is missing. The type system has holes, the standard library is small, and the compiler has bugs. None
+of that is hidden. I would rather you bounce off this page than off a compiler error six hours in.
 
 Still here? [Install it](/guide/installation).

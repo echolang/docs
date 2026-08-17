@@ -22,7 +22,7 @@ Hatak $enemy = Hatak(4);
 echo $enemy->hyperspace_speed();    // 32
 ```
 
-So far, so ordinary. Here is the part that is different: **an interface does two separate jobs in Echo, and
+So far, so ordinary. Here's the part that is different: **an interface does two separate jobs in Echo, and
 a given type can usually only do one of them.**
 
 1. It constrains a **type parameter**, and the call is resolved at compile time with no dispatch at all.
@@ -33,7 +33,7 @@ than an accident waiting to be tidied up.
 
 ## What an interface may contain
 
-Function signatures ending in a semicolon, operator requirements, and associated types. That is all:
+Function signatures ending in a semicolon, operator requirements, and associated types. That's all:
 
 ```echo
 interface Vessel
@@ -100,7 +100,7 @@ Note that `const` is part of the requirement. A `const function draw()` in the i
 a `const function draw()`, because const-ness of the receiver is part of the signature rather than a flag on
 the side.
 
-This is not inheritance. There is no base type, nothing is shared, and an interface cannot extend another
+This is not inheritance. There is no base type, nothing is shared, and an interface can't extend another
 interface.
 
 ## Job one: constraining a type parameter
@@ -179,8 +179,8 @@ echo $contact->hyperspace_speed();      // 90
 echo $contact->crew();                  // 200
 ```
 
-One variable, two different concrete types over its lifetime, dispatch decided at runtime. This is what you
-would expect from PHP or Java, and it costs a vtable pointer and an indirect call.
+One variable, two different concrete types over its lifetime, dispatch decided at runtime. It costs a
+vtable pointer and an indirect call.
 
 ### Why a struct cannot do this
 
@@ -208,7 +208,7 @@ Vessel $contact = F302(8);
 A `Vessel` value has to be one size regardless of what is inside it, and it has to carry enough information
 to find the right `hyperspace_speed`. A class gets both for free: it is always a pointer, and its heap block
 already holds a type pointer. A struct is neither, and making it work would mean boxing it silently, which
-is an allocation you did not ask for.
+is an allocation you didn't ask for.
 
 So the rule is: **struct for the compile-time job, class for the runtime job.** The error message points you
 at the other one, which is usually the fix.
@@ -274,7 +274,7 @@ The operator itself is declared at file scope, not inside the struct, because
 [operators are always free functions](/language/operators). The interface requirement just says one must
 exist.
 
-An interface with an operator requirement cannot be a stored type. There is no vtable slot for `<`.
+An interface with an operator requirement can't be a stored type. There is no vtable slot for `<`.
 
 ## Generic interfaces
 
@@ -359,7 +359,7 @@ echo total(GateAddress());      // 6
 `GateAddress` never writes `type Iter = symbol_cursor`. The compiler infers it from the return type of
 `iterate()` and then checks that `symbol_cursor` really does conform to `Stepper<int32>`.
 
-An interface with an associated type cannot be a stored type either, for the same reason as the operator
+An interface with an associated type can't be a stored type either, for the same reason as the operator
 case: the size and shape are not known until the concrete type is.
 
 This is exactly how `foreach` works. `contract::iterable<V>` in `stdlib/core/contract.eco` is one of these,
@@ -369,7 +369,7 @@ as `array<T>` does because there is no arm anywhere that knows what an array is.
 
 ## There is no Self
 
-Some languages let a requirement name the implementing type. Echo does not have `Self`. Where you need it,
+Some languages let a requirement name the implementing type. Echo doesn't have `Self`. Where you need it,
 make the interface generic and pass the type in, as `Comparable<Naquadah>` does above.
 
 ## Next

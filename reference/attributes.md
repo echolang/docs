@@ -13,16 +13,18 @@ function double(int32 $n) : int32
 echo double(21);        // 42
 ```
 
-Fifteen names in total: seven on a declaration (four of yours, three for the library), eight that only
-mean something in a `module.eco` manifest. The four conditional directives look like attributes and are
-not on that list at all, for a reason worth a section of its own.
+Sixteen names in total: seven on a declaration (four of yours, three for the library), nine that only
+mean something in a `module.eco` manifest. A namespaced name (`#[epm::license:]`) is not on that list
+and is carried rather than refused. The four conditional directives look like attributes and are
+not on that list at all. There's a reason, and it gets its own section.
 
 ## The value grammar
 
 One grammar, used by every attribute:
 
 ```
-value   := name atom | atom
+value   := tag atom | atom
+tag     := name | string
 atom    := string | int | float | bool | name | list | record
 list    := '[' ( value ( ',' value )* ','? )? ']'
 record  := '{' ( name ':' value ( ',' name ':' value )* ','? )? '}'
@@ -39,10 +41,10 @@ Seven shapes, and one example of each drawn from the standard library or the tes
 | name | `#[core: array]` |
 | list | `#[sources: ["src/*.eco", "extra/*.eco"]]` |
 | record | `#[depends: git { url: "...", rev: "v1.2.0" }]` |
-| tagged | `#[link: framework "OpenGL"]` |
+| tagged | `#[link: framework "OpenGL"]`, or `#[requires: "libcurl" { ... }]` with a string tag |
 
 One rule holds the whole thing together: **a bare name means itself.** It is never a constant, never a type
-and never a variable. That is why a closed vocabulary is written bare (`array`, `lib`, `size_of`) and free
+and never a variable. That's why a closed vocabulary is written bare (`array`, `lib`, `size_of`) and free
 text is quoted. `#[core: array]` names the string `array`, and there is no way for it to accidentally pick up
 a struct called `array` that happens to be in scope.
 
@@ -70,7 +72,7 @@ Seven names. Four of them are yours:
 | Attribute | Value | What it does |
 |---|---|---|
 | `#[inline]` | none | asks for the function to be emitted into every unit that calls it, so it can be inlined without a whole-program build |
-| `#[implicit]` | none | on a method, declares that its owner converts to the method's return type at an argument position |
+| `#[implicit]` | none | on a method, declares that its owner converts to the method's return type at an argument position. on a static of the destination, declares the reverse: a type the library does not own converts *to* this one |
 | `#[unique]` | none | on a struct, says exactly one value may name this storage. The type is moved, never copied |
 | `#[group: "..."]` | string | on a `test`, names the group a test run can select on |
 
@@ -86,7 +88,7 @@ so you write them:
 ### #[inline]
 
 `#[inline]` is a request about *emission*, not a hint to the optimizer. Without it, an ordinary module symbol
-cannot be inlined across a module boundary unless you build with `--optimize whole`. With it, the definition
+can't be inlined across a module boundary unless you build with `--optimize whole`. With it, the definition
 travels into every unit that references it.
 
 It is not validated at all. On a declaration with no body of ours it is meaningless rather than wrong, which
@@ -124,8 +126,57 @@ show(Feet(10.0));       // 3.048000
 ```
 
 A declared conversion ranks below every built-in one, so an overload taking `Feet` still wins outright over
-this. Seven shapes are refused at the declaration rather than at the call site, so the slot only ever holds
-something valid. The one you are most likely to meet: the return type has to be a declared type.
+this.
+
+**It fires through a borrow too**, which matters more than it sounds. Library code takes its parameters as
+`const T&`. Without this, every helper wanting the converted type would have to be called with the
+conversion written out from anywhere that had been handed one.
+
+```echo
+function forward(const Feet& $f) : void
+{
+    show($f);           // the conversion is found through the borrow
+}
+```
+
+A `const` borrow only reaches a conversion declared `const function`. One declared without it would be
+writing through a value the caller said was read-only, so it is not considered.
+
+**The other direction is a static of the destination.** A library can't add a method to `int32`. What it
+can do is say that an `int32` can stand in for a type it *does* own:
+
+```echo
+struct Quantity
+{
+    int64 $n;
+
+    #[implicit]
+    static function from(int32 $n) : Quantity
+    {
+        return Quantity($n);
+    }
+}
+
+function put(Quantity $q) : void
+{
+    echo $q->n;
+}
+
+put(7);                 // 7
+```
+
+Same rank as the outbound form. An overload that already takes `int32` still wins. The conversion still
+has to return a declared type, and for inbound that type has to be the owner.
+
+A class that allocates is allowed here: inbound *constructs* the destination. It does not sneak a retain
+into an argument list the way an outbound window would.
+
+Wrong arity, a return that is not the owner, a second inbound from the same source: those are located
+errors at the declaration, same as the outbound refusals.
+
+Seven shapes are refused at the declaration rather than at the call site, so the slot only ever holds
+something valid. The one you are most likely to meet on the outbound side: the return type has to be a
+declared type.
 
 ```echo
 struct Celsius
@@ -199,7 +250,7 @@ implementation comes from instead of having a body". The fourth way is an `exter
 
 ## Manifest attributes
 
-Eight names, legal in a `module.eco` and nowhere useful else. [Modules](/projects/modules) is the chapter;
+Nine names, legal in a `module.eco` and nowhere useful else. [Modules](/projects/modules) is the chapter;
 this is the value shapes.
 
 | Attribute | Value | Repeats | Notes |
@@ -207,7 +258,8 @@ this is the value shapes.
 | `#[module: "name"]` | string | no | required. No spaces, no quotes inside the name |
 | `#[version: "0.1.0"]` | string | no | recorded, folded into the build fingerprint, resolves against nothing |
 | `#[sources: "src/*.eco"]` | string or list | yes | relative to the manifest. A pattern matching nothing is an error |
-| `#[depends: ...]` | string, `path "..."`, `git { }`, or a list | yes | a path to a manifest file, or to a directory holding one |
+| `#[depends: ...]` | string, `path "..."`, `git { }`, or a list | yes | a path to a manifest that is already on disk |
+| `#[requires: "name" { }]` | string-tagged record, or a list | yes | a package. Fields: `version` and `git` required, `rev` optional. Resolves to `vendor/<name>`; `name` may be `echolang/libcurl`. See [Packages](/projects/packages) |
 | `#[target: <tag> { }]` | tagged record, a bare tag, or a list | yes | tags: `exe`, `test`. An `exe` wants `name` and `entry`, both required, and `entry` must be one of this module's own `sources`. A `test` takes `name`, `groups` and `files`, all optional, and is refused for writing an `entry`; `#[target: test]` on its own is the whole selection |
 | `#[link: <tag> "..."]` | tagged | yes | tags: `lib`, `framework`, `search`, `object` |
 | `#[cc: <tag> ...]` | tagged | yes | tags: `sources`, `include`, `define`, `flag` |
@@ -225,12 +277,13 @@ target rather than to the module, and takes effect only for a program that build
 #[target: test] {
     #[sources: "tests/*.eco"]
     #[depends: "../mocklib"]
+    #[requires: "libhello" { git: "https://x", version: "^1" }]
     #[link: lib "check"]
     #[cc: sources "c/stubs/*.c"]
 }
 ```
 
-Those four are the whole vocabulary, and each means inside a scope exactly what it means outside one. A
+Those five are the whole vocabulary, and each means inside a scope exactly what it means outside one. A
 scoped `#[sources:]` is expanded by the same expander, with the same "a pattern matching nothing is an
 error" rule. A scoped `#[cc:]` is refused for options with no `sources:` in the same words.
 
@@ -278,15 +331,17 @@ echo "this compiles";       // this compiles
 ```
 
 The manifest is the direction that does refuse, because its list is the narrower one. `#[inline]` in a
-`module.eco` is an error naming the seven names a manifest accepts.
+`module.eco` is an error naming the nine names a manifest accepts. A `#[epm::license:]` is the
+exception: any `<ns>::<name>` whose namespace is not `echoc` is carried, not refused, and
+`-p manifest` emits it. [Packages](/projects/packages) is why.
 
-I would like the first case to be an error too. It is not today, and if you find yourself wondering why a
+I'd like the first case to be an error too. It is not today, and if you find yourself wondering why a
 `#[link:]` line had no effect, check which file you put it in.
 
 ## When the name is wrong
 
 ```
-unknown attribute 'bultin', expected one of: inline, implicit, intrinsic, builtin, core, unique, group, module, version, depends, sources, target, link, cc, build_dir
+unknown attribute 'bultin', expected one of: inline, implicit, intrinsic, builtin, core, unique, group, module, version, depends, sources, target, link, cc, build_dir, requires
 ```
 
 The attribute is then skipped and the declaration after it still parses, which is the point: the error you
@@ -299,7 +354,7 @@ actually needed usually follows immediately.
 A manifest says it differently, because its list is different:
 
 ```
-module.eco:4: unknown manifest attribute 'source', expected one of: module, version, depends, sources, target, link, cc, build_dir
+module.eco:4: unknown manifest attribute 'source', expected one of: module, version, depends, sources, target, link, cc, build_dir, requires
 ```
 
 ## When the shape is wrong
@@ -320,7 +375,7 @@ shape refusals:
 | a record with no `}` | `this record is missing its '}' - the '{' is on line 3.` |
 | an unknown tag | `'framwork' is not a kind of link requirement, expected one of: lib, framework, search, object.` |
 | `#[depends: svn { }]` | `'svn' is not a kind of dependency, expected one of: path, git.` |
-| `#[depends: git { }]` | `git dependencies are not resolved yet - a dependency is a path to a manifest that is already on disk. Vendor the module and name it with a path.` |
+| `#[depends: git { }]` | `git dependencies are not resolved yet - write '#[requires: "name" { git: "...", version: "..." }]' and run \`epm install\`, or vendor the module and name it with a path.` |
 
 Recovery is the balanced `[ ... ]`, not the next statement, so one broken attribute costs you one error and
 the file keeps parsing.
@@ -331,7 +386,7 @@ the file keeps parsing.
 consumed by a token filter that runs between lexing and the first parse pass, so by the time the attribute
 parser exists they are gone.
 
-That is also what makes them work everywhere: at file scope, inside a struct body, inside a function body,
+That's also what makes them work everywhere: at file scope, inside a struct body, inside a function body,
 around an `extern` block, around a `namespace`. No pass had to be taught about them.
 
 [Conditional compilation](/projects/conditional-compilation) is the chapter. What follows is the grammar and

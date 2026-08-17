@@ -37,7 +37,7 @@ dprint($l);
 }
 ```
 
-It is a compile-time expansion rather than a runtime walk, so the whole shape is known and a static one costs
+It's a compile-time expansion rather than a runtime walk, so the whole shape is known and a static one costs
 a single `printf`. It needs no `-g` and works under `run`.
 
 The catch is the one the debugger has too: `dprint` shows a container's internals, because it has no
@@ -72,7 +72,7 @@ lldb ./plot
 ```
 
 On macOS echoc runs `dsymutil` for you afterwards, because the linker leaves the DWARF behind in the objects
-and lldb would otherwise find nothing. That is why a `-g` build leaves a `plot.dSYM` beside the binary.
+and lldb would otherwise find nothing. That's why a `-g` build leaves a `plot.dSYM` beside the binary.
 
 ## A session, start to finish
 
@@ -128,7 +128,7 @@ Process 60743 stopped
 }
 ```
 
-Everything you would want is there: the breakpoint resolved to a real address, the backtrace shows your
+Everything you'd want is there: the breakpoint resolved to a real address, the backtrace shows your
 function and its caller with your line numbers, a parameter and a local read their actual values, and members
 are reachable through the borrow.
 
@@ -146,14 +146,14 @@ echoc build -g -o plot plot.eco             # release semantics, fully debuggabl
 echoc build -g --debug -o plot plot.eco     # assertions on, fully debuggable
 ```
 
-The first one looks odd and is the one you want more often than you would guess. A crash that only happens
+The first one looks odd and is the one you want more often than you'd guess. A crash that only happens
 with assertions compiled out is exactly the crash you need a debugger for, and turning them back on can make
 it go away.
 
 ## `-g` turns the optimizer off, unless you say otherwise
 
 `-g` sets `--optimize none` unless you passed `--optimize` yourself. A line table over optimized output
-describes a program nobody wrote, where locals live nowhere, statements execute in an order you did not put
+describes a program nobody wrote, where locals live nowhere, statements execute in an order you didn't put
 them in, and stepping is a good way to lose an afternoon.
 
 If you genuinely need to debug an optimized build, ask for it and accept what you get:
@@ -221,12 +221,11 @@ owner's buffer, so reading to the NUL would print the owner's whole text. The fo
 length instead, which is the sort of thing a rendering layer can know and DWARF cannot.
 
 The reference counts on a class are gathered under `[refcount]` rather than shown as three fields in front of
-your own. They are how a class is *stored*, and you should not have to look past them to find `id`.
+your own. They are how a class is *stored*, and you shouldn't have to look past them to find `id`.
 
 **This is not a gap in the debug info and could not be fixed by emitting more of it.** DWARF describes
 layout. It has no way to say "the length is in `len` and the elements are at `storage.data[0..len)`", and
-nothing at all for a hash table's occupancy rule. Every language solves this one layer up: libc++, Rust and
-Swift all ship formatters, and this is Echo's.
+nothing at all for a hash table's occupancy rule. That's why Echo ships formatters.
 
 Everything registers into an `echo` type category, so `type category disable echo` gives the raw view back
 when you want to see what is really in memory.
@@ -243,7 +242,7 @@ Three honest gaps, all on [the list](/reference/limitations).
 program builds and runs fine without `-g`. If you hit a segfault from `echoc build -g`, this is the first
 thing to check.
 
-**An interface value shows two raw pointers**, because the formatter cannot yet resolve the vtable back to a
+**An interface value shows two raw pointers**, because the formatter can't yet resolve the vtable back to a
 concrete type:
 
 ```

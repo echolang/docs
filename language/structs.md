@@ -1,7 +1,6 @@
 # Structs
 
-A struct groups a few values into one named thing. If you have written a PHP class with only public
-properties, you already know the shape:
+A struct groups a few values into one named thing:
 
 ```echo
 struct GateAddress
@@ -14,12 +13,12 @@ GateAddress $abydos = GateAddress(27, 1);
 echo $abydos->destination;      // 27
 ```
 
-Two things to notice before anything else.
+Two things to notice.
 
 **There is no `new`.** You call the type. `GateAddress(27, 1)` builds one.
 
 **A struct is a value.** It lives where you put it, exactly like an `int32` does. That single fact drives
-everything else on this page.
+everything else.
 
 ## A struct is copied, not shared
 
@@ -39,11 +38,10 @@ $backup->destination = 99;
 echo $dialled->destination;     // 27, untouched
 ```
 
-Which is what you want from an address. Writing one down somewhere else should not re-point the original.
+Which is what you want from an address. Writing one down somewhere else shouldn't re-point the original.
 
-This is the opposite of what a PHP object does, and it is the whole reason `class` also exists. If you want
-two names for one object, that is a [class](/language/classes). If you want a value you can pass around
-without worrying who else is holding it, this is it.
+If you want two names for one object, that's a [class](/language/classes). If you want a value you can
+pass around without worrying who else is holding it, this is it.
 
 Passing a struct to a function copies it too, unless the parameter asks for a borrow with `&`. See
 [Functions](/language/functions).
@@ -85,7 +83,7 @@ Chevron $wrapped = Chevron(45, 1);
 echo $wrapped->symbol;      // 6
 ```
 
-A constructor with a *different* signature does not suppress it. Both exist, and overload resolution picks:
+A constructor with a *different* signature doesn't suppress it. Both exist, and overload resolution picks:
 
 ```echo
 struct Chevron
@@ -120,7 +118,7 @@ ZPM $module = ZPM(0, 4096);
 // error: The function 'ZPM' could not be found
 ```
 
-Write your own constructor and the type works again. That is the usual reason to write one.
+Write your own constructor and the type works again. That's the usual reason to write one.
 
 ## Writing a constructor
 
@@ -222,8 +220,8 @@ $sealed->drain(500);
 //        const, so it may write. Mark it `const function drain(...)` if it only reads.
 ```
 
-The habit worth forming: mark a method `const` whenever it only reads. It costs nothing and it is what makes
-your type usable in a `const` position, including inside somebody else's `const` method.
+Mark a method `const` whenever it only reads. It costs nothing, and it's what makes your type usable in a
+`const` position, including inside somebody else's `const` method.
 
 ## A static belongs to the type, not to a value
 
@@ -305,8 +303,8 @@ echo $second->index;        // 2
 echo Chevron::$locked;      // 2
 ```
 
-It is not in the layout, so it costs a `Chevron` value nothing. Three things about it are worth knowing,
-because all three are visible from the outside.
+It is not in the layout, so it costs a `Chevron` value nothing. Three things about it, all visible from the
+outside.
 
 **The initializer runs the first time something reads or writes it**, not when the program starts. A static
 nothing ever names is never initialized, so its initializer's side effects never happen:
@@ -346,7 +344,7 @@ echo Log::$prefix;          // gate
 `die`, a failed `assert` and `std::env::exit` stop the program without running those teardowns, which is the
 same thing they already do to values in scope.
 
-**An initializer may name statics declared before it, and nothing else.** That is what makes it impossible
+**An initializer may name statics declared before it, and nothing else.** That's what makes it impossible
 to write two statics that wait on each other:
 
 ```echo
@@ -392,7 +390,7 @@ variable there is no type to do the owning, and the compiler says so.
 
 ## The leading dot lets the destination name the type
 
-Writing the type twice gets tiring where it is already obvious:
+Writing the type twice gets tiring where it's already obvious:
 
 ```echo
 struct Response
@@ -466,8 +464,8 @@ echo attempt()->why->code;      // 30
 The outer `.failed(...)` takes its type from the return type, and the inner `.timeout(30)` then takes its
 own from `failed`'s parameter.
 
-The one place this will not work is where the destination is the thing you were asking the compiler to work
-out. A shorthand has no type of its own until an overload is chosen, so it cannot be what chooses one. Write
+The one place this won't work is where the destination is the thing you were asking the compiler to work
+out. A shorthand has no type of its own until an overload is chosen, so it can't be what chooses one. Write
 the type when that happens:
 
 ```echo
@@ -526,7 +524,7 @@ That prints `connected`, then `7`, then `disengaged`. The destructor ran at the 
 end of the program.
 
 Once a struct has a destructor it **owns** something as far as the compiler is concerned, and the rules in
-[Ownership and moving](/memory/ownership) start to apply: it cannot be captured by a closure, and copying it
+[Ownership and moving](/memory/ownership) start to apply: it can't be captured by a closure, and copying it
 becomes something you have to think about.
 
 ## Copy constructors
@@ -560,7 +558,7 @@ echo $duplicate->revision;      // 11
 There is no separate `copy` keyword. A constructor taking `Manifest&` or `const Manifest&` **is** the copy
 constructor, and the `+1` above is how you can see it fire.
 
-Prefer `const Manifest&` where you can. A copy constructor taking a mutable borrow cannot be used to copy out
+Prefer `const Manifest&` where you can. A copy constructor taking a mutable borrow can't be used to copy out
 of a `const` value, which quietly rules your type out of a few places. [Copying](/memory/copying) has the
 details.
 
@@ -664,8 +662,8 @@ function report<T : Powered>(const T& $unit) : void
 report(ZPM(2.5));       // 2.500000
 ```
 
-What a struct **cannot** do is be stored *as* a `Powered`. That needs a vtable and a stable address, which a
-value type does not have. [Interfaces](/language/interfaces) explains why that split is deliberate, and
+What a struct **can't** do is be stored *as* a `Powered`. That needs a vtable and a stable address, which a
+value type doesn't have. [Interfaces](/language/interfaces) explains why that split is deliberate, and
 [Classes](/language/classes) is the half that can.
 
 ## Next

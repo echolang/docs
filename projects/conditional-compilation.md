@@ -12,8 +12,7 @@ echo 'somewhere else';
 #[end]
 ```
 
-That is the whole feature for the common case. The rest of this page is what "never parsed" buys you, which
-turns out to be quite a lot.
+That's the usual case. What "never parsed" buys you turns out to be quite a lot.
 
 ## Four directives
 
@@ -36,8 +35,8 @@ Forget the `#[end]` and you hear about it straight away, because the filter is c
 line 1: '#[if: ...]' is never closed - add '#[end]'
 ```
 
-They nest, and a nested region inside an arm that was **not** taken still has to balance. That is not a rule
-you have to remember, it is just what happens: the untaken arm is read structurally even though none of it is
+They nest, and a nested region inside an arm that was **not** taken still has to balance. That's not a rule
+you have to remember, it's just what happens: the untaken arm is read structurally even though none of it is
 compiled.
 
 ## A condition is not an Echo expression
@@ -55,8 +54,8 @@ echo 'still unixish';
 #[end]
 ```
 
-It has to be its own grammar, because `darwin` is a name nothing in Echo declares and never will. That is also
-why a condition cannot name one of your constants, even though `const MAX = 100` looks like exactly the sort
+It has to be its own grammar, because `darwin` is a name nothing in Echo declares and never will. That's also
+why a condition can't name one of your constants, even though `const MAX = 100` looks like exactly the sort
 of thing it should be able to test. [Constants](/language/constants) explains the timing that makes that
 impossible.
 
@@ -98,7 +97,7 @@ line 1: unknown condition axis 'platform', expected one of: os, arch
 ```
 
 The alternative is a typo that reads as false, so `#[if: os == darwn]` becomes a block that vanishes in
-silence and surfaces as a missing function three files later. I would rather have the error.
+silence and surfaces as a missing function three files later. I'd rather have the error.
 
 A flag you never defined is **false**, not an error. That one has to go the other way: if an undefined flag
 were refused, `#[if: TRACE]` could never take its else arm, which is the arm you spend most of your time in.
@@ -146,7 +145,7 @@ A manifest is Echo too, so the same directives gate a source list:
 
 ## The payoff: naming a symbol this platform does not have
 
-This is the case that a runtime `if` cannot cover and a smarter parser could not either.
+This is the case that a runtime `if` can't cover and a smarter parser couldn't either.
 
 There is no portable call for "where is this executable". Each platform has exactly one, none of them exists
 anywhere else, and declaring the wrong one is a *link* error rather than a compile error. So the declaration
@@ -165,10 +164,10 @@ extern {
 #[end]
 ```
 
-That is straight out of `stdlib/std/env/libc.eco`, and it is the one platform-specific binding in the whole
+That's straight out of `stdlib/std/env/libc.eco`, and it is the one platform-specific binding in the whole
 module. Note that the arms are the entire `extern { }` block, not just its contents. An `extern` block accepts
 nothing but `function` declarations inside it and has no attribute plumbing at all, so there would be nowhere
-to hang a per-declaration condition. A token filter does not care: the block is tokens like anything else.
+to hang a per-declaration condition. A token filter doesn't care: the block is tokens like anything else.
 
 ## Three arms may declare the same function
 
@@ -190,7 +189,7 @@ and an `if` the compiler evaluates later, and it is why the filter runs where it
 
 ## Reading your file as the other platform
 
-You do not need the other machine to find out which arm it takes:
+You don't need the other machine to find out which arm it takes:
 
 ```bash
 echoc run --target-os linux app.eco
@@ -221,7 +220,7 @@ else {
 }
 ```
 
-The split between the two is worth getting right, because they solve different problems.
+These two solve different problems. Don't mix them up.
 
 `#[if:]` runs on tokens, before parsing. It can test the target and your flags, and nothing else, and the
 untaken arm need not even be valid Echo for this platform.
@@ -235,12 +234,12 @@ Neither is a runtime `if`, and neither costs anything at runtime.
 
 ## What a condition deliberately cannot do
 
-It cannot see anything from your program. Not a constant, not a type, not whether a function is declared. The
+It can't see anything from your program. Not a constant, not a type, not whether a function is declared. The
 filter runs before there is a program to ask.
 
-It cannot express a version comparison, or a "feature" in the Rust sense, or an inverted default. `--define`
-is a set of names that are either present or not, and the deliberate consequence is that there is nothing to
-learn: if you know what `#[if:]` means, you know all of it.
+It can't express a version comparison, or a feature flag with a version, or an inverted default.
+`--define` is a set of names that are either present or not, and the deliberate consequence is that
+there is nothing to learn: if you know what `#[if:]` means, you know all of it.
 
 And there is no `#[if: !defined(X)]` spelling, because there is nothing to define against. `!X` is that.
 

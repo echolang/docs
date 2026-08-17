@@ -1,8 +1,7 @@
 # Arrays
 
-If you are coming from PHP, this is the type most likely to surprise you: **an Echo `array<T>` is a
-growable, contiguous buffer of exactly one type.** It is not a hash map, it is not heterogeneous, and the
-only thing it shares with a PHP array is the name and the brackets.
+**An `array<T>` is a growable, contiguous buffer of exactly one type.** It is not a hash map and it is not
+heterogeneous. The brackets are just how you write one.
 
 ```echo
 array<int32> $numbers = [1, 2, 3];
@@ -12,8 +11,8 @@ echo $numbers->count();     // 4
 echo $numbers[0];           // 1
 ```
 
-That is the whole thing for the common case. The rest of this page is what an array does with your memory,
-which is the part worth knowing before you write anything large.
+Because arrays are objects, the things you know from a standard library live on the array itself:
+`count()`, `push()`, `pop()`. The catch is how the buffer is grown and when a borrow into it dies.
 
 ## Four ways to make one
 
@@ -122,7 +121,7 @@ echo $numbers[];
 
 ## The methods and the brackets are the same code
 
-`push` is `$this[] = $value` and `at` is `&$this[$index]`. That is not a coincidence to remember, it is
+`push` is `$this[] = $value` and `at` is `&$this[$index]`. That's not a coincidence to remember, it is
 literally how they are written, so the two spellings can never drift apart:
 
 ```echo
@@ -277,7 +276,7 @@ echo $b[0];     // 99
 ```
 
 `$b = $a` and `$a->clone()` are the same copy, one inferred and one said out loud. If you want to hand the
-buffer over instead of duplicating it, that is a move:
+buffer over instead of duplicating it, that's a move:
 
 ```echo
 array<int32> $a = [1, 2, 3];
@@ -319,7 +318,7 @@ echo $letters->count();         // 2
 ```
 
 `truncate($n)` drops everything past `$n`, destroying what it drops. `clear()` is `truncate(0)`: the
-elements go, the buffer stays, and the array is immediately usable again. That is the reason to clear
+elements go, the buffer stays, and the array is immediately usable again. That's the reason to clear
 rather than reassign.
 
 ```echo
@@ -372,6 +371,19 @@ borrows so neither is consumed.
 
 ## An element is a destination like any other
 
+Writing into an element destroys what was there and stores the new value, exactly as writing into a
+field does. `$at` is not evaluated twice:
+
+```echo
+array<string> $rows = array<string>();
+$rows->push('first');
+
+usize $at = 0;
+$rows[$at] = 'replaced';
+
+echo $rows[0];      // replaced
+```
+
 A literal written into an element is checked against the element type, exactly as one written into a
 declaration is. A value that does not survive the trip is refused rather than truncated:
 
@@ -393,7 +405,7 @@ echo $wide[1];      // 2
 
 The same goes for a literal inside the brackets, since `[1, 2.5]` is those appends written another way.
 Note that the element type comes from the **first** element, so `[2.5, 1]` is an `array<float64>` holding
-`2.5` and `1.0` - that ordering rule is deliberate.
+`2.5` and `1.0`. That ordering rule is deliberate.
 
 ## One thing that compiles and is wrong
 

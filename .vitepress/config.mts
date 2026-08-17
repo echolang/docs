@@ -63,6 +63,7 @@ const sidebar = [
     text: 'Building Projects',
     items: [
       { text: 'Modules', link: '/projects/modules' },
+      { text: 'Packages', link: '/projects/packages' },
       { text: 'The echoc CLI', link: '/projects/cli' },
       { text: 'Testing', link: '/projects/testing' },
       { text: 'Conditional compilation', link: '/projects/conditional-compilation' },

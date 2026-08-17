@@ -3,7 +3,7 @@
 Echo is a personal project and it is far from production ready. This page is the honest list of what does not
 exist, what is broken, and what will bite you.
 
-I would much rather you read this and decide Echo is not for you today than discover the same thing six hours
+I'd much rather you read this and decide Echo is not for you today than discover the same thing six hours
 into a project. Everything here is known. Most of it is being worked on. None of it is hidden.
 
 Two things this page is not: it is not a roadmap with dates, and it is not exhaustive at the level of
@@ -11,8 +11,8 @@ individual compiler bugs. It is the set of holes big enough to change what you w
 
 ## Language features that do not exist
 
-**Named arguments.** Arguments are positional, full stop. `describe(value: 1)` does not parse. Old design
-notes describe this feature as if it exists; they are aspirational.
+**Named arguments.** Arguments are positional, full stop. `describe(value: 1)` does not parse. Some older
+writing describes this feature as if it exists. It does not.
 
 **Default parameter values.** `function f(int32 $a, int32 $b = 2)` parses and then discards the default. The
 signature stays `f(int32, int32)` and calling `f(1)` is a "no matching overload" error. Do not use it. It
@@ -43,9 +43,6 @@ returns a `T&`. Reading through the borrow and calling a method through it both 
 
 **Map literals.** `["LHR" => "Heathrow"]` does not parse. Construct the map and fill it.
 
-**A `use` / import statement.** Names from other namespaces are reached by qualifying them in full:
-`std::math::sqrt`, `geometry::Point`. There is no way to shorten that.
-
 **Exceptions.** No `throw`, no `try`, no `catch`. Recoverable failure is a `T?`, or a
 [`result<T, E>`](/stdlib/result) when you need a reason. `assert` for "this should never happen", `die`
 for "no recovering from this".
@@ -69,7 +66,8 @@ function bad() : int32
 }   // compiles, returns garbage
 ```
 
-**Narrowing between variables is silent.** The literal check does not apply once a value is in a variable:
+**Narrowing between variables is silent.** `$x as T` exists for the sites that have no destination, but
+an assignment still converts without it. The literal check does not apply once a value is in a variable:
 
 ```echo
 int64 $big = 5000000000;
@@ -125,9 +123,16 @@ Binding by value works, and direct field access on the borrow works. Only the me
 **`mem::size` and `mem::align` in a `const if`.** Layout queries cannot decide a compile-time branch, which is
 what blocks small-buffer optimisation.
 
-**`mv` on a field or element.** `$x = mv $doc->body;` is refused. `mv` moves a whole variable only.
+**`mv` on a field or element.** `$x = mv $doc->body;` is refused. `mv` moves a whole variable only. Writing
+one *into* a field is fine. It is only moving one out that has no spelling.
 
-**`#[implicit]` on a method of a generic type.** Refused at the declaration.
+**A borrow-returning call kept past its statement.** `$r->header('a: 1')->header('b: 2');` chains fine:
+the statement throws its value away, so nothing can dangle. But `Request& $held = $r->header('a: 1');` is
+refused whenever an argument needed a temporary slot, because Echo has no way to say whether the returned
+borrow points into the receiver or into that argument. Bind the argument to a variable first.
+
+**`#[implicit]` on a method of a generic type.** Refused at the declaration. Reaching a conversion *through*
+a `const T&` works.
 
 **A binary `-` written without spaces.** `-` glues to a following digit, so `1-2` is two integer literals in
 a row and you get `unexpected '-2' - two expressions with no operator between them.` `1 - 2` is fine. Same
@@ -177,17 +182,14 @@ compiler's own token list, so `mv`, `guard`, `:$`, the attributes and the `#[if:
 themselves. That is where it stops. No completion, no diagnostics, no go-to-definition, and nothing for any
 other editor.
 
-**No package manager.** A dependency is a path on disk:
-
-```echo
-#[depends: "../lib_geometry"]
-```
-
-A git dependency parses, validates, and is then refused, because nothing fetches a repository yet.
+**No registry yet, and two versions of one package cannot coexist.** `#[requires:]` resolves a name
+against `vendor/`. epm is what fetches. There is no published index in v1, so every requirement
+still writes a `git:` URL. Module names are unique in a build, so two versions of `libjson` in one
+program is an error rather than a feature. [Packages](/projects/packages) is the chapter.
 
 **No formatter and no `echoc new`.** The CLI is four subcommands: `run`, `build`, `test`, `clean`.
 
-**The test runner has three gaps worth knowing about.** There is no timeout, so a test that hangs hangs the
+**The test runner has three gaps.** There is no timeout, so a test that hangs hangs the
 run. There is no standalone test binary, so running a suite needs `echoc` rather than an artifact you can
 ship to CI on its own. And a test is not run under `--track-allocations` by default, so a leak inside one
 does not fail it. [Testing](/projects/testing) is the chapter.

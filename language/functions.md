@@ -1,6 +1,6 @@
 # Functions
 
-Functions are declared just like you would expect from PHP. One difference: **the return type is required.**
+A function declares the type of every parameter and of the result. **The return type is required.**
 
 ```echo
 function add(int32 $a, int32 $b) : int32
@@ -11,7 +11,7 @@ function add(int32 $a, int32 $b) : int32
 echo add(1, 2);     // 3
 ```
 
-Every parameter has a type, and so does the result. That is the whole shape of it.
+Every parameter has a type, and so does the result. That's the whole shape of it.
 
 ## void is not the default
 
@@ -24,7 +24,7 @@ function log(string $message) : void
 }
 ```
 
-Leave the `: void` off and it does not parse:
+Leave the `: void` off and it doesn't parse:
 
 ```echo
 function log(string $message)
@@ -34,7 +34,7 @@ function log(string $message)
 // error: Unexpected token 'open_brace '{'' found. Expected 'colon (:)'
 ```
 
-I know that is a few extra characters on every side-effecting function. I prefer it to the alternative, where
+I know that's a few extra characters on every side-effecting function. I prefer it to the alternative, where
 the only way to find out whether something comes back is to read the body.
 
 ## Order does not matter
@@ -54,8 +54,8 @@ function fib(int32 $n) : int32
 }
 ```
 
-Declarations are collected before any body is compiled, across every file of the module at once. There are no
-forward declarations and no include order to get right. Only top-level *statements* care about order, and
+Declarations are collected before any body is compiled, across every file of the module at once. There are
+no forward declarations and no include order to get right. Only top-level *statements* care about order, and
 those run in filename order.
 
 ## Arguments are copies
@@ -74,11 +74,11 @@ function scaled(Coordinate $c) : Coordinate
 }
 ```
 
-Scribbling on `$c` is fine. It is yours.
+Scribbling on `$c` is fine. It's yours.
 
-For an `int32` that copy is free. For a `struct` of two floats it is nearly free. For something that owns a
-heap buffer, like an `array<T>`, it is a real copy of the whole buffer, which is usually not what you meant.
-That is what borrows are for.
+For an `int32` that copy is free. For a `struct` of two floats it's nearly free. For something that owns a
+heap buffer, like an `array<T>`, it's a real copy of the whole buffer, which is usually not what you meant.
+That's what borrows are for.
 
 ## Borrowing instead of copying
 
@@ -116,9 +116,9 @@ fill($nums);
 echo $nums->count();    // 4
 ```
 
-Three rules worth knowing up front:
+Three rules up front:
 
-- A borrow is **never null**. That is the difference between `T&` and `ptr<T>`.
+- A borrow is **never null**. That's the difference between `T&` and `ptr<T>`.
 - `const T&` and `T&` are different types, so `f(const Foo&)` and `f(Foo&)` are two different overloads and
   the compiler picks the more specific one for a mutable argument.
 - Writing `total(&$nums)` explicitly is the same call. A `ptr<T>` parameter is the one that does *not* borrow
@@ -148,12 +148,12 @@ echo consume(mv $nums);     // 3
 echo $nums->count();        // error: '$nums' has been moved out of
 ```
 
-A signature cannot quietly eat something you thought you still had. [Ownership and
+A signature can't quietly eat something you thought you still had. [Ownership and
 moving](/memory/ownership) is the chapter.
 
 ## Which one should a parameter be?
 
-The short answer, in the order you should try them:
+The short answer, in the order I'd try them:
 
 | Want | Write | Cost |
 |---|---|---|
@@ -194,8 +194,8 @@ Overloads are matched on arity first, and a set with exactly one candidate of th
 the types being consulted at all. That is why the message above lists the signature rather than complaining
 about the second argument specifically.
 
-Note that the return type is **not** part of the signature. Two functions differing only in what they return
-are a duplicate, not an overload.
+The return type is **not** part of the signature. Two functions differing only in what they return are a
+duplicate, not an overload.
 
 ## Generic functions
 
@@ -216,7 +216,7 @@ echo largest(1.5, 0.5);     // 1.500000
 ```
 
 `T` is inferred from the arguments, so you rarely write it at the call site. The constraint after the colon
-can be an interface you declared or one of the built-in shorthands: `numeric`, `integer`, `signed`,
+can be an interface you declared, or one of the built-in shorthands: `numeric`, `integer`, `signed`,
 `unsigned`, `floating`.
 
 [Generics](/language/generics).
@@ -258,8 +258,8 @@ your Echo, and passing a function to C as `extern function<R(P...)>` with `&name
 
 ## What functions cannot do yet
 
-Three things you might reach for that are not there. All of them are on [the list](/reference/limitations),
-this is just a heads-up so you do not spend twenty minutes on the syntax.
+Three things you might reach for that aren't there. All of them are on [the list](/reference/limitations).
+This is just so you don't spend twenty minutes on the syntax.
 
 **Named arguments.** Arguments are positional. `describe(value: 1)` does not parse.
 

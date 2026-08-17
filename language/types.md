@@ -53,9 +53,8 @@ uint $b = 2;        // uint32
 float $c = 3.0f;    // float32
 ```
 
-That is the whole alias list. `int` is **not** the machine word. It is `int32` on every platform, the same
-way `long` should have been. If you want a pointer-width integer, `usize` and `isize` exist for exactly
-that.
+That's the whole alias list. `int` is **not** the machine word. It's `int32` on every platform, the same way
+`long` should have been. If you want a pointer-width integer, `usize` and `isize` exist for exactly that.
 
 There is no `double`. `float64` is spelled `float64`.
 
@@ -73,14 +72,13 @@ $g = 0b1011;    // uint8 too, and it is 11
 $f = 3.14f;     // float32, and that is the f talking
 ```
 
-An untyped integer literal is an `int32`. An untyped float literal is a `float64`. Note that those two do
-not agree about width, which is deliberate: an integer that needs more than 32 bits is unusual, and a float
-that wants less precision than a `float64` is a decision you should have to write down.
+An untyped integer literal is an `int32`. An untyped float literal is a `float64`. Those two don't agree
+about width, and that's deliberate: an integer that needs more than 32 bits is unusual, and a float that
+wants less precision than a `float64` is a decision you should have to write down.
 
-A `0x` or `0b` literal is the exception, and this one is deliberate: with nothing else to go on it takes an
-unsigned type sized to the number of digits you wrote, so `0xFF` is a `uint8` and `0x00FF` is a `uint16`
-despite being the same number. Write the zeros when you mean the width.
-[Primitive types](/reference/primitive-types) has the table.
+A `0x` or `0b` literal is the exception. With nothing else to go on it takes an unsigned type sized to the
+number of digits you wrote, so `0xFF` is a `uint8` and `0x00FF` is a `uint16` despite being the same number.
+Write the zeros when you mean the width. [Primitive types](/reference/primitive-types) has the table.
 
 Writing it down usually means putting the type in front:
 
@@ -89,7 +87,7 @@ int64 $big = 25;
 uint8 $small = 255;
 ```
 
-Floats get a second way, and it is the last line of the first example.
+Floats get a second way, and it's the last line of the first example.
 
 ### The f suffix
 
@@ -102,7 +100,8 @@ $b = 0.5f;              // float32, 4 bytes
 float32 $c = 3.14f;     // type and suffix agree, which is the boring case
 ```
 
-The suffix is also how you say you meant it. A `float64` literal landing in a `float32` warns, because the number in the program is not quite the number you typed:
+The suffix is also how you say you meant it. A `float64` literal landing in a `float32` warns, because the
+number in the program is not quite the number you typed:
 
 ```echo
 float32 $pi = 3.14;     // warning: results in a loss of precision
@@ -113,7 +112,7 @@ rules.
 
 ## usize is where counts live
 
-`usize` is a pointer-width unsigned integer, and it is not an alias for `uint64`. It is its own type with
+`usize` is a pointer-width unsigned integer, and it is not an alias for `uint64`. It's its own type with
 its own identity.
 
 That matters because every length, count, capacity and index in the standard library is spelled with it:
@@ -132,7 +131,7 @@ negative.** `$numbers->count() - 5` is a very large number, not `-2`.
 
 ## bool is not a small integer
 
-This is the one place where PHP habits will genuinely hurt you.
+This is the one that will genuinely hurt you if you treat `bool` as a small integer.
 
 `bool` is its own type. It is not an integer that happens to hold 0 or 1:
 
@@ -142,7 +141,7 @@ echo $ready;        // 1
 echo !$ready;       // 0
 ```
 
-`echo` prints a `bool` as `1` or `0`, because `echo` prints numbers and that is the number. Those two
+`echo` prints a `bool` as `1` or `0`, because `echo` prints numbers and that's the number. Those two
 integers are also what a `bool` destination accepts as a literal: `1` is `true`, `0` is `false`.
 
 ```echo
@@ -180,18 +179,31 @@ if ($count > 0) {       // fine, the comparison produces a bool
 ```
 
 Writing `if ($count)` with an integer is not valid Echo, and right now it fails as a compiler crash rather
-than a polite diagnostic. That is on [the list](/reference/limitations).
+than a polite diagnostic. That's on [the list](/reference/limitations).
 
 A **variable** still converts either way, as [Primitive types](/reference/primitive-types) sets out. An
-`int32` into a `bool` is compared against zero at runtime. It is only a written literal other than `0` or
+`int32` into a `bool` is compared against zero at runtime. It's only a written literal other than `0` or
 `1` that has to say which of the two it meant.
 
-## There is no cast
+## `$x as T`
 
-Worth stating plainly, because every C-shaped language you know has one: **Echo has no cast operator.**
-`(int32)$x` does not parse, and `int32($x)` is not a function.
+A destination usually decides the type: a typed variable, a parameter, a field. Sometimes there is no
+destination. A `return` whose expression is wider than the function asked for. An operand of `<`. Then you
+write the destination next to the value:
 
-Conversion happens by assigning to a typed destination, or by passing to a typed parameter:
+```echo
+function wide(uint8 $b) : int32
+{
+    return $b as int32;
+}
+
+echo (200 as int32) > 57;       // 1
+```
+
+`(int32)$x` does not parse, and `int32($x)` is not a function. `as` is postfix, the same way `instanceof`
+is: `$n as int32 + 1` is `($n as int32) + 1`.
+
+A typed slot still converts without it:
 
 ```echo
 float64 $precise = 3.9;
@@ -199,9 +211,47 @@ int32 $rounded = $precise;
 echo $rounded;      // 3
 ```
 
-Which is convenient right up to the point where it is not, since that narrowing happened without a word of
-complaint. [Expressions](/language/expressions) has the full conversion rules, including which ones the
-compiler refuses.
+That narrowing still happens without a word of complaint. `as` is for the sites that have nowhere to land,
+not a requirement on every conversion. [Expressions](/language/expressions) has the full conversion rules.
+
+Anything the compiler would have converted at a destination, you can write. A type that declared
+`#[implicit]` participates too:
+
+```echo
+struct Quantity
+{
+    int64 $n;
+
+    #[implicit]
+    static function from(int32 $n) : Quantity
+    {
+        return Quantity($n);
+    }
+}
+
+function put(Quantity $q) : void
+{
+    echo $q->n;
+}
+
+put(7 as Quantity);         // 7
+```
+
+`put(7)` would have done the same thing. The `as` just says it out loud.
+
+Here is the catch: it doesn't invent a conversion, and it doesn't unwrap.
+
+```echo
+int32? $maybe = 1;
+int32 $x = $maybe as int32;
+// error: 'int32?' does not narrow through 'as' - unwrap it with guard, ?? or ?->
+```
+
+`$w as T` on a `weak<T>` is the same kind of refusal. That's `strong($w)`. Two unrelated structs refuse it
+too: `'Alpha' cannot be read as a 'Beta'`.
+
+Pointer reinterpretation and the `T&` promotion are the two things that are only legal when written, and
+the promotion still needs `unsafe`. See [Pointers](/memory/pointers) and [Unsafe](/memory/unsafe).
 
 ## Values and references
 
@@ -259,8 +309,8 @@ That `[]` append is an operator declaration in `stdlib/core/array.eco`. `..` in 
 declaration in `stdlib/core/range.eco`. Compile with `--no-stdlib` and the dots stop being a symbol the
 program can use, because nothing declares them any more.
 
-A small number of these types are pointed at by name so the compiler can talk about them (that is what
-`#[core: array]` does), but the shape is still the library's. There is no privileged array type you cannot
+A small number of these types are pointed at by name so the compiler can talk about them (that's what
+`#[core: array]` does), but the shape is still the library's. There is no privileged array type you can't
 write yourself.
 
 ## Next

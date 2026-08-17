@@ -34,13 +34,13 @@ $b->value = 99;
 echo $a->value;     // 99, because there is only one object
 ```
 
-That is the whole decision: **one owner and a copy, or many owners and a shared object.** Everything below
+That's the whole decision: **one owner and a copy, or many owners and a shared object.** Everything below
 follows from it.
 
 ## Which one should you reach for
 
-Reach for a `struct` by default. It is cheaper, it has no allocation, and a value you cannot accidentally
-share is a value you cannot accidentally corrupt.
+Reach for a `struct` by default. It's cheaper, it has no allocation, and a value you can't accidentally
+share is a value you can't accidentally corrupt.
 
 Reach for a `class` when:
 
@@ -142,17 +142,17 @@ Everything in [Nullability](/memory/nullability) applies: `guard` to narrow, `??
 short-circuit a chain.
 
 Note: `Stargate $sgc;` with no initializer currently compiles and hands you a null handle, which slips past
-this rule. That is a hole, not a feature, and it is on [the list](/reference/limitations).
+this rule. That's a hole, not a feature, and it's on [the list](/reference/limitations).
 
 ## Statics work here on exactly the struct's terms
 
 A `static function` called on the type, a `static` property the type owns one of, the leading-dot shorthand,
-all of it. The rules do not change for a class, so they are written up once, on
+all of it. The rules don't change for a class, so they're written up once, on
 [the struct page](/language/structs#a-static-belongs-to-the-type-not-to-a-value).
 
-The one thing worth repeating here is what a class adds. A `static` property holding a class handle owns a
+The one extra thing a class adds: a `static` property holding a class handle owns a
 reference like any other and gives it back when the program ends, so a class parked in a static stays alive
-for the whole run. Usually that is the point. Occasionally it is the bug.
+for the whole run. Usually that's the point. Occasionally it's the bug.
 
 ## instanceof
 
@@ -191,7 +191,7 @@ Hatak? $sensorContact = null;
 echo $sensorContact instanceof Hatak;      // 0
 ```
 
-`instanceof` works against an interface too, and that is where it earns its keep. See
+`instanceof` works against an interface too, and that's where it earns its keep. See
 [Interfaces](/language/interfaces).
 
 It does **not** work on a struct. A struct has no header and no type pointer, so there is nothing to ask.
@@ -233,15 +233,15 @@ $contact = Daedalus(16);
 echo $contact->hyperspaceSpeed();      // 90
 ```
 
-One variable, two different concrete types over its lifetime, dispatch decided at runtime. This is what you
-would expect from PHP or Java, and it costs a vtable pointer and an indirect call.
+One variable, two different concrete types over its lifetime, dispatch decided at runtime. It costs a
+vtable pointer and an indirect call.
 
-That is the job a struct cannot do, and [Interfaces](/language/interfaces) explains why the split is
+That's the job a struct can't do, and [Interfaces](/language/interfaces) explains why the split is
 deliberate rather than a gap waiting to be filled.
 
 ## Reference cycles leak
 
-Reference counting has one well-known failure and Echo does not paper over it. If two objects hold strong
+Reference counting has one well-known failure and Echo doesn't paper over it. If two objects hold strong
 references to each other, neither count ever reaches zero.
 
 The gate and its wormhole are exactly that shape. The gate owns the connection it opened:
@@ -331,11 +331,11 @@ echo "done";
 Both destructors run. The forward edge owns, the backward edge watches, and the counts reach zero in order.
 
 Note the `&` on `$outbound->origin = &$sgc`. The destination decides that this is a weak reference, and the
-`&` is how you write taking a reference to something you do not intend to own.
+`&` is how you write taking a reference to something you don't intend to own.
 
 ### Using a weak reference
 
-A weak reference cannot be read directly, because the object may be gone. Upgrade it with `strong()`, which
+A weak reference can't be read directly, because the object may be gone. Upgrade it with `strong()`, which
 gives you a `T?`:
 
 ```echo

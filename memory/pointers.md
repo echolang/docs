@@ -1,6 +1,6 @@
 # Pointers and references
 
-Echo has two ways to name storage you do not own, and **the only difference between them is that a borrow can
+Echo has two ways to name storage you don't own, and **the only difference between them is that a borrow can
 never be null.**
 
 ```echo
@@ -90,7 +90,7 @@ $p = 7;
 echo $chevrons;     // 7
 ```
 
-Which means you cannot re-point it that way, and the compiler tells you what to write instead:
+Which means you can't re-point it that way, and the compiler tells you what to write instead:
 
 ```echo
 $a = 1;
@@ -120,7 +120,7 @@ echo $a;            // 100, unchanged
 echo $b;            // 200
 ```
 
-That is the whole of `:$`. It compiles to nothing at all: it is a way of saying which of the two things you
+That's the whole of `:$`. It compiles to nothing at all: it is a way of saying which of the two things you
 mean, not an operation.
 
 It only applies to a pointer, and it does not have members:
@@ -184,16 +184,20 @@ echo $p[0];
 against another address: `$p == null` compares the *pointee*, which is a mistake with its own diagnostic. See
 [Nullability](/memory/nullability).
 
+Pointer arithmetic is useful in the right hands and very dangerous in the wrong ones. The compiler will not
+save you from walking off the end of an allocation.
+
 ## Casting a pointer needs no ceremony
 
-A pointer type converts to another pointer type by calling it:
+A pointer type converts to another pointer type when you write the destination. `$x as T` is the usual
+spelling. `ptr<T>(...)` is the same conversion written the other way around:
 
 ```echo
 ptr<int32> $ints = mem::alloc<int32>(2);
 $ints:$[0] = 0;
 $ints:$[1] = 0;
 
-ptr<uint8> $bytes = ptr<uint8>($ints:$);
+ptr<uint8> $bytes = $ints:$ as ptr<uint8>;
 $bytes:$[0] = 1;
 
 echo $ints:$[0];    // 1

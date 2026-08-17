@@ -1,6 +1,6 @@
 # Testing
 
-A test is a block you write in the file it is about, and the catch is that **every invocation of `echoc`
+A test is a block you write in the file it is about, and here's the catch: **every invocation of `echoc`
 except `echoc test` drops it before it is parsed.**
 
 <!-- verify: test -->
@@ -18,12 +18,12 @@ echoc test
 ```
 
 No framework to install, no separate test directory, no `main` to wire up. And nothing to strip out later:
-not compiled and discarded, never seen. A test costs your release build exactly nothing, and it cannot end
+not compiled and discarded, never seen. A test costs your release build exactly nothing, and it can't end
 up in a binary by accident.
 
 ## A test is a function with an unspellable name
 
-`test <name> { ... }` is a function of no arguments that returns nothing. Structurally that is all it is, so
+`test <name> { ... }` is a function of no arguments that returns nothing. Structurally that's all it is, so
 it gets the same type checking, the same ownership rules, the same destructor calls and the same diagnostics
 as any other body, because it *is* one:
 
@@ -44,8 +44,8 @@ test a_point_holds_what_it_was_given
 }
 ```
 
-It sits at file scope, beside your functions and types. You cannot write one inside a function, and you
-cannot mark it `public` or `private`: nothing in the language can name a test, so there is nobody for a
+It sits at file scope, beside your functions and types. You can't write one inside a function, and you
+can't mark it `public` or `private`: nothing in the language can name a test, so there is nobody for a
 visibility modifier to describe.
 
 The body is its own scope in both directions. What you declare inside stays inside:
@@ -65,7 +65,7 @@ test uses_a_fixture
 ```
 
 And nothing outside leaks in, in the one way that might catch you out. A variable at file scope belongs to
-the program's own frame, so a test cannot read it, exactly as no other function can:
+the program's own frame, so a test can't read it, exactly as no other function can:
 
 ```echo
 $outer = 1;
@@ -77,7 +77,7 @@ function reads_it() : int32
 }
 ```
 
-Put shared setup in a function and call it from each test. That is the whole pattern, and there is no
+Put shared setup in a function and call it from each test. That's the pattern, and there is no
 `setUp` hook coming.
 
 ## assert is the only way to fail
@@ -103,7 +103,7 @@ x main/overflows.eco::overflows  exited 1
       at overflows.eco:5
 ```
 
-That is not minimalism for its own sake. Echo has no exceptions and nothing in it can unwind, so a failed
+That's not minimalism for its own sake. Echo has no exceptions and nothing in it can unwind, so a failed
 `assert` ends the process it is in. So does `die`, and so does a segfault in whatever you are testing. A
 process boundary is the only thing that can survive any of those. See
 [Errors and panics](/language/errors-and-panics) for the wider picture.
@@ -131,8 +131,8 @@ ok   2/2  main/two.eco::still_runs
 2 tests, 1 failed
 ```
 
-Once you have that, you do not need anything else. A matcher library would be a nicer sentence in the
-failure output, and that is all it would be.
+Once you have that, you don't need anything else. A matcher library would be a nicer sentence in the
+failure output, and that's all it would be.
 
 Note: `assert` is a debug-build thing. `echoc test` defaults to `--debug` for exactly this reason, and
 `echoc test --release` runs your suite with every assertion elided, which is a run that cannot fail. Try not
@@ -176,7 +176,7 @@ echoc test --filter file:src/math.eco    # by file
 echoc test --filter module:mylib         # by module
 ```
 
-A bare word is a test's name, because that is the case you want shortest. Everything else is tagged, and a
+A bare word is a test's name, because that's the case you want shortest. Everything else is tagged, and a
 tag you misspell is refused rather than quietly read as a name:
 
 ```
@@ -262,7 +262,7 @@ echoc test --target quick
 unlike `#[target: exe]` rather than another flavour of it is that it produces no binary and names no entry
 file, so `echoc build` never builds one and `echoc build --target quick` is refused.
 
-One thing worth knowing: **a bare `echoc test` runs every test the module has, whatever targets it
+Here's the bit people miss: **a bare `echoc test` runs every test the module has, whatever targets it
 declares.** A target narrows only when you name it. So `#[target: test]` on its own buys you the word
 `tests` to pass to `--target` and nothing else.
 
@@ -277,7 +277,7 @@ echoc test math.eco     # the tests of a loose file, the same way `run` takes on
 ```
 
 A library you depend on keeps its own tests to itself. They are not parsed, not type checked and not run,
-which is also why adding a dependency does not slow your test runs down. Running them is a matter of
+which is also why adding a dependency doesn't slow your test runs down. Running them is a matter of
 pointing at it instead.
 
 ## Code that only exists while testing
@@ -303,7 +303,7 @@ test uses_the_fixture
 Outside `echoc test` that function does not exist.
 [Conditional compilation](/projects/conditional-compilation) is the rest of that mechanism.
 
-You cannot set `tests` yourself with `--define`. Whatever compiles your test blocks has to be the same thing
+You can't set `tests` yourself with `--define`. Whatever compiles your test blocks has to be the same thing
 that runs them, or you would have a build carrying tests nothing ever calls.
 
 ### A whole directory of it
@@ -332,7 +332,7 @@ a `#[depends:]` only your tests need.
 ## The catch
 
 A dropped test body still has to be **lexable**. The filter drops tokens, so your body has to have produced
-some. A body that does not *parse* is invisible to a normal build:
+some. A body that doesn't *parse* is invisible to a normal build:
 
 ```echo
 test never_compiled_here
@@ -343,7 +343,7 @@ test never_compiled_here
 echo 'compiles fine';
 ```
 
-An unterminated string or a character the lexer does not know is a different story, and still fails every
+An unterminated string or a character the lexer doesn't know is a different story, and still fails every
 build, because lexing happens first.
 
 In practice this means a test body is only checked when you run `echoc test`, which is the same deal an

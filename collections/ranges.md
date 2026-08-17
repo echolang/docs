@@ -10,8 +10,8 @@ foreach (0 .. 4 as $i) {
 }
 ```
 
-Nothing in the compiler knows what a range is. That is the interesting part of this page, and the reason it
-is short.
+Nothing in the compiler knows what a range is. That's why this page is short, and why `--no-stdlib` leaves
+the dots with no symbol behind them.
 
 ## Exclusive and inclusive
 
@@ -67,9 +67,9 @@ foreach ($r as $v) {
 }
 ```
 
-A `const` one loops too, and still yields a writable value. That is worth a sentence because a
-container cannot do it: a range's cursor borrows *its own* field rather than storage the range owns, so
-there is nothing to protect and a `const range<int32>` can honestly hand out an `int32&`.
+A `const` one loops too, and still yields a writable value. That's a bit surprising if you just came from
+arrays: a range's cursor borrows *its own* field rather than storage the range owns, so there is nothing
+to protect and a `const range<int32>` can honestly hand out an `int32&`.
 
 ```echo
 const range<int32> $frozen = 0 .. 2;
@@ -111,12 +111,12 @@ foreach ($lo ..= 255 as $byte) {
 }
 ```
 
-That is a real bug that the obvious implementation has, and it is why `range<T>` carries an `$inclusive`
+That's a real bug that the obvious implementation has, and it is why `range<T>` carries an `$inclusive`
 field rather than lowering `$a ..= $b` to `range($a, $b + 1)`.
 
 ## The literal that decides your index type
 
-Here is the trap, and it is worth knowing before it costs you an afternoon.
+Here is the trap, and it will cost you an afternoon if you walk into it cold.
 
 The operator takes **one** `T` for both operands:
 
@@ -135,7 +135,7 @@ foreach (0 .. $xs->count() as $i) {
 }
 ```
 
-`count()` returns a `usize` and `0` is an untyped literal, so **the count is what binds `T`** - the literal
+`count()` returns a `usize` and `0` is an untyped literal, so **the count is what binds `T`**. The literal
 is the operand with no opinion, and it is written at whatever the other one decided. You get `range<usize>`
 and an index you can hand straight back to `$xs[...]`, with nothing converted down on the way.
 
@@ -147,7 +147,7 @@ foreach (0 .. 3 as $i) {
 }
 ```
 
-Which is what you want - `-2 ..= 2` would be a strange thing to have to spell as a signed type.
+Which is what you want. `-2 ..= 2` would be a strange thing to have to spell as a signed type.
 
 ## Precedence
 

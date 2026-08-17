@@ -1,9 +1,8 @@
 # Environment
 
 `std::env` is the process: what it was started with, what it inherited, where it is, and how it stops.
-The thing worth knowing up front is what is *not* in it: **none of this needs a platform conditional in
-your code**, because the environment block arrives as the entry point's third argument rather than through
-`environ`.
+Here's the catch up front: **none of this needs a platform conditional in your code**, because the
+environment block arrives as the entry point's third argument rather than through `environ`.
 
 ```echo
 echo std::env::argc();                  // 1 when nothing was passed
@@ -71,7 +70,7 @@ Under `build` there is no separator at all. The linked binary's argv is your pro
 
 ## Under `run`, `arg(0)` is your source and `exe()` is echoc
 
-This is the one trap in the module and it bites during exactly the debugging session where you can least
+This is the one trap in the module, and it bites during exactly the debugging session where you can least
 afford it.
 
 ```echo
@@ -188,7 +187,7 @@ echo 2;         // never runs, and the compiler knows it
 ```
 
 Nothing after the call runs, which means **no destructor runs either**, and no `[memory]` report is printed
-under `--explain memory`. That is the same bargain `die` makes, and it is deliberate: an exit code is for
+under `--explain memory`. That's the same bargain `die` makes, and it's deliberate: an exit code is for
 telling a shell what happened, not for unwinding.
 
 `std::env::exit` sets the exit status. `die` also stops the program, but it prints a message first and its
@@ -197,8 +196,7 @@ with every destructor run. See [Errors and panics](/language/errors-and-panics).
 
 ## Nothing here returns an error
 
-Worth saying once, because it is consistent across the module and it is a design position rather than an
-oversight:
+This is consistent across the module, and it's a design position rather than an oversight:
 
 - **Absence** is a nullable type. `var` and `home`.
 - **A mistake in your code** is an `assert`. `arg` past the end, a key that is not NUL terminated.

@@ -1,7 +1,7 @@
 # Hashing
 
-`hash::` is what `map<K, V>` calls to turn a key into a bucket index. You will mostly never call it. You
-will call it the day you want your own type to be a map key, and the surprise is what that takes:
+You'll mostly never call `hash::`. `map<K, V>` calls it to turn a key into a bucket index. You'll call
+it the day you want your own type to be a map key, and the surprise is what that takes:
 **a `hash::of` overload and an `operator ==`, and deliberately not an interface.**
 
 ```echo
@@ -11,15 +11,15 @@ $power["naquadah"] = 3;
 echo $power->get("naquadah");       // 3
 ```
 
-`string` already has both, so that just works. So does every primitive. The rest of this page is what
-happens when the key is a type you wrote.
+`string` already has both, so that just works. So does every primitive. Here's what happens when the
+key is a type you wrote.
 
 ## Why a key requirement is not a `contract::`
 
 `contract::hashable` would read better than an overload set, and it cannot work. **A primitive cannot
 declare a conformance.** So a constrained `K` would refuse `map<int32, V>` and `map<usize, V>`, the two maps
 everybody writes first, on the grounds that `int32` never opted in. An overload's parameter type has no such
-restriction: it can be anything, including a type you do not own.
+restriction: it can be anything, including a type you don't own.
 
 This is the mirror image of the argument `array<T>` makes about its elements. There, opt-in conformance was
 rejected because a type that *forgets* to opt in goes back to being bit-copied in silence. Here it is
@@ -27,7 +27,7 @@ rejected because a type that *cannot* opt in is excluded outright. Same shape, o
 
 ## The overload set, as it actually is
 
-Ten integer types, `bool`, both floats, `string` and `string::view`. That is all of it, and there is
+Ten integer types, `bool`, both floats, `string` and `string::view`. That's all of it, and there is
 deliberately **no generic `of<T>`** above them. When your key type is not in the set, the compiler simply
 tells you what is:
 
@@ -52,8 +52,8 @@ $stock[sku(1)] = 5;
 ```
 
 Be ready for where that error is reported: it points at the line inside the library that asked for the hash,
-not at your `$stock[...]`. That is not great and it is on [the list](/reference/limitations), but the
-message names the missing thing exactly, so it is still the fastest error in the language to act on.
+not at your `$stock[...]`. That's not great and it's on [the list](/reference/limitations), but the
+message names the missing thing exactly, so it's still the fastest error in the language to act on.
 
 Every overload takes `const T&`, a borrow, so hashing a key never copies it or touches a reference count.
 Yours should do the same.
@@ -91,7 +91,7 @@ Every `namespace hash;` file in a program contributes to the same overload set, 
 `map<K, V>` calls. Your overload is found automatically. There is nothing to register and nothing to
 import.
 
-**It has to be a file of its own, and that is a real cost rather than a style note.** A namespace is a
+**It has to be a file of its own, and that's a real cost rather than a style note.** A namespace is a
 file-level statement, so a `namespace hash;` file cannot also hold the `struct sku` it is about, or its
 `operator ==`, or the program using them. Which means a single-file program cannot extend the set at all.
 
@@ -128,7 +128,7 @@ uint64 $h = hash::of(42);
 echo $h & 7;            // 2, the bucket in a table of capacity 8
 ```
 
-That is the one thing to know if you ever write a hash by hand rather than composing one out of `hash::of`.
+That's the one thing to know if you ever write a hash by hand rather than composing one out of `hash::of`.
 A hash built only out of multiplies looks perfectly random when you print the whole word and collides
 constantly in the table, because multiplying pushes randomness *upward* and leaves the low bits about as
 structured as it found them. Run yours through `hash::mix` at the end, which folds the top of the word back
@@ -183,7 +183,7 @@ is a heap pointer hashed, so two strings holding the same text in two different 
 buckets while comparing equal, which is the one way a hash table breaks that nothing else catches. It is
 also wrong for a struct with padding, whose padding bytes are not defined.
 
-That is exactly why there is no generic `of<T>` sitting above it. A catch-all would answer for a type nobody
+That's exactly why there is no generic `of<T>` sitting above it. A catch-all would answer for a type nobody
 thought about, silently and wrongly. Making you write `bits` is making you say you checked.
 
 ## A float makes a poor key, and the library only fixes half of it
@@ -200,14 +200,14 @@ echo hash::of($zero) == hash::of($neg);     // 1
 ```
 
 The other half of IEEE-754 has no fix available. **A NaN is never equal to itself**, so a NaN key can be
-stored and then never found again, whatever its hash is. Nothing here can help with that, and it is the
+stored and then never found again, whatever its hash is. Nothing here can help with that, and it's the
 reason a float is a poor key in general.
 
 ## These numbers are not a format
 
 Not cryptographic, not stable across architectures, and not a serialization format. This is an in-memory
-bucket index and nothing else. Do not write one to a file and expect the next build to agree with it, and do
-not use one where an attacker chooses the keys.
+bucket index and nothing else. Don't write one to a file and expect the next build to agree with it, and
+don't use one where an attacker chooses the keys.
 
 ## The whole surface
 

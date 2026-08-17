@@ -1,7 +1,8 @@
 # String functions
 
-`str::` is the plumbing under `string` plus the two functions that cross the C boundary. **Nothing here is
-a string library.** [Strings](/collections/strings) is, and `string` itself owns almost all of that surface.
+`string` itself owns almost all of the surface. [Strings](/collections/strings) is that chapter.
+`str::` is the plumbing under it, plus the two functions that cross the C boundary. **Nothing here is
+a string library.**
 
 ```echo
 echo str::from(42);         // 42
@@ -15,14 +16,14 @@ A `string` is a window onto a `str::buf`, which owns the actual bytes. The buffe
 counted**, so two strings holding the same text usually hold one buffer between them, and the bytes are
 freed once when the last of them goes.
 
-That is the whole reason copying a `string` is cheap, and it is the only thing about `str::buf` you need. It
+That's why copying a `string` is cheap, and it's the only thing about `str::buf` you need. It
 is not a type to build yourself. It has to be `public`, because `string` holds one as a property and anyone
 holding a `string` can already name the type, so hiding it would be incoherent. What is actually enforced is
 the shape: every mutator is `private` on `string`'s side, so no caller reaches one through the owner it holds.
-The type is public. The mutators are private. Do not construct one. See
+The type is public. The mutators are private. Don't construct one. See
 [Visibility](/language/visibility).
 
-You will meet the name in two places: in a debugger, and in `mem::refs<str::buf>` if you want to see
+You'll meet the name in two places: in a debugger, and in `mem::refs<str::buf>` if you want to see
 the sharing for yourself.
 
 ## A literal allocates nothing, which is why the count starts at zero
@@ -45,7 +46,7 @@ echo mem::live_allocations();                       // 2
 
 A literal is a window over bytes baked into your binary, with no buffer behind it at all, so its count reads
 0 and it costs you no memory at all. A string you actually build costs two allocations. Copying either of
-them costs nothing, which is the number worth remembering: **passing strings around is free, building them
+them costs nothing, which is the number to remember: **passing strings around is free, building them
 is not.**
 
 ## C strings: copy or borrow
@@ -69,7 +70,7 @@ echo $owned;                // Chulak
 
 `cview` walks to the NUL to find the length and points at the same bytes. Use it when the source
 lives at least as long as you need the window, which is exactly the case for `argv` entries and environment
-variables. That is why [Environment](/stdlib/env) hands back views rather than strings.
+variables. That's why [Environment](/stdlib/env) hands back views rather than strings.
 
 `from` allocates and copies. Use it when the source is about to be freed, or is behind something like
 `setenv` that may replace it out from under you.
@@ -86,8 +87,8 @@ echo str::from(true);       // true
 echo str::from(1.5);        // 1.5
 ```
 
-It is an **overload set**, not an interface, and I did not get to choose that: a primitive cannot declare a
-conformance, so no interface could ever cover `int32`. It is the same reason `hash::of` is one.
+It's an **overload set**, not an interface, and I didn't get to choose that: a primitive cannot declare a
+conformance, so no interface could ever cover `int32`. It's the same reason `hash::of` is one.
 
 Which means your own type joins it by declaring one function, in `namespace str`, anywhere in your own
 module:
@@ -115,7 +116,7 @@ $c = Chevron(7, true);
 echo "status: {$c}";        // status: chevron 7 locked
 ```
 
-That is all [interpolation](/collections/strings#interpolation) is: `"{$x}"` becomes `str::from($x)`, and
+That's all [interpolation](/collections/strings#interpolation) is: `"{$x}"` becomes `str::from($x)`, and
 `"{$x:spec}"` becomes `str::from($x, 'spec')`. A type that renders but does not want to honour format specs
 simply has no two-argument overload, and `"{$c:>8}"` says so by name rather than silently ignoring it.
 
@@ -137,7 +138,7 @@ string $trimmed = str::trim($padded);
 echo "|{$trimmed}|";                // |Chulak|
 ```
 
-`n` separators give `n + 1` parts, always. That is the rule worth remembering, because it is the one that
+`n` separators give `n + 1` parts, always. Remember that one, because it's the rule that
 makes `str::join(str::split($t, $s), $s)` give `$t` back. An empty text splits to one empty part, and `',a,'`
 on `','` gives three.
 
@@ -179,21 +180,35 @@ echo str::ucfirst('écho');      // Écho
 echo str::lcfirst('ÉCHO');      // éCHO
 ```
 
-Unicode Default Case Conversion, locale-independent. That is the same meaning Rust's `to_uppercase` /
-`to_lowercase` have: `ß` becomes `SS`, `ﬁ` becomes `FI`, and Turkish `I` is not a different letter,
-because there is no locale. Greek capital sigma at the end of a word becomes `ς` rather than `σ`.
-That is the only contextual mapping, and it is hard-coded rather than a condition engine.
+Unicode Default Case Conversion, locale-independent. `ß` becomes `SS`, `ﬁ` becomes `FI`, and Turkish
+`I` is not a different letter, because there is no locale. Greek capital sigma at the end of a word
+becomes `ς` rather than `σ`. That's the only contextual mapping, and it's hard-coded rather than a
+condition engine.
 
 `ucfirst` titles the **first codepoint** and leaves the rest. Titlecase, not uppercase: they agree
 for almost every letter and disagree on a handful of digraphs. `straße` starts with `s`, so the
 answer is `Straße`. `ß` on its own titles to `Ss`.
 
 Already-cased text is the same string, sharing its buffer. `str::upper('HELLO')` allocates nothing.
-Changing case always allocates; leaving it alone never does. That is [trim](#split--join--trim)'s
+Changing case always allocates; leaving it alone never does. That's [trim](#split--join--trim)'s
 bargain, and the reason the parameter is a `string` rather than a view.
 
 Invalid UTF-8 is copied, not rejected. [chars()](/collections/strings#size-and-chars-are-different-questions)
 already counts it rather than validating, and these four do not invent a stricter contract.
+
+## iequals is ASCII, and allocates nothing
+
+`str::lower($a) == str::lower($b)` is the Unicode answer, and it's two buffers. A header name, an
+HTTP token, a hex digit is none of that: the protocol said "case-insensitive" and meant A-Z.
+
+```echo
+echo str::iequals('Content-Type', 'content-type');      // 1
+echo str::iequals('Content-Type', 'content-length');    // 0
+echo str::iequals('straße', 'STRASSE');                 // 0, ß is not SS here
+```
+
+A `string` reaches it without a cast. The parameters are views, so a comparison costs no allocation
+and no reference count, which is what a scan over thirty headers needs.
 
 ## The whole surface
 
@@ -219,6 +234,7 @@ already counts it rather than validating, and these four do not invent a stricte
 | `str::float(const string& $t) : float64?` | through `strtod`, whole text consumed |
 | `str::upper` / `lower` `(const string&) : string` | Unicode uppercase / lowercase. already-cased text shares the buffer |
 | `str::ucfirst` / `lcfirst` `(const string&) : string` | titlecase / lowercase of the first codepoint |
+| `str::iequals(string::view $a, string::view $b) : bool` | same bytes, ignoring ASCII case. allocates nothing |
 
 ## Next
 

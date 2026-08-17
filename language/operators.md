@@ -22,12 +22,12 @@ type. **An operator is an ordinary function with a funny name.** It goes in the 
 symbol, it obeys the same resolution rules as any other call, and there is no separate machinery for it
 anywhere in the compiler.
 
-Two consequences of that fall straight out:
+Two things follow from that:
 
 **Operators are declared at file scope, not inside a type.** They are free functions. `Naquadah` above does
 not mention `+` at all.
 
-**Order does not matter.** Like any function, an operator can be declared below the code that uses it.
+**Order doesn't matter.** Like any function, an operator can be declared below the code that uses it.
 
 ## The declaration form
 
@@ -88,7 +88,7 @@ echo 1.0 + 2.0 avg 3.0 + 5.0;   // 5.500000
 That second line is the interesting one. `avg` got the default precedence, which sits below `+`, so it
 parsed as `(1.0 + 2.0) avg (3.0 + 5.0)` and gave `5.5`.
 
-Note that declaring `avg` as an operator does not stop you declaring a *function* called `avg`. They live in
+Note that declaring `avg` as an operator doesn't stop you declaring a *function* called `avg`. They live in
 different worlds:
 
 ```echo
@@ -119,8 +119,8 @@ echo 2 tight 3 * 4;     // 20, because tight binds harder than *
 echo 2 loose 3 * 4;     // 14, because * binds harder than loose
 ```
 
-`*` sits at 40. `tight` at 35 grabs its operands first, so that is `(2 tight 3) * 4`. `loose` at 45 lets `*`
-go first, so that is `2 loose (3 * 4)`.
+`*` sits at 40. `tight` at 35 grabs its operands first, so that's `(2 tight 3) * 4`. `loose` at 45 lets `*`
+go first, so that's `2 loose (3 * 4)`.
 
 Associativity works the way you would expect:
 
@@ -234,7 +234,7 @@ $target[0] = 99;
 echo $target->x;    // 99
 ```
 
-Declare a `const` receiver overload alongside it to make reads work through a `const` value. That is what
+Declare a `const` receiver overload alongside it to make reads work through a `const` value. That's what
 `array<T>` does: `operator<T> (array<T>& $a)[usize $i] : T&` and
 `operator<T> (const array<T>& $a)[usize $i] : const T&`.
 
@@ -268,7 +268,7 @@ An index operator with an empty bracket is the append form:
 operator<T> (array<T>& $a)[] : T&
 ```
 
-That is what makes `$numbers[] = 4` work. It is distinguished from the others by arity, nothing else.
+That's what makes `$numbers[] = 4` work. It is distinguished from the others by arity, nothing else.
 
 ## Generic operators
 
@@ -299,7 +299,7 @@ echo $hold[0];      // 11
 operator<T> (T $from) .. (T $to) : range<T>
 ```
 
-Which is worth sitting with for a second. **Ranges are not syntax.** They are two operator declarations in a
+Let that sink in for a second. **Ranges are not syntax.** They are two operator declarations in a
 library file, and `foreach (0 .. 10 as $i)` works because the thing they return declares that it can be
 iterated. Compile with `--no-stdlib` and the dots stop meaning anything.
 

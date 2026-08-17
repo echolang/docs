@@ -1,7 +1,7 @@
 # Ownership and moving
 
-Every value has exactly one owner, and **when the owner goes out of scope the value is destroyed.** Not when
-the garbage collector gets around to it, not when a count happens to reach zero. At the closing brace.
+Every value has exactly one owner, and **when the owner goes out of scope the value is destroyed.** Not
+when a count happens to reach zero later. At the closing brace.
 
 ```echo
 struct Wormhole
@@ -27,10 +27,10 @@ echo "disengaged";
 That prints `connected`, then `7`, then `disengaged`. The destructor ran at the brace, and nothing you write
 can make it run twice or not at all.
 
-If your values do not own anything, that is the entire chapter and you can stop here. The rest is what
-happens when you want to hand ownership somewhere else. The examples below drop the buffer and keep the
-destructor, because a destructor is all it takes: a struct that has one **owns** something as far as the
-compiler is concerned, and every rule on this page follows from that.
+If your values don't own anything, none of this is your problem. Handing ownership somewhere else is
+what the rest of the rules are for. The examples below drop the buffer and keep the destructor, because a
+destructor is all it takes: a struct that has one **owns** something as far as the compiler is concerned,
+and every rule on this page follows from that.
 
 ## The last one declared is the first destroyed
 
@@ -167,7 +167,7 @@ echo "after";
 ```
 
 `closing`, `7`, `after`. Note where the `7` lands: the wormhole is destroyed at the end of `close`, because
-that is where its owner now goes out of scope.
+that's where its owner now goes out of scope.
 
 Leave the `mv` off at the call and you are told to write it:
 
@@ -180,7 +180,7 @@ Wormhole $open = Wormhole(7);
 close($open);   // error: '$w' takes ownership of this argument - write 'mv' in front of it
 ```
 
-I like this rule more than any other one in the language. A signature cannot quietly eat something you
+I like this rule more than any other one in the language. A signature can't quietly eat something you
 thought you still had, and you never have to read a function's declaration to find out whether your variable
 survived the call. Every place a value stops being yours is a word in your own source.
 
@@ -272,8 +272,8 @@ function unloaded() : int32
 ```
 
 Here `$hold` is still yours on the next line, so the call needs a value of its own and `Cargo` has not said
-how to make one. `mv $hold` is the answer if you meant to hand it over. In the `return` above you did
-not have to write it, because there was nothing left for it to be.
+how to make one. `mv $hold` is the answer if you meant to hand it over. In the `return` above you didn't
+have to write it, because there was nothing left for it to be.
 
 ## mv is not a performance hint
 
@@ -349,7 +349,7 @@ before the callee saw it, and not left lying around until the end of the scope.
 
 ## mv moves a whole variable, nothing smaller
 
-You cannot move a field out of a struct or an element out of an array:
+You can't move a field out of a struct or an element out of an array:
 
 ```echo
 struct Wormhole { int32 $id; destructor() { echo $this->id; } }
@@ -367,6 +367,55 @@ Wormhole $stolen = mv $sgc->active;
 
 The struct would be left with a hole in it and nothing in the type says which fields are still there. Moving
 the whole `Gate` works. Moving a piece of it is on [the list](/reference/limitations).
+
+Writing a piece of it is a different question, and that one works.
+
+## Writing an owning value into a field
+
+Assigning over a field that owns something destroys what was there and stores the new value, exactly as
+assigning over a whole variable does:
+
+```echo
+struct Client
+{
+    string $baseUrl;
+
+    constructor() { $this->baseUrl = ''; }
+
+    function base(const string& $url) : void
+    {
+        $this->baseUrl = $url;      // the old string is destroyed first
+    }
+}
+
+Client $api = Client();
+
+$api->base('https://example.com');
+$api->base('https://echoc.dev');    // and again - nothing leaks
+```
+
+You don't have to write a `clear()`/`append()` pair to reach the same state, and an owning field doesn't
+need a setter method where a scalar one would be a plain field.
+
+An **element** is the same statement. The compiler binds the element's address once, so the old value is
+destroyed through that address and `$at` is not evaluated twice:
+
+```echo
+array<string> $rows = array<string>();
+$rows->push('first');
+
+usize $at = 0;
+$rows[$at] = 'replaced';
+
+echo $rows[0];      // replaced
+```
+
+That's every container whose bracket hands back a `T&`: `array`, `slice`, and a type of yours that
+declares only `operator []`. A `map` is different: it declares `operator []=`, so the write is one call
+and there is no assignment left to tear anything down.
+
+A raw pointer element is still refused. `$p:$[0] = $s` is storage nothing is accounting for, so there is
+no old value there to destroy. `mem::take` ends what is in the slot, `mem::init` seats the new one.
 
 ## A class answers all of this with a count
 
@@ -434,7 +483,7 @@ echo "done";
 Both destructors run. Pick the direction that owns, make the other one `weak<T>`, and the counts reach zero
 in order. Had both edges been strong, neither destructor would run and nothing would tell you.
 
-A weak reference does not keep its object alive, so reading one is a question rather than an access. Ask it
+A weak reference doesn't keep its object alive, so reading one is a question rather than an access. Ask it
 with `strong()`, which gives you a `T?`:
 
 <!-- verify: dies -->

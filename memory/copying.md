@@ -22,7 +22,7 @@ means.
 
 ## A copy happens in three places
 
-There is no `copy` keyword, so it is worth knowing where one appears without you writing anything:
+There is no `copy` keyword. One just appears, in three situations, without you writing anything:
 
 **Assigning or declaring from another value.**
 
@@ -36,7 +36,7 @@ echo $backup->origin;                   // 1
 
 **Passing by value.** A parameter without `&` and without `mv` is the function's own copy.
 
-**Handing back a value you only borrowed.** The callee does not own `$src`, so it cannot give it away:
+**Handing back a value you only borrowed.** The callee does not own `$src`, so it can't give it away:
 
 ```echo
 struct GateAddress { int32 $destination; int32 $origin; }
@@ -87,7 +87,7 @@ Bay $spare = $primary;
 echo $spare->right->serial;     // 2
 ```
 
-`Bay` has no copy constructor and does not need one. It printed `cloning a ZPM` twice, once per field, and
+`Bay` has no copy constructor and doesn't need one. It printed `cloning a ZPM` twice, once per field, and
 that composition is the whole rule: a struct is copyable exactly when every part of it is.
 
 ## Two things stop the compiler writing one
@@ -212,15 +212,14 @@ GateLog $working = $sealed;
 // error: cannot implicitly convert 'const GateLog&' to 'GateLog&'
 ```
 
-Change that one word to `const GateLog& $other` and the same program compiles. The cost of getting it wrong
-is not obvious at the declaration and shows up much later, in somebody else's `const` method, which is why it
-is worth making a habit.
+Change that one word to `const GateLog& $other` and the same program compiles. Get it wrong and the cost
+doesn't show up at the declaration. It shows up later, in somebody else's `const` method. Make it a habit.
 
 This propagates. A struct holding your type can only promise a `const` source if your type does, so one
 mutable copy constructor at the bottom of a graph rules the whole graph out. `array<T>` copies its elements
 out of a `const` borrow of itself, so an element type with a mutable copy constructor cannot live in a copied
 array at all, and the error you get points at a line inside the standard library rather than at your
-declaration. That is the "much later, somewhere else" I mean.
+declaration. That's the "much later, somewhere else" I mean.
 
 ## A class is retained, not copied
 
@@ -272,7 +271,7 @@ echo $a->value;                 // 9, same object
 echo $built->value;             // 107, a different one
 ```
 
-That is deliberate and it is asked in that order: a class is a reference before it is anything else. If you
+That's deliberate and it is asked in that order: a class is a reference before it is anything else. If you
 want a second object, say `Counter($a)` and it is right there in the source.
 
 ## clone() says it out loud
@@ -300,8 +299,8 @@ echo $glyphs->count();              // 3
 echo $spare->count();               // 4
 ```
 
-Which is the point of it being a method rather than a rule. It buys you nothing the assignment did not
-already do, and a reader scanning the line does not have to know what `array<T>` decided about copies to see
+Which is the point of it being a method rather than a rule. It buys you nothing the assignment didn't
+already do, and a reader scanning the line doesn't have to know what `array<T>` decided about copies to see
 that a buffer got duplicated. `array<T>`, `map<K, V>`, `ordered_map<K, V>` and `string` all have one.
 
 `string` is the one where the two differ in cost. It shares its buffer until somebody writes, so an
@@ -354,7 +353,7 @@ Handle $b = mv $a;
 echo read_id($b);       // 7
 ```
 
-The refusal is inherited: a struct holding a unique value cannot be copied either, and that is what makes
+The refusal is inherited: a struct holding a unique value cannot be copied either, and that's what makes
 "two live values means two regions" a fact about the type rather than a convention people follow.
 
 This is what `mem::buffer<T>` is built on, and it is the reason `array<T>` can be sure its buffer is its own.

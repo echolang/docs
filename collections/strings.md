@@ -12,7 +12,7 @@ echo $greeting;             // hello
 echo $greeting->size();     // 5
 ```
 
-That is a whole program, and it allocates nothing at all. Here is why.
+That's a whole program, and it allocates nothing at all. Here is why.
 
 ## A literal is a string, and it costs nothing
 
@@ -28,7 +28,7 @@ echo $name->byte(0);     // 114
 ```
 
 A null owner owns nothing, which is exactly why the first write to a literal has to clone rather than
-scribble on the program's own image. That is the next section.
+scribble on the program's own image. That's the next section.
 
 ## Copy-on-write, and the one rule behind it
 
@@ -364,8 +364,7 @@ $age = 3;
 echo "{$name} is {$age} years old.";        // Ronon is 3 years old.
 ```
 
-That is the whole thing for the common case. The rest of this section is the format specs, and how your own
-types join in.
+That's interpolation. Format specs and how your own types join in come next.
 
 Every `{$...}` is a hole, and what goes in one is an **expression**, not just a name:
 
@@ -439,7 +438,7 @@ echo "{$pi:.3e}";       // 3.142e+00
 
 ### It is all `str::from`
 
-There is no magic here, and that is the point. `"{$x}"` becomes `str::from($x)`, and `"{$x:.2f}"` becomes
+There is no magic here, and that's the point. `"{$x}"` becomes `str::from($x)`, and `"{$x:.2f}"` becomes
 `str::from($x, '.2f')`. So your own type joins in by declaring one function:
 
 ```echo
@@ -480,7 +479,7 @@ std::io::eprintln('to stderr');
 std::io::print('no newline');
 ```
 
-One difference worth knowing: `echo` renders a float as `3.500000` and `str::from` renders it as `3.5`.
+One difference: `echo` renders a float as `3.500000` and `str::from` renders it as `3.5`.
 `echo` reaches printf's `%f` directly and always has; `str::from` uses the shortest form that reads well in
 a sentence.
 

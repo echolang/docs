@@ -1,24 +1,6 @@
 # Namespaces
 
-A namespace keeps names apart. If you have written PHP you know the idea, and the spelling is close enough
-to guess:
-
-```echo
-namespace geometry;
-
-struct Point
-{
-    int32 $x;
-    int32 $y;
-}
-
-function make(int32 $x, int32 $y) : Point
-{
-    return Point($x, $y);
-}
-```
-
-The separator is `::`, not `\`:
+A namespace keeps names apart. The separator is `::`.
 
 ```echo
 namespace geometry;
@@ -66,7 +48,7 @@ echo app::take(Shared(7));      // 7
 Note the root-level `struct Shared` above the first `namespace` line. Anything declared before the first
 `namespace` statement lives at the root, and is reachable unqualified from everywhere.
 
-By convention one file holds one namespace, and the standard library is strict about it. That is a
+By convention one file holds one namespace, and the standard library is strict about it. That's a
 readability rule, not a language rule.
 
 ## Lookup resolves outward
@@ -125,7 +107,7 @@ echo $r->root;                      // 1, the root one out here
 
 ## Hidden, not extended
 
-Here is the rule that will eventually surprise you. Functions resolve as an **overload set**, and lookup
+Here's the rule that will eventually surprise you. Functions resolve as an **overload set**, and lookup
 stops at the first namespace that has *any* candidate with that name. Outer candidates are not added to the
 set. They are hidden.
 
@@ -181,7 +163,7 @@ there, and the only overload in scope takes a `string`.
 The fix is to qualify what you meant. From inside `app`, the root one is reachable by writing it out.
 
 I prefer this to merging the sets. Merging means adding a function in one namespace can silently change
-which overload an unrelated call in another namespace picks, and that is a debugging session nobody enjoys.
+which overload an unrelated call in another namespace picks, and that's a debugging session nobody enjoys.
 
 ## Nested types share the syntax
 
@@ -205,31 +187,63 @@ echo $c->index;     // 0
 Same separator, different thing: the left side is a type rather than a namespace. See
 [Structs](/language/structs).
 
-## There is no use statement
+## use is a file-local alias
 
-You cannot import a name to shorten it:
+A `use` binds a shorter name for the rest of this file. It doesn't publish anything into a namespace,
+so a second file of the same namespace doesn't see it, and a library's `use` cannot leak into a
+consumer.
 
 ```echo
-namespace app;
+namespace geometry;
 
-function helper() : void
+struct Point
 {
-    echo 1;
+    int32 $x;
+    int32 $y;
 }
 
-namespace main;
+function make(int32 $x, int32 $y) : Point
+{
+    return Point($x, $y);
+}
 
-app::helper();      // the only spelling
+namespace app;
+
+use geometry;
+use geometry::Point;
+
+Point $p = geometry::make(3, 4);
+echo $p->x;     // 3
 ```
 
-`use app;` does not parse. Every cross-namespace name is written in full at each use site. For deeply nested
-names such as `std::math::sqrt` that gets verbose, and an import statement is on
-[the list](/reference/limitations).
+Three shapes:
+
+```echo
+use std::math;                      // prefix: math::sqrt
+use std::math::sqrt;                // item:   sqrt(...)
+use std::math::{sqrt, abs};         // group
+use std::math::sqrt as square_root; // alias
+```
+
+The last segment decides what you bound. A namespace is a prefix, so you still write `math::sqrt`. A
+type, a function or a constant is an item, so the short name stands in every role that name has:
+`Point` as a type, `Point(...)` as a constructor, `Point::origin` as a static. There is no
+`use function` or `use const`. Echo already keeps those in different stores, so one `use` is enough.
+
+An alias is only a spelling. The declaration stays where it was, with the same visibility. `use`
+of a name another module did not mark `public` is refused at the `use`.
+
+A `use` is a file-scope statement, like `namespace`. It applies to the whole file, wherever you
+wrote it. It is not legal inside a body.
+
+There is no `use std::math::*;`. Adding a function in a namespace must not silently change which
+overload an unrelated call picks, and a star import is that happening on purpose. Name the
+namespace, or name the items.
 
 ## Operators ignore all of this
 
-Worth knowing before it bites you: **operators are global.** An operator declared anywhere in your program,
-including inside a namespace and including in a library you depend on, applies everywhere.
+This one will bite you if you don't know it: **operators are global.** An operator declared anywhere in your
+program, including inside a namespace and including in a library you depend on, applies everywhere.
 
 There is no namespacing for them and no way to scope one. See [Operators](/language/operators).
 
@@ -244,7 +258,7 @@ A name's spelling tells you what tier it is in:
 | `std::math::`, `std::env::` | ordinary utility with no special relationship to the language | `stdlib/std/` |
 
 So `array<int32>` is unqualified because you write it constantly, while `mem::size<T>()` is qualified
-because you do not. And anything under `std::` is a library like any you would write yourself.
+because you don't. And anything under `std::` is a library like any you would write yourself.
 
 ## Next
 

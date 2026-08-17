@@ -1,7 +1,8 @@
 # The standard library
 
-Echo's standard library is **ordinary Echo**. It is compiled with your program, it is written against the
-same language you are writing, and you can turn it off. There is no runtime hiding behind it.
+You write `array<string>`, you append to it, you `foreach` over it. Those aren't compiler builtins.
+They're ordinary Echo, compiled with your program, written against the same language you are writing.
+You can turn the whole library off. There is no runtime hiding behind it.
 
 ```echo
 array<string> $ships = ["Prometheus", "Daedalus"];
@@ -12,12 +13,11 @@ foreach ($ships as $name) {
 }
 ```
 
-The array, the append, and the `foreach` are all library code. The rest of this page is where to find
-things, and what happens if you build without them.
+The array, the append, and the `foreach` are all library code.
 
 ## Three tiers, and the spelling tells you which
 
-Where a name lives is visible in how you write it. There is no lookup table to memorize.
+Where a name lives is visible in how you write it. No lookup table.
 
 **Tier one is the language's own vocabulary.** Root namespace, lowercase, spelled like a primitive:
 
@@ -33,15 +33,15 @@ assert($chevrons->count() == 3);
 `array`, `map`, `ordered_map`, `string`, `slice`, `range`, `result`, plus `die`, `assert` and `dprint`. You write
 these every day, so they cost you no namespace at all.
 
-**Tier two is still about the language, but you do not write it every line.** A short namespace:
+**Tier two is still about the language, but you don't write it every line.** A short namespace:
 
 ```echo
 echo mem::size<int32>();             // 4
 echo hash::of(42) == hash::of(42);      // 1
 ```
 
-`contract::` (interfaces only), `mem::`, `str::`, `arr::` and `hash::`. Container plumbing, mostly. If you
-are writing a data structure you will live here; otherwise you will visit for `mem::size` and leave.
+`contract::` (interfaces only), `mem::`, `str::`, `arr::` and `hash::`. Container plumbing, mostly. If you're
+writing a data structure you'll live here. Otherwise you'll visit for `mem::size` and leave.
 
 **Tier three is ordinary utility with nothing to do with the language.** Fully qualified under `std`:
 
@@ -68,9 +68,9 @@ foreach (0 .. 3 as $i) {
 works anywhere iteration does, and you could have declared it yourself. See
 [Operators](/language/operators).
 
-A handful of library declarations do carry attributes you will not write yourself, which is how the
-compiler is able to name a type like `array<T>` when you write `$a = [1, 2]` with no declared type. You
-never need to think about them to use the library. [Attributes](/reference/attributes) has them if you are
+A handful of library declarations do carry attributes you won't write yourself. That's how the
+compiler names a type like `array<T>` when you write `$a = [1, 2]` with no declared type. You
+never need to think about them to use the library. [Attributes](/reference/attributes) has them if you're
 curious.
 
 ## What `--no-stdlib` takes away

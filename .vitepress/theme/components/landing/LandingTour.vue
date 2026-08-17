@@ -91,8 +91,7 @@ onBeforeUnmount(() => window.removeEventListener('scroll', onScroll))
         >
           <h3>Variables have one type, forever</h3>
           <p class="says">
-            Declared the way you would expect from PHP, but with a catch: the type is fixed at the
-            declaration and the compiler knows it before your program runs.
+            The type is fixed at the declaration, and the compiler knows it before your program runs.
           </p>
           <CodeWindow>
             <pre class="eco-code">$count = <span class="s">3</span><span class="p">;</span>         <span class="c">// int32, inferred</span>

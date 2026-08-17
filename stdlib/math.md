@@ -1,6 +1,6 @@
 # Math
 
-`std::math` is thin, and it is thin on purpose: **most of what is in it is one machine instruction rather
+`std::math` is thin, and it's thin on purpose: **most of what is in it is one machine instruction rather
 than a function call.**
 
 ```echo
@@ -19,7 +19,7 @@ echo std::math::SQRT_2;     // 1.414214
 ```
 
 They are **constants, not variables**, which in Echo is a real distinction rather than a naming convention.
-A constant has no storage at all: its expression is copied into each place the name is used. That is what
+A constant has no storage at all: its expression is copied into each place the name is used. That's what
 lets one live at file scope, where a variable cannot.
 
 Every one of them is a `float64`, because a float literal is double precision unless it ends in `f`. Where
@@ -43,7 +43,7 @@ echo std::math::sqrt(2.0f);     // 1.414214, the float32 one
 ```
 
 They are separate functions all the way down, so single-precision math never round-trips through a double.
-The `f` suffix is the only literal suffix Echo has, and this is the place you will use it most.
+The `f` suffix is the only literal suffix Echo has, and this is the place you'll use it most.
 
 ## Trigonometry, exponentials, logarithms
 
@@ -73,7 +73,7 @@ echo std::math::roundeven(2.5);     // 2.000000
 ```
 
 `round` rounds half away from zero. `roundeven` is banker's rounding, which rounds an exact half to the
-nearest even number, and on 2.5 that is the difference between 3 and 2. If you are summing a lot of rounded
+nearest even number, and on 2.5 that is the difference between 3 and 2. If you're summing a lot of rounded
 values and care about drift, `roundeven` is the one you want. There is also `rint`, which rounds according
 to the current rounding mode.
 
@@ -101,11 +101,11 @@ echo std::math::min($a, $b);
 //          std::math::min(uint32, uint32)
 ```
 
-Cast the operands to one type first. That is the honest answer: a `min` that silently picked one would be
+Cast the operands to one type first. That's the honest answer: a `min` that silently picked one would be
 choosing which of your two values gets reinterpreted, and it would be wrong about half the time.
 
 There are no `int8` or `int16` overloads, which means a `min` over two `uint8`s widens. That costs nothing
-in practice and it is still a gap.
+in practice and it's still a gap.
 
 ## abs takes any number you give it
 
@@ -120,7 +120,7 @@ ordinary rules sort it out: a float argument matches a float overload exactly, a
 instantiates the generic. Concrete beats generic, so a float never goes near the generic body. See
 [Generics](/language/generics).
 
-One wrinkle worth knowing. The generic works by comparing against zero, which over an unsigned type is never
+Here's the wrinkle. The generic works by comparing against zero, which over an unsigned type is never
 true, so `abs` on a `uint32` compiles and hands you the value back unchanged. The answer is right, since the
 absolute value of an unsigned number is itself, but you have written a call that cannot do anything.
 
@@ -147,7 +147,7 @@ missing integer `clamp` is a gap in the library rather than in the language, and
 
 ## A constant is not a compile-time number
 
-This is the one that surprises people, and it is not a `std::math` rule at all:
+This is the one that surprises people, and it's not a `std::math` rule at all:
 
 ```echo
 const if (std::math::PI > 3.0) {

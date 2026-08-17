@@ -1,8 +1,8 @@
 # Memory
 
-`mem::` is raw heap memory and the questions you can ask about a type. Most programs never touch it, and
-the ones that do are usually **writing a container**, which is exactly what the standard library uses it
-for. The rule for the whole namespace: **nothing here frees anything for you.**
+Most programs never touch `mem::`. The ones that do are usually **writing a container**, which is
+exactly what the standard library uses it for. This is raw heap memory and the questions you can ask
+about a type. The rule for the whole namespace: **nothing here frees anything for you.**
 
 ```echo
 ptr<int32> $chevrons = mem::alloc<int32>(4);
@@ -13,8 +13,8 @@ echo $chevrons:$[0];        // 7
 mem::free($chevrons);
 ```
 
-Every `mem::alloc` needs a matching `mem::free`, and using memory after freeing it is undefined. That is
-the whole bargain. If you are not building a data structure, [Arrays](/collections/arrays) already did all
+Every `mem::alloc` needs a matching `mem::free`, and using memory after freeing it is undefined. That's
+the bargain. If you're not building a data structure, [Arrays](/collections/arrays) already did all
 of this for you and did it correctly.
 
 ## Counts are elements, never bytes
@@ -83,7 +83,7 @@ mem::free($p);
 address the allocator has already recycled, which is the classic version of this bug and is silent for as
 long as you are lucky.
 
-`mem::realloc` over `null` allocates, and `mem::free` over `null` is a no-op. That is why a container needs
+`mem::realloc` over `null` allocates, and `mem::free` over `null` is a no-op. That's why a container needs
 no separate "not allocated yet" state: empty and unallocated are the same thing.
 
 ## copy promises the regions do not overlap. move does not
@@ -109,7 +109,7 @@ mem::free($n);
 
 A container closing a gap is exactly the case that breaks `mem::copy`'s promise, which is why the two are
 separate functions rather than one with a flag. And note what `move` does *not* do: nothing is duplicated
-and nothing is destroyed, so the number of owners is unchanged. That is what makes it correct for a `T`
+and nothing is destroyed, so the number of owners is unchanged. That's what makes it correct for a `T`
 that owns something, with no branch on `T` at all.
 
 `mem::zero<T>` fills `$count` elements with zero bytes.
@@ -142,7 +142,7 @@ Asking them out loud lets your own code branch on the answer instead of guessing
 
 ## Those answers are constants, so a `const if` can branch on them
 
-This is the part that makes `mem::` worth having:
+This is why `mem::` exists as more than an allocator:
 
 ```echo
 struct Chevron
@@ -194,7 +194,7 @@ which is what makes the slot safe to free or reuse. An ordinary read would *copy
 a slot nobody is going to release.
 
 The rule for your own container: if the slot you are writing to is one you just grew into existence, an
-ordinary `=` is fine, and that is why `$a[] = $v` on an array needs none of this. If the slot is one you
+ordinary `=` is fine, and that's why `$a[] = $v` on an array needs none of this. If the slot is one you
 picked, as a hash table picks a slot for a key, you need `init`. And any time you hand a value *out* of
 storage you are managing yourself, you need `take`, or you leave a second owner behind in a slot nobody is
 going to release.
@@ -204,7 +204,7 @@ Initialize a place that already holds one and that value leaks.
 
 ## Both refuse anything the compiler is already accounting for
 
-You cannot use them to sidestep ownership, and the refusal says so:
+You can't use them to sidestep ownership, and the refusal says so:
 
 ```echo
 string $local = "Abydos";
@@ -259,7 +259,7 @@ the block is given back. They are not the same moment, and the gap between them 
 lives in. All the strong references together hold one weak count, seated with the first, which is why a
 freshly built object reads 1 there.
 
-Both take a **borrow** rather than a value, and that is not a detail you can ignore: a by-value class
+Both take a **borrow** rather than a value, and that's not a detail you can ignore: a by-value class
 parameter would itself be one more reference, so it would answer one too high at every call.
 
 Both answer 0 for a null handle, which is more useful than it sounds. A copy-on-write check asks "am I the
@@ -338,13 +338,13 @@ mem::buffer<int32> $copy = $a;
 
 Hand it over with `mv` instead. Its address and capacity are private, so there is also no way to read the
 address out, write one in, or build a second buffer around an allocation that already has an owner. The
-whole point of closing those doors is that **two live `mem::buffer<T>` values are always two separate
-allocations**, which is a promise `mem::alloc` on its own can never make. That is what `array<T>` is built
-on, and what makes a buffer worth reaching for over a bare `ptr<T>`.
+point of closing those doors is that **two live `mem::buffer<T>` values are always two separate
+allocations**, which is a promise `mem::alloc` on its own can never make. That's what `array<T>` is built
+on, and why you'd reach for a buffer over a bare `ptr<T>`.
 
 `resize` is the one operation that is neither a create nor a destroy. It consumes the old region and
 produces its replacement: the block may move, the elements are relocated bitwise, the number of owners is
-unchanged. Every borrow into the buffer is stale afterwards, and that is the owner's rule to keep, because
+unchanged. Every borrow into the buffer is stale afterwards, and that's the owner's rule to keep, because
 the buffer cannot see the borrows.
 
 ## The whole surface

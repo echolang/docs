@@ -12,8 +12,8 @@ echo $window->count();      // 3
 echo $window[0];            // 2
 ```
 
-That is the whole type. What makes it worth a page is the rule attached to it: a slice does not keep its
-array alive, and nothing in the compiler checks that you noticed.
+Here is the catch, and it is a real one: a slice does not keep its array alive, and nothing in the
+compiler checks that you noticed.
 
 ## Take one with sub()
 
@@ -45,8 +45,8 @@ echo $middle[0];        // 2
 echo $middle->count();  // 2
 ```
 
-One asymmetry worth knowing: `slice<T>` has no zero-argument `sub()`. An array has one because "all of it"
-is a useful thing to ask an owner for. A slice already is a window, so narrowing it always says how far.
+One asymmetry: `slice<T>` has no zero-argument `sub()`. An array has one because "all of it" is a useful
+thing to ask an owner for. A slice already is a window, so narrowing it always says how far.
 
 ## A slice shares storage, so writes go both ways
 
@@ -96,7 +96,7 @@ If you want to append, go back to the array.
 
 ## A slice is copied by copying two words
 
-`slice<T>` declares no constructor, no destructor and no copy constructor, and that is the design rather
+`slice<T>` declares no constructor, no destructor and no copy constructor, and that's the design rather
 than an omission. It owns nothing, so a shallow copy is the *correct* copy:
 
 ```echo
@@ -116,7 +116,7 @@ other end.
 
 `slice<const T>` and `const slice<T>` are different types, and the difference is which thing is read-only.
 
-`slice<const T>` promises **the elements** will not be written. That is what a const array hands you,
+`slice<const T>` promises **the elements** will not be written. That's what a const array hands you,
 because it has no writable elements to give:
 
 ```echo

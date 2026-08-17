@@ -9,8 +9,8 @@ echo 2 + 3 * 4;     // 14
 echo (1 + 2) * 3;   // 9
 ```
 
-If that is all you needed, you can stop here. The rest of this page is the type rules underneath it, which
-you will eventually trip over.
+If that's all you needed, you can stop here. The rest of this page is the type rules underneath it, which
+you'll eventually trip over.
 
 ## The operators
 
@@ -36,6 +36,10 @@ echo 7 / 2;         // 3
 echo 7 % 2;         // 1
 echo 7 / 2.0;       // 3.500000
 ```
+
+`&&` and `||` short-circuit. The right side doesn't run when the left has already decided: `false &&
+die("no")` doesn't die, and `true || die("no")` doesn't die. Both sides stay `bool`. There is no
+truthiness. `??` and `?->` are the other forms that skip a side; see [Nullability](/memory/nullability).
 
 The bitwise operators are integers only. A float has no bits as far as the language is concerned:
 
@@ -117,7 +121,7 @@ the literal cases are all resolved at compile time where nothing can go wrong at
 
 ## Literals convert at compile time, variables at runtime
 
-The distinction matters, so it is worth making explicit.
+The distinction matters, so let's make it explicit.
 
 A literal has no type until something gives it one. When the compiler retypes a literal, nothing happens at
 runtime at all. The constant that ends up in the program is simply the right one:
@@ -141,14 +145,14 @@ echo $val;          // 6.280000
 
 Conceptually, that second line becomes:
 
-<!-- verify: skip -->
 ```echo
-float32 $val = 3.14f * float32($multiplier);
+int32 $multiplier = 2;
+float32 $val = 3.14f * ($multiplier as float32);
 ```
 
-That `float32(...)` is not something you can write (Echo has no cast operator), but it is what the compiler
-inserts. An optimizer will often make it disappear, but assume it is there when you are reasoning about a
-hot loop.
+That `$multiplier as float32` is a written destination. The compiler inserts the same conversion when a
+typed slot is already waiting. An optimizer will often make it disappear, but assume it is there when you
+are reasoning about a hot loop.
 
 ## What the compiler refuses
 
@@ -266,9 +270,9 @@ That looks pointless in isolation, and mostly it is. It earns its keep next to `
 compiler branches on a value before the program exists (see [Control flow](/language/control-flow)), and
 inside generic code, where the answer depends on the type parameter.
 
-Worth knowing: folding is not a licence to be wrong. An overflow during folding is refused rather than
-wrapped, and the folded answer always agrees with the runtime one. A `const if` and the ordinary `if` beside
-it can never take different arms over the same operands.
+Folding is not a licence to be wrong. An overflow during folding is refused rather than wrapped, and the
+folded answer always agrees with the runtime one. A `const if` and the ordinary `if` beside it can never
+take different arms over the same operands.
 
 ## Next
 

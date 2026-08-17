@@ -1,7 +1,7 @@
 # Input and Output
 
-`echo` gets you through more of a program than you would think, and then one day you need to write to stderr,
-or write without a trailing newline, or hand "where the output goes" to a function. That is the whole reason
+`echo` gets you through more of a program than you'd think. Then one day you need to write to stderr,
+or write without a trailing newline, or hand "where the output goes" to a function. That's why
 `std::io` exists.
 
 ```echo
@@ -86,7 +86,7 @@ std::io::println("hello, {$name}");
 ```
 
 `null` means *there was nothing at all*. A final line with no newline is still answered in full, and an
-empty line is an empty string rather than a `null`. That is the distinction `guard` exists to make easy.
+empty line is an empty string rather than a `null`. That's the distinction `guard` exists to make easy.
 
 `std::io::readline()` is `std::io::stdin->readline()` written the short way.
 

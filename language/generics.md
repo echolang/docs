@@ -18,13 +18,13 @@ echo largest(1.5, 0.5);     // 1.500000
 `<T>` after the name declares a type parameter. Inside the body `T` is an ordinary type you can write
 anywhere: a parameter, a local, a return type.
 
-The important thing to know up front: **Echo monomorphizes.** Each set of type arguments you actually use
+Here's the thing that actually matters: **Echo monomorphizes.** Each set of type arguments you actually use
 produces a separate, fully concrete copy of the function. `largest(3, 7)` compiles down to a function taking
 two `int32`s. There is no boxing, no type erasure and no runtime cost for the generality.
 
 ## Inference at the call site
 
-You normally do not write the type arguments. The compiler works them out from what you passed:
+You normally don't write the type arguments. The compiler works them out from what you passed:
 
 ```echo
 function identity<T>(T $value) : T
@@ -191,7 +191,7 @@ echoc run -p instances program.eco
 ```
 
 That prints every instance the compiler minted and what each type parameter was bound to, which is the first
-thing to reach for when a generic call does not resolve the way you expected.
+thing to reach for when a generic call doesn't resolve the way you expected.
 
 ## Asking about a type parameter
 
@@ -239,7 +239,7 @@ This is how `array<T>` is written. Its copy, its destructor and its `clear()` al
 questions, which is why an owning element type works correctly with **no arm anywhere in the compiler that
 knows what a container is**.
 
-One limitation worth knowing: `mem::size` and `mem::align` cannot decide a `const if`. They are
+One catch: `mem::size` and `mem::align` can't decide a `const if`. They are
 answered from the target's layout, which the compiler only knows once it is emitting code, and the branch
 has to be picked earlier than that. The two AST questions above can. See
 [Control flow](/language/control-flow).
@@ -271,7 +271,7 @@ echo $hold[1];      // 22
 `T` is inferred from the operands, exactly as it is for a call. This is how `array<T>` and `map<K, V>`
 declare their brackets.
 
-There is a gap here worth knowing about. Declaring a **generic** overload of a symbol that already has a
+Here's a gap. Declaring a **generic** overload of a symbol that already has a
 built-in meaning is currently refused, even though the concrete version is fine:
 
 ```echo
@@ -308,7 +308,7 @@ CargoBay<int32> $combined = CargoBay<int32>(1, 2) + CargoBay<int32>(10, 20);
 echo $combined->forward;    // 11
 ```
 
-Custom symbols such as `..` do not hit this, because nothing is built in for them. See
+Custom symbols such as `..` don't hit this, because nothing is built in for them. See
 [Operators](/language/operators).
 
 ## Next

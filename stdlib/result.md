@@ -1,7 +1,7 @@
 # Results
 
 Sometimes a function can fail and the caller needs to know why. `T?` is the cheap answer when absence is
-enough. It cannot carry a reason. **`result<T, E>` is a value of type `T`, or a failure of type `E`.**
+enough. It can't carry a reason. **`result<T, E>` is a value of type `T`, or a failure of type `E`.**
 
 ```echo
 function double(int32 $n) : result<int32, string>
@@ -20,11 +20,8 @@ int32 $n = guard double(21) else {
 echo $n;        // 42
 ```
 
-The return type says the call can fail. The compiler will not let you read the value without dealing with
+The return type says the call can fail. The compiler won't let you read the value without dealing with
 that. `guard` is how you usually deal with it.
-
-If you are coming from Rust, this is `Result<T, E>` and the shapes line up almost exactly. If you are coming
-from PHP: it is an exception you have to look at, checked by the compiler, with no unwinding anywhere.
 
 ## T? when there is nothing to say
 
@@ -35,7 +32,7 @@ Reach for `result<T, E>` when the reason is the point: a parser that saw a bad d
 of range, a string that was empty versus one that was too long. The `E` can be a `string`, an `int32`, or
 an enum of your own. Anything.
 
-[Nullability](/memory/nullability) is the `T?` chapter. This page is the other one.
+[Nullability](/memory/nullability) is the `T?` chapter. This one is the type that carries a reason.
 
 ## How you build one
 
@@ -49,7 +46,7 @@ echo $good->has_value();    // 1
 echo $bad->failed();      // 1
 ```
 
-Writing the type twice gets old, and you do not have to. Wherever the destination already names the type,
+Writing the type twice gets old, and you don't have to. Wherever the destination already names the type,
 drop the owner:
 
 ```echo
@@ -99,7 +96,7 @@ compile.
 `guard` is the shape you want almost always. It declares the variable. Leave the `else` off and a
 failure stops the program, with `E` in the message when `str::from` can print it. Write an `else`
 when you want to handle the reason; that block has to leave: `return`, `break`, `continue` or `die`.
-That is what makes the declaration safe afterwards.
+That's what makes the declaration safe afterwards.
 
 ```echo
 function first_word(const string& $line) : result<string, int32>
@@ -118,8 +115,7 @@ string $word = guard first_word('  hello  ') else {
 echo $word;    // hello
 ```
 
-Add a name and you get the `E`. This is the half `T?` cannot do, and it is the whole reason this type
-exists:
+Add a name and you get the `E`. This is the half `T?` can't do, and it's why this type exists:
 
 ```echo
 function pick(int32 $i) : result<string, int32>
@@ -145,10 +141,10 @@ echo describe(-3);      // failed with -3
 ```
 
 `$code` is a borrow of the failure inside the result, seeded into the `else` block's own scope the same way
-a `foreach` binding is. It is only in scope inside the block.
+a `foreach` binding is. It's only in scope inside the block.
 
 The binding `guard` hands you is a **copy** of the payload, taken out of storage the result still owns.
-That is why an owning `T` is safe here: nothing is moved out of a value that is about to be destroyed, and
+That's why an owning `T` is safe here: nothing is moved out of a value that is about to be destroyed, and
 nothing is aliased into storage that is about to go away.
 
 [Nullability](/memory/nullability#guard-binds-it-once) has the rest of `guard`, including the rule that
@@ -172,12 +168,12 @@ echo status(4)->or(-1);    // 40
 echo status(0)->or(-1);    // -1
 ```
 
-That works on a temporary, because a copy does not need the result to outlive the statement. `unwrap()`
-is different, and that is the next section.
+That works on a temporary, because a copy doesn't need the result to outlive the statement. `unwrap()`
+is different, and that's the next section.
 
 ### match, when both arms do work
 
-It is an enum. Nothing stops you treating it as one, and the leading-dot shorthand works in a pattern too
+It's an enum. Nothing stops you treating it as one, and the leading-dot shorthand works in a pattern too
 once the subject has named the type:
 
 ```echo
@@ -241,7 +237,7 @@ echo $e->unwrap();
 fatal error: unwrap() on a result holding a failure
 ```
 
-That is deliberate. The protocol asks `has_value()` first, so by the time `guard` calls `unwrap()` the
+That's deliberate. The protocol asks `has_value()` first, so by the time `guard` calls `unwrap()` the
 test is already done and there is nothing left to re-check. A call you write by hand can get the order
 wrong, and then stopping is the only honest answer: the error arm has no `T` to hand back.
 
@@ -260,7 +256,7 @@ echo $r->unwrap();      // 9
 
 Same for a method call. `$r->unwrap()->push(4)` appends to the array the result is holding.
 
-Two things that look like they should work, and do not.
+Two things that look like they should work, and don't.
 
 A call is not an assignment destination, so `$r->unwrap() = 99;` does not parse. Read through the borrow
 or call through it. To replace the whole payload, build a new result.
@@ -274,11 +270,11 @@ echo result<int32, string>::ok(5)->unwrap();
 //        Bind it to a variable first.
 ```
 
-Name it first. That is the same rule `map<K, V>::at()` and `slice<T>::at()` live under, and Echo does not
+Name it first. That's the same rule `map<K, V>::at()` and `slice<T>::at()` live under, and Echo does not
 check the rest: a borrow you stash past the result is yours to keep straight. See
 [Pointers and references](/memory/pointers).
 
-`or` is the copy, and that is why it is the one that works on a `const` result and on a temporary.
+`or` is the copy, and that's why it's the one that works on a `const` result and on a temporary.
 `unwrap()` cannot be `const`. Handing a writable borrow out of a read-only value would be a lie.
 
 ## E can be an enum
@@ -332,7 +328,7 @@ node for it, no pass that mentions it. `guard` reaches it through two interfaces
 declare, and `.ok(...)` / `.error(...)` are the same
 [static shorthand](/language/structs#a-static-belongs-to-the-type-not-to-a-value) every enum's cases get.
 
-So you can write your own. `result<T, E>` is not a privileged type. It is the one the library happens to
+So you can write your own. `result<T, E>` is not a privileged type. It's the one the library happens to
 ship. [Contracts](/stdlib/contract#unwrappable-and-failable) is the two interfaces, and
 [Nullability](/memory/nullability#your-own-types-can-be-guarded-too) walks a type that declares them.
 
@@ -350,36 +346,34 @@ told apart by name, so the question never arises.
 
 The second problem is what a copy costs. Echo synthesizes a struct's copy and its teardown over **every**
 property, so a result holding a value would still retain and release the failure it is not holding. For
-`result<string, string>` that is two reference counts moving per copy where one should. And a struct
+`result<string, string>` that's two reference counts moving per copy where one should. And a struct
 cannot opt out: declare a destructor to branch by hand and [the copy rules](/memory/copying) answer "no
 copy at all", so the type stops being copyable.
 
 An enum's copy and teardown are per case by construction. An `ok` touches the value slot and never looks
-at the failure slot. That is the entire argument, and it is why the language grew a way to hand a payload
+at the failure slot. That's the entire argument, and it's why the language grew a way to hand a payload
 back as a `T&` rather than this type growing a `bool`.
 
 ## What it costs
 
-An enum does not overlay its cases. The value is a tag, then a slot for every payload field of every
-case, so `result<T, E>` holds both `T` and `E` even though only one of them is live.
+The two payloads overlay, so `result<T, E>` is as wide as the larger of `T` and `E`, plus the tag and
+the padding their alignment wants. It is not as wide as both at once.
 
 ```echo
-echo mem::size<result<int64, int32>>();    // 24
+echo mem::size<result<int64, int32>>();    // 16
 echo mem::size<int64>();                   // 8
 echo mem::size<int32>();                   // 4
 ```
 
-24 is not 8 + 4. The tag is one byte, `int64` wants 8-byte alignment, and the whole value is padded out
-to that alignment. A layout that sat the two payloads on top of each other would be 16. Echo does not
-do that yet.
+16 is not 8 + 4. The tag is one byte, `int64` wants 8-byte alignment, and the `int32` sits in the same
+eight bytes the `int64` uses. A layout that sat the two payloads side by side would be 24.
 
-[Enums](/language/enums#what-an-enum-is-underneath) is the reasoning: the slots are ordinary properties,
-which is what keeps copy and teardown per case with no special rule for this type. Overlapping them
-later would not change a line of Echo.
+[Enums](/language/enums#what-an-enum-is-underneath) is the rest of the shape: the slots are still
+ordinary properties, which is what keeps copy and teardown per case with no special rule for this type.
 
-A result you produce and immediately `guard` is usually inlined down to a test of the tag, so the extra
-width never becomes a copy you pay for. A result you store, put in an array, or hand across a function
-that does not inline is the 24-byte value above.
+A result you produce and immediately `guard` is usually inlined down to a test of the tag, so the width
+never becomes a copy you pay for. A result you store, put in an array, or hand across a function that
+does not inline is the 16-byte value above.
 
 ## The whole surface
 

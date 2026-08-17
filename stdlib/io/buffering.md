@@ -3,7 +3,7 @@
 A `stream` is one `int32`. It has nowhere to keep leftover bytes, which is why
 [`stdin->readline()`](/stdlib/io/) is one `read` per byte. Buffering needs a value you hold.
 
-`reader` and `writer` wrap a `stream`. They do not own the descriptor and they do not close it. The last
+`reader` and `writer` wrap a `stream`. They don't own the descriptor and they don't close it. The last
 `writer` flushes.
 
 ```echo
@@ -31,8 +31,7 @@ usize $z = guard $out->flush() else ($e) {
 echo $n;
 ```
 
-That is the whole reason these types exist: leftover bytes have somewhere to sit, so a line is not one
-syscall per character.
+Leftover bytes now have somewhere to sit, so a line is not one syscall per character.
 
 ## The window
 
@@ -46,11 +45,11 @@ and an unflushed window is a third place for output to sit.
 ## They do not own the descriptor
 
 A `reader` or `writer` copies the fd out of the stream and forgets the stream. Closing stdin because a
-`reader` went out of scope would be a hell of a surprise, so they do not. A
+`reader` went out of scope would be a hell of a surprise, so they don't. A
 [`std::io::file`](/stdlib/io/files) is the type that closes what it opened.
 
 The last `writer` does flush. A `reader` does nothing on the way out: unread bytes in the window are
-simply dropped, and the next reader of that descriptor will not see them. That is the cost of having
+simply dropped, and the next reader of that descriptor will not see them. That's the cost of having
 stolen them from the kernel in the first place.
 
 ## Do not wrap a live file
@@ -59,7 +58,7 @@ A `std::io::file` already has both windows. Wrapping its `fd()` in a `reader` or
 bytes from the file's own window, and the two would disagree about where you are. If you have a
 `std::io::file`, use that.
 
-These two are for streams you do not own: stdin, stdout, stderr, or a descriptor someone else handed you.
+These two are for streams you don't own: stdin, stdout, stderr, or a descriptor someone else handed you.
 
 ## The whole surface
 

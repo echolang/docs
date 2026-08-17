@@ -1,6 +1,6 @@
 # Primitive types
 
-Fourteen primitives, three aliases, one literal suffix. That is the entire set of types the compiler knows
+Fourteen primitives, three aliases, one literal suffix. That's every type the compiler knows
 about on its own, and **everything else you write, including `string` and `array<T>`, is a library type**.
 
 ```echo
@@ -45,7 +45,7 @@ echo mem::size<usize>();     // 8
 
 ## usize and isize are pointer width, and today that is always 8
 
-Their width is one compile-time constant in the compiler, `ECO_TARGET_POINTER_SIZE`, and it is 8. There is no
+Their width is one compile-time constant, `ECO_TARGET_POINTER_SIZE`, and it's 8. There is no
 per-target logic behind it yet, so on every platform Echo currently builds for, `usize` is 64 bits.
 
 What matters more than the number is that **they are their own types, not aliases**. Assigning a `uint64`
@@ -71,8 +71,8 @@ float $c = 3.0f;    // float32
 There are no others. No `double`, no `byte`, no `char`, no `short`, no `long`. `int` is `int32` everywhere
 and is not the machine word.
 
-Note that `numeric`, `integer`, `signed`, `unsigned` and `floating` look like they belong on this list and do
-not. They are generic constraint aliases, usable only in a type parameter's constraint, never as the type of
+`numeric`, `integer`, `signed`, `unsigned` and `floating` look like they belong on this list and
+don't. They are generic constraint aliases, usable only in a type parameter's constraint, never as the type of
 a variable. See [Generics](/language/generics).
 
 ## What an untyped literal decides
@@ -86,7 +86,7 @@ a variable. See [Generics](/language/generics).
 | `"hi"` | `string` |
 | `0xFF` | `uint8`, and the width comes from the digit count |
 
-The last row is the one that surprises people, so it gets its own section.
+The last row is the one that surprises people.
 
 ### A radix literal picks its width from how you wrote it
 
@@ -103,7 +103,7 @@ Nothing about the value:
 So `$e = 0xFF;` is a `uint8` and `$f = 0x00FF;` is a `uint16`, despite being the same number. Write the
 zeros when you mean the width.
 
-That is only what happens when nothing else has an opinion. **A destination outranks it**, exactly as it
+That's only what happens when nothing else has an opinion. **A destination outranks it**, exactly as it
 does for a decimal literal, and the range check comes with it:
 
 ```echo
@@ -260,14 +260,16 @@ echo $f;                // 3.141593
 
 The type checker deliberately does not look at primitive-to-primitive conversions. It refuses conversions
 between pointers, structs, classes, interfaces, callables, C function pointers and weak handles, and waves
-numbers through. I am
-not happy with that. I would rather narrowing needed something written down, and it is on
-[the list](/reference/limitations). Until then the literal check is the only safety net you get.
+numbers through. I am not happy with that. I'd rather narrowing needed something written down, and it is
+on [the list](/reference/limitations). Until then the literal check is the only safety net you get.
 
-There is **no cast operator** to reach for either. `(int32)$x` does not parse and `int32($x)` is not a
-function. Conversion happens by assigning to a typed destination or passing to a typed parameter, and that is
-the only spelling there is. The one exception is inside an `unsafe` block, where `uint8&($bytes:$)` promotes
-raw storage to a typed borrow, which is a different operation with a similar shape.
+`$x as T` writes the destination next to the value, for the sites that have none: a `return`, an operand of
+`<`, a field of a constructor about to be called. `(int32)$x` does not parse and `int32($x)` is not a
+function. [Types](/language/types) has the spelling. Narrowing at a typed destination still happens
+silently. `as` is the escape hatch, not a requirement.
+
+The other written form is inside an `unsafe` block, where `$bytes:$ as uint8&` (or `uint8&($bytes:$)`)
+promotes raw storage to a typed borrow. That is a different operation with a similar shape.
 
 ## void
 
@@ -284,11 +286,11 @@ log("done");        // done
 ```
 
 By intent it appears in return position only. In practice **nothing refuses `void $x;`**: the type checker
-waves it through and the compiler then hangs trying to lay it out. Do not write it. That is a bug, and it is
+waves it through and the compiler then hangs trying to lay it out. Don't write it. That's a bug, and it is
 on [the list](/reference/limitations).
 
-`void` is also not the same thing as "the compiler has not worked this out yet", which is a separate internal
-state you will never see spelled in your program.
+`void` is also not the same thing as "the compiler has not worked this out yet". That's a separate internal
+state you'll never see spelled in your program.
 
 ## Next
 

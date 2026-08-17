@@ -1,10 +1,10 @@
 # A tour of Echo
 
-This page is the whirlwind version. Every big idea in the language, one snippet each, in an order where each
-one makes sense given the one before it.
+Every big idea in the language, one snippet each, in an order where each one makes sense given the one
+before it. It isn't a reference and it doesn't go deep. By the end you should be able to read Echo code,
+and know which chapter to open when you need the details.
 
-It is not a reference and it does not go deep. The goal is that by the end you can read Echo code, and you
-know which chapter to open when you need the details. Every snippet here compiles and runs as written.
+Every snippet here compiles and runs as written.
 
 ## There is no main
 
@@ -131,8 +131,8 @@ struct Rect
 echo Rect(3.0, 4.0)->area();    // 12
 ```
 
-`const function` means the method only reads `$this`. It is worth writing, because a `const` value can only
-call `const` methods.
+`const function` means the method only reads `$this`. Write it. A `const` value can only call `const`
+methods.
 
 [Structs](/language/structs).
 
@@ -173,7 +173,7 @@ echo $a->balance(); // 150
 A class lives on the heap and is reference counted. Assigning one shares it. When the last owner goes away
 the object is destroyed and the memory is given back.
 
-That is the whole struct/class decision: **one owner and a copy, or many owners and a shared object.** Pick
+That's the whole struct/class decision: **one owner and a copy, or many owners and a shared object.** Pick
 per type, at the declaration, and every use site follows from it.
 
 Note the `private` on the properties. A struct with a private property loses its free field-wise constructor,
@@ -370,7 +370,7 @@ echo apply($double, 10);    // 20
 
 ## Ownership, and the word mv
 
-This is the part that is genuinely new if you are coming from PHP, so it gets a little more room.
+This is the part that is genuinely new, so it gets a little more room.
 
 Every value has exactly one owner. When the owner goes out of scope, the value is destroyed. You can hand
 ownership to somebody else, and that is called a **move**:
@@ -398,9 +398,9 @@ echo $nums->count();        // error: '$nums' has been moved out of
 A function signature cannot quietly eat something you thought you still had. Every place a value stops being
 yours is spelled out, in your own source.
 
-Most of the time you do not want to give the thing away, you just want the function to look at it. That is a
-borrow, written `&` on the parameter. The call site says nothing, because a borrow takes nothing and so does
-not need announcing the way `mv` does:
+Most of the time you don't want to give the thing away, you just want the function to look at it. That's a
+borrow, written `&` on the parameter. The call site says nothing, because a borrow takes nothing and so
+doesn't need announcing the way `mv` does:
 
 ```echo
 function total(const array<int32>& $xs) : int32
@@ -430,8 +430,7 @@ fill($nums);
 echo $nums->count();        // 4
 ```
 
-[Ownership and moving](/memory/ownership) is the real chapter, and it is worth reading properly before you
-write anything large.
+[Ownership and moving](/memory/ownership) is the real chapter. Read it before you write anything large.
 
 ## Null is a type, not a value
 
@@ -447,7 +446,7 @@ function halve(int32 $n) : int32?
 }
 ```
 
-There are three ways to deal with the result, and you will use all of them.
+There are three ways to deal with the result, and you'll use all of them.
 
 `??` supplies a fallback:
 
@@ -531,14 +530,17 @@ namespace geometry;
 struct Point { float64 $x; float64 $y; }
 ```
 
-`namespace` is a file-level statement, so one namespace per file. Elsewhere you reach it by qualifying:
+`namespace` is a file-level statement, so one namespace per file. Elsewhere you reach it by qualifying,
+or by a `use` that binds a shorter name for the rest of this file:
 
 ```echo
-geometry::Point $p = geometry::Point(1.0, 2.0);
+use geometry::Point;
+
+Point $p = Point(1.0, 2.0);
 ```
 
-There is no `use` statement yet, so qualified names are how you get at things. The standard library is
-organised this way: `std::math::sqrt`, `std::env::args`, `mem::alloc`.
+`use std::math;` lets you write `math::sqrt`. `use std::math::sqrt;` lets you write `sqrt`. The
+standard library is organised this way: `std::math::sqrt`, `std::env::args`, `mem::alloc`.
 
 [Namespaces](/language/namespaces).
 

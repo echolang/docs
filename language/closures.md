@@ -1,7 +1,7 @@
 # Closures
 
 Sometimes the thing you want to pass to a function is another function. A comparator, a callback, a small
-transformation that is not worth naming. Echo has a type for that:
+transformation that isn't worth naming. Echo has a type for that:
 
 ```echo
 function<int32(int32)> $increment = function(int32 $a) : int32 { return $a + 1; };
@@ -63,8 +63,8 @@ echo $add10(32);        // 42
 
 ## Capture is by value
 
-**A closure copies what it captures, at the moment the closure is created.** It does not hold a reference to
-the variable, and it does not see later writes to it:
+**A closure copies what it captures, at the moment the closure is created.** It doesn't hold a reference to
+the variable, and it doesn't see later writes to it:
 
 ```echo
 function frozen() : int32
@@ -80,8 +80,7 @@ function frozen() : int32
 echo frozen();      // 5, not 99
 ```
 
-If you are coming from PHP this is the same as `use ($n)` rather than `use (&$n)`, and there is no `&` form.
-From JavaScript it is the opposite of what you are used to, and the loop case is the one to watch:
+There is no by-reference capture. The loop case is the one to watch:
 
 ```echo
 int32 $i = 0;
@@ -92,7 +91,7 @@ while ($i < 3) {
 }
 ```
 
-Each round captures the value `$i` had that round. The classic "all three closures print 3" bug does not
+Each round captures the value `$i` had that round. The classic "all three closures print 3" bug doesn't
 happen, because there is no shared binding to go stale.
 
 Captures are stored in an environment allocated when the closure is created and released when the last
@@ -114,7 +113,7 @@ echo shared();      // 42
 
 ## What you can capture
 
-Anything that does not own a resource. Primitives, pointers and plain structs are all fine:
+Anything that doesn't own a resource. Primitives, pointers and plain structs are all fine:
 
 ```echo
 struct Chevron
@@ -178,7 +177,7 @@ Both of these are on [the list](/reference/limitations).
 ## And a C function pointer is a different type
 
 `function<R(P...)>` is Echo's callable: two words, an environment, a closure. C has no spelling
-for that. When a C library wants a callback, the type is `extern function<R(P...)>` — one word,
+for that. When a C library wants a callback, the type is `extern function<R(P...)>`: one word,
 no environment, produced by `&name`. [C interop](/projects/c-interop#callbacks-passing-a-function-to-c)
 has the rest, including why a closure cannot be one.
 
@@ -199,7 +198,7 @@ echo $long_range->filter(21);   // 42
 echo $long_range->range;        // 7
 ```
 
-That is the closest thing Echo has to a strategy object, and it costs one pointer plus the environment. A
+That's the closest thing Echo has to a strategy object, and it costs one pointer plus the environment. A
 sensor that takes its filter as a value can be re-rigged without touching the sensor.
 
 It works as a type argument too:
@@ -244,7 +243,7 @@ function<int32()> $f = null;
 The diagnostic tells you the fix. If absence is a real state for your value, say so in the type with `?` and
 handle it like any other optional. See [Nullability](/memory/nullability).
 
-One more small thing: `echo` cannot print a callable, because there is nothing sensible to print:
+One more small thing: `echo` can't print a callable, because there is nothing sensible to print:
 
 ```echo
 function<int32()> $f = function() : int32 { return 1; };
