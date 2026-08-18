@@ -241,8 +241,8 @@ Depending on another module is one line:
 ```
 
 A path on disk is `#[depends:]`. A library that is not sitting next to you yet is `#[requires:]`, and epm
-is what fetches it. There is no Composer and no published index in v1, so every requirement still writes a
-`git:` URL. [Packages](/projects/packages) is the chapter.
+is what fetches it. There is no Composer and no published index in v1, so every requirement still writes
+`source: git "..."`. [Packages](/projects/packages) is the chapter.
 
 ## Things that are exactly the same
 

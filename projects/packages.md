@@ -15,15 +15,15 @@ hand. That's `#[requires:]`. **epm** is the tool that puts the sources in `vendo
 #[epm::description: "a thing that does a thing"]
 
 #[depends: "../scratch-lib"]
-#[requires: "echolang/libcurl" { git: "https://github.com/echolang/libcurl", version: "^0.1" }]
+#[requires: "echolang/libcurl" { version: "^0.1", source: git "https://github.com/echolang/libcurl" }]
 
 #[sources: "src/*.eco"]
 ```
 
 The compiler reads the **name** and nothing else. It looks in `vendor/<name>/`, and a slash in the
-name is a directory. Version, git URL and rev are recorded for epm and for the build fingerprint,
+name is a directory. Version, source and rev are recorded for epm and for the build fingerprint,
 then ignored by the compiler itself. epm reads both halves. One line, two readers, no fact declared
-twice.
+twice. The source is a tagged locator (`git "..."`) so a later host is another tag, not a new field.
 
 ## Three files, three jobs
 

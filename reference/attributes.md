@@ -281,7 +281,7 @@ this is the value shapes.
 | `#[version: "0.1.0"]` | string | no | recorded, folded into the build fingerprint, resolves against nothing |
 | `#[sources: "src/*.eco"]` | string or list | yes | relative to the manifest. A pattern matching nothing is an error |
 | `#[depends: ...]` | string, `path "..."`, `git { }`, or a list | yes | a path to a manifest that is already on disk |
-| `#[requires: "name" { }]` | string-tagged record, or a list | yes | a package. Fields: `version` and `git` required, `rev` optional. Resolves to `vendor/<name>`; `name` may be `echolang/libcurl`. See [Packages](/projects/packages) |
+| `#[requires: "name" { }]` | string-tagged record, or a list | yes | a package. Fields: `version` and `source` required, `rev` optional. `source` is a tagged locator (`git "..."`). Resolves to `vendor/<name>`; `name` may be `echolang/libcurl`. See [Packages](/projects/packages) |
 | `#[target: <tag> { }]` | tagged record, a bare tag, or a list | yes | tags: `exe`, `test`. An `exe` wants `name` and `entry`, both required, and `entry` must be one of this module's own `sources`. A `test` takes `name`, `groups` and `files`, all optional, and is refused for writing an `entry`; `#[target: test]` on its own is the whole selection |
 | `#[link: <tag> "..."]` | tagged | yes | tags: `lib`, `framework`, `search`, `object` |
 | `#[cc: <tag> ...]` | tagged | yes | tags: `sources`, `include`, `define`, `flag` |
@@ -299,7 +299,7 @@ target rather than to the module, and takes effect only for a program that build
 #[target: test] {
     #[sources: "tests/*.eco"]
     #[depends: "../mocklib"]
-    #[requires: "libhello" { git: "https://x", version: "^1" }]
+    #[requires: "libhello" { version: "^1", source: git "https://x" }]
     #[link: lib "check"]
     #[cc: sources "c/stubs/*.c"]
 }
@@ -397,7 +397,7 @@ shape refusals:
 | a record with no `}` | `this record is missing its '}' - the '{' is on line 3.` |
 | an unknown tag | `'framwork' is not a kind of link requirement, expected one of: lib, framework, search, object.` |
 | `#[depends: svn { }]` | `'svn' is not a kind of dependency, expected one of: path, git.` |
-| `#[depends: git { }]` | `git dependencies are not resolved yet - write '#[requires: "name" { git: "...", version: "..." }]' and run \`epm install\`, or vendor the module and name it with a path.` |
+| `#[depends: git { }]` | `git dependencies are not resolved yet - write '#[requires: "name" { version: "...", source: git "..." }]' and run \`epm install\`, or vendor the module and name it with a path.` |
 
 Recovery is the balanced `[ ... ]`, not the next statement, so one broken attribute costs you one error and
 the file keeps parsing.

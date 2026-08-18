@@ -184,8 +184,9 @@ other editor.
 
 **No registry yet, and two versions of one package cannot coexist.** `#[requires:]` resolves a name
 against `vendor/`. epm is what fetches. There is no published index in v1, so every requirement
-still writes a `git:` URL. Module names are unique in a build, so two versions of `libjson` in one
-program is an error rather than a feature. [Packages](/projects/packages) is the chapter.
+still writes `source: git "..."`. The tag is the host; a registry is another tag, not a new field.
+Module names are unique in a build, so two versions of `libjson` in one program is an error rather
+than a feature. [Packages](/projects/packages) is the chapter.
 
 **No formatter and no `echoc new`.** The CLI is four subcommands: `run`, `build`, `test`, `clean`.
 

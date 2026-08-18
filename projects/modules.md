@@ -31,7 +31,7 @@ A name with a namespace the compiler doesn't own is not on that list and is not 
 | `#[version: "0.1.0"]` | recorded, and part of the build fingerprint |
 | `#[sources: "src/*.eco"]` | the files this module is made of |
 | `#[depends: "../geometry"]` | another module, already on disk, by path |
-| `#[requires: "lib" { git:, version: }]` | a package, optionally `org/name`. epm puts it in `vendor/`; the compiler resolves the name. See [Packages](/projects/packages) |
+| `#[requires: "lib" { version:, source: git "..." }]` | a package, optionally `org/name`. epm puts it in `vendor/`; the compiler resolves the name. See [Packages](/projects/packages) |
 | `#[target: exe { ... }]` | a program this module produces. See [More than one program](#more-than-one-program) |
 | `#[target: test] { ... }` | and what belongs to that target alone. See [A target can have things of its own](#a-target-can-have-things-of-its-own) |
 | `#[link: lib "m"]` | a native library this module needs. See [Linking](/projects/linking) |
@@ -264,7 +264,7 @@ common case growing a word.
 parses, validates, and is then refused, because the spelling that fetches is `#[requires:]`:
 
 ```
-module.eco:3: git dependencies are not resolved yet - write '#[requires: "name" { git: "...", version: "..." }]' and run `epm install`, or vendor the module and name it with a path.
+module.eco:3: git dependencies are not resolved yet - write '#[requires: "name" { version: "...", source: git "..." }]' and run `epm install`, or vendor the module and name it with a path.
 ```
 
 A path you already have on disk stays `#[depends:]`. A package epm should put in `vendor/` is
