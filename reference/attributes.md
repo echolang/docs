@@ -67,13 +67,14 @@ scheme with two libraries rather than two schemes.
 
 ## Declaration attributes
 
-Seven names. Four of them are yours:
+Eight names. Five of them are yours:
 
 | Attribute | Value | What it does |
 |---|---|---|
 | `#[inline]` | none | asks for the function to be emitted into every unit that calls it, so it can be inlined without a whole-program build |
 | `#[implicit]` | none | on a method, declares that its owner converts to the method's return type at an argument position. on a static of the destination, declares the reverse: a type the library does not own converts *to* this one |
 | `#[unique]` | none | on a struct, says exactly one value may name this storage. The type is moved, never copied |
+| `#[atomic]` | none | on a class, says the reference count is an atomic RMW, so a handle may be retained and released on more than one thread. The contents are not covered |
 | `#[group: "..."]` | string | on a `test`, names the group a test run can select on |
 
 And three belong to the standard library. They are documented here so that reading `stdlib/` makes sense, not
@@ -231,6 +232,24 @@ echo $h->fd;            // 3
 It is refused on a `class` and on an `interface`, where it would mean nothing. `mem::buffer<T>` is the type
 it exists for, and it needs `private` properties alongside it to close the deliberate half.
 
+### #[atomic]
+
+`#[atomic]` is the other mark a type can carry, and it is only a class that has a count to mark. An unmarked
+class keeps today's retain — a load, an add and a store — so a program that never shares a handle across
+threads pays nothing. Mark it when a handle will be copied onto another thread with no lock held:
+
+```echo
+#[atomic]
+class SharedCounter
+{
+    int32 $hits;
+}
+```
+
+The count is then an atomic RMW. The fields are not: two threads writing `$hits` still race. It is refused
+on a `struct` and on an `interface`, where there is no count. [Atomics](/memory/atomics) is the
+chapter; [Threads](/stdlib/thread) is why you would mark one.
+
 ### The library's three
 
 `#[core: name]` binds a type the compiler needs to be able to name. The vocabulary is nine names: `string`,
@@ -238,10 +257,11 @@ it exists for, and it needs `private` properties alongside it to close the delib
 resolves the shape by property name, so it is a binding rather than a hardcoded layout, and `--no-stdlib`
 leaves every one of them unbound.
 
-`#[builtin: name]` marks a bodyless function the compiler answers at the call site. Nineteen names:
+`#[builtin: name]` marks a bodyless function the compiler answers at the call site. Twenty-six names:
 `size_of`, `align_of`, `is_trivially_copyable`, `needs_destruction`, `take`, `init`, `die`, `assert`,
 `ref_count`, `weak_count`, `dprint`, `alloc_bytes`, `realloc_bytes`, `free_bytes`, `live_allocations`,
-`process_argc`, `process_argv`, `process_envp`, `exit`. Anything else is
+`process_argc`, `process_argv`, `process_envp`, `exit`, `atomic_load`, `atomic_store`, `atomic_add`,
+`atomic_sub`, `atomic_exchange`, `atomic_compare_exchange`, `atomic_fence`. Anything else is
 `Unknown compiler builtin '<name>'.`
 
 `#[intrinsic: "llvm.sin"]` is the third bodyless form and lowers to an LLVM intrinsic. A string rather than a
@@ -343,7 +363,7 @@ I'd like the first case to be an error too. It is not today, and if you find you
 ## When the name is wrong
 
 ```
-unknown attribute 'bultin', expected one of: inline, implicit, intrinsic, builtin, core, unique, group, module, version, depends, sources, target, link, cc, build_dir, requires
+unknown attribute 'bultin', expected one of: inline, implicit, intrinsic, builtin, core, unique, atomic, group, module, version, depends, sources, target, link, cc, build_dir, requires
 ```
 
 The attribute is then skipped and the declaration after it still parses, which is the point: the error you

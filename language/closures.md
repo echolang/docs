@@ -133,28 +133,27 @@ function encode() : int32
 echo encode();      // 42
 ```
 
-A value that owns something is refused, and this is the biggest limitation of closures today:
+Capture is by copy. A `string` or a class handle is retained into the environment; a struct with a
+copy constructor is copied; a `#[unique]` type is refused, because there is nothing to copy:
 
 ```echo
-struct Wormhole
+#[unique]
+struct Token
 {
     usize $id;
-    destructor() { }
 }
 
 function outer() : usize
 {
-    Wormhole $open = Wormhole(3);
-    function<usize()> $f = function() : usize { return $open->id; };
+    Token $t = Token(3);
+    function<usize()> $f = function() : usize { return $t->id; };
     return $f();
 }
-// error: '$open' is a 'Wormhole', which owns a resource. Capturing an owning value is not supported
-//        yet - pass it as a parameter instead.
+// error: '$t' is a 'Token', which cannot be copied
 ```
 
-"Owns a resource" means the type needs destruction, which in practice means it has a destructor or holds
-something that does. An `array<T>`, a `string` or your own struct with a destructor all land here. The
-message tells you the workaround: take it as a parameter instead of capturing it.
+The original local still owns its copy. The environment is a minted `#[atomic]` class, so the
+closure can be spawned onto another thread. [Threads](/stdlib/thread) is that page.
 
 Capturing through **two** levels of closure is also refused, for now:
 

@@ -50,7 +50,7 @@ echo std::math::sqrt(9.0);      // 3.000000
 echo std::env::argc() > 0;      // 1
 ```
 
-`std::math::`, `std::env::` and `std::io::`.
+`std::math::`, `std::env::`, `std::io::` and `std::thread::`.
 
 ## Nothing in the library is special-cased
 
@@ -136,8 +136,9 @@ echo $c->bump(5);       // 7
 |---|---|---|
 | root | `array`, `map`, `ordered_map`, `string`, `slice`, `range`, `die`, `assert`, `dprint` | [Collections](/collections/arrays) |
 | root | `result` | [Results](/stdlib/result) |
+| root | `atomic<T>` | [Atomics](/memory/atomics) |
 | `contract::` | `iterator`, `iterable`, `const_iterable`, `keyed`, `unwrappable`, `failable` | [Contracts](/stdlib/contract) |
-| `mem::` | allocation, type queries, `take` / `init`, `buffer<T>` | [Memory](/stdlib/mem) |
+| `mem::` | allocation, type queries, `take` / `init`, `buffer<T>`, `mem::atomic::` | [Memory](/stdlib/mem) |
 | `hash::` | `of` and the composition primitives | [Hashing](/stdlib/hash) |
 | `str::` | `str::from` and the formatting surface, splitting and joining, case conversion, `str::buf`, the C string boundary | [String functions](/stdlib/str) |
 | `arr::` | `merge` and `room` | [Arrays](/stdlib/arr) |
@@ -146,9 +147,12 @@ echo $c->bump(5);       // 7
 | `std::io::` | a buffered `reader` and `writer` | [Readers and writers](/stdlib/io/buffering) |
 | `std::math::` | constants and the numeric functions | [Math](/stdlib/math) |
 | `std::env::` | arguments, environment, directories, `exit` | [Environment](/stdlib/env) |
+| `std::thread::` | `spawn`, `handle`, `task<T>`, `mutex<T>`, `once` | [Threads](/stdlib/thread) |
 
 ## Next
 
 - [Contracts](/stdlib/contract) for the interfaces `foreach` uses, and how your own type joins them.
 - [Memory](/stdlib/mem) for what a container is built out of.
 - [Collections](/collections/arrays) for the types you will actually reach for first.
+- [Threads](/stdlib/thread) for `spawn`, `mutex` and `task`.
+- [Atomics](/memory/atomics) for `atomic<T>` and `#[atomic]`.

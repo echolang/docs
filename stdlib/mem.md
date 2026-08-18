@@ -202,6 +202,10 @@ going to release.
 **Nothing checks either of these for you.** Take twice from one place and two owners release one value.
 Initialize a place that already holds one and that value leaks.
 
+`mem::take` on a slot two threads share duplicates ownership. `mem::atomic::exchange` is "take,
+atomically", and only for a word. A `string` or a class handle is not one. See
+[Atomics](/memory/atomics).
+
 ## Both refuse anything the compiler is already accounting for
 
 You can't use them to sidestep ownership, and the refusal says so:
@@ -347,6 +351,21 @@ produces its replacement: the block may move, the elements are relocated bitwise
 unchanged. Every borrow into the buffer is stale afterwards, and that's the owner's rule to keep, because
 the buffer cannot see the borrows.
 
+## `mem::atomic::` is the rare spelling
+
+The type you write on a field is [`atomic<T>`](/memory/atomics). A `ptr<int32>` you already hold
+still writes `mem::atomic::add`. Sequentially consistent. An ordering is a claim about two
+accesses and nothing in the language can check it, so there is no ordering parameter.
+
+```echo
+int32 $n = 0;
+echo mem::atomic::add<int32>($n, 2);        // 0
+echo mem::atomic::load<int32>($n);          // 2
+```
+
+Mixing a plain `$n = 0` with `add` on the same word is a data race. Discipline is on the caller,
+which is why `atomic<T>` keeps the slot private. [Atomics](/memory/atomics) is the chapter.
+
 ## The whole surface
 
 | Signature | What it does |
@@ -367,6 +386,13 @@ the buffer cannot see the borrows.
 | `refs<T>(T& $handle) : usize` | references naming the object. 0 for null |
 | `weaks<T>(T& $handle) : usize` | handles needing the block to stay readable. 0 for null |
 | `live_allocations() : usize` | allocations still outstanding. needs `--track-allocations` |
+| `atomic::load<T>(const T& $slot) : T` | sequentially consistent load of a word |
+| `atomic::store<T>(T& $slot, T $value)` | sequentially consistent store |
+| `atomic::add<T>(T& $slot, T $delta) : T` | RMW add, returns the previous value |
+| `atomic::sub<T>(T& $slot, T $delta) : T` | RMW sub, returns the previous value |
+| `atomic::exchange<T>(T& $slot, T $desired) : T` | swap, returns the previous value |
+| `atomic::compare_exchange<T>(T& $slot, T $expected, T $desired) : bool` | write `$desired` if the slot is `$expected` |
+| `atomic::fence()` | sequentially consistent fence |
 | `buffer<T>()` | an empty buffer, holding no allocation |
 | `buffer<T>::capacity() : usize` | how many elements it has room for |
 | `buffer<T>::resize(usize $count) : void` | consumes the old region, produces its replacement |
@@ -381,3 +407,4 @@ the buffer cannot see the borrows.
 - [Unsafe](/memory/unsafe) for the promise a `T&` over raw storage makes, and where it is owed.
 - [Pointers and references](/memory/pointers) for `ptr<T>`, `T&` and what `:$` peels.
 - [Ownership and moving](/memory/ownership) for `mv`, which is what `take` refuses in favour of.
+- [Atomics](/memory/atomics) for `atomic<T>` and why the slot is private.

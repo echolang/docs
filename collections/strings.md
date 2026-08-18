@@ -2,8 +2,9 @@
 
 Text is three types, and the split between them is the whole design: `string` **owns** its bytes,
 `string::view` **borrows** them, and `str::buf` is the reference-counted buffer underneath that you almost
-never name. The consequence you feel every day: **copying a string is a reference count bump, not a
-memcpy.**
+never name. A unique value of at most `string::INLINE` bytes (15 today) lives *in the string* and never touches that buffer.
+Longer text, or text more than one `string` names, is a reference-counted window over `str::buf`:
+**copying one of those is a retain, not a memcpy.**
 
 ```echo
 $greeting = 'hello';
@@ -28,7 +29,33 @@ echo $name->byte(0);     // 114
 ```
 
 A null owner owns nothing, which is exactly why the first write to a literal has to clone rather than
-scribble on the program's own image. That's the next section.
+scribble on the program's own image. A short unique result of that clone stays in the string; a longer
+one is the next section.
+
+## `string::INLINE` bytes, no allocation
+
+A unique `string` of at most `string::INLINE` bytes is stored in the value. Appending `'hello'` to an empty string
+allocates nothing. Copying one is a memcpy of those bytes, and mutating the copy leaves the original
+alone — there is no buffer to share.
+
+```echo
+$s = '';
+$s->append('hello');
+
+echo $s;                        // hello
+
+$t = $s;
+$t->append('!');
+
+echo $s;                        // hello
+echo $t;                        // hello!
+```
+
+`string::INLINE + 1` bytes is what first pays for a `str::buf`. After that the value is a window over a
+reference-counted buffer, and the rule below applies.
+
+Ask `$s->view()` for a window over the live bytes. The stored `$window` of an inline string is a tag,
+not an address: a return in Echo is a move, and a pointer into the callee's frame would dangle.
 
 ## Copy-on-write, and the one rule behind it
 
@@ -38,26 +65,26 @@ buffer, clone first.** Three ways it can fail that test, and they collapse into 
 The bytes are a literal, so nobody owns them:
 
 ```echo
-$s = 'ab';
-$s->append('cd');
+$s = '0123456789abcdef';
+$s->append('!');
 
-echo $s;                        // abcd
+echo $s;                        // 0123456789abcdef!
 echo mem::refs($s->owner); // 1
 ```
 
 A second string names the same buffer:
 
 ```echo
-$orig = 'one';
-$orig->append('two');
+$orig = '0123456789abcdef';
+$orig = $orig->clone();
 
 $copy = $orig;
 echo mem::refs($orig->owner);  // 2
 
-$orig->append('three');
+$orig->append('!');
 
-echo $copy;     // onetwo
-echo $orig;     // onetwothree
+echo $copy;     // 0123456789abcdef
+echo $orig;     // 0123456789abcdef!
 ```
 
 `$copy = $orig` was one retain. The `append` after it saw a count of two, cloned, and left `$copy` looking
@@ -66,26 +93,29 @@ at the original bytes. Two buffers now, each uniquely owned.
 Or this string is a *sub-window* of a buffer it does own. The bytes ahead of it are not its to move:
 
 ```echo
-$whole = 'abcdef';
+$whole = '0123456789abcdef';
 $whole = $whole->clone();
 
 $part = $whole->sub(0, 3);
 $part->append('!');
 
 echo $part;     // abc!
-echo $whole;    // abcdef
+echo $whole;    // 0123456789abcdef
 ```
+
+A short substring of an inline string copies into its own store rather than sharing — the bytes live
+inside the parent value, and a window into them would dangle when the parent is dropped.
 
 And the case the gate exists to let through, a string that *is* the whole of a buffer it alone owns, which
 mutates in place with no copy at all:
 
 ```echo
-$solo = 'abc';
+$solo = '0123456789abcdef';
 $solo = $solo->clone();
 
-$solo->append('d');
+$solo->append('g');
 
-echo $solo;                         // abcd
+echo $solo;                         // 0123456789abcdefg
 echo mem::refs($solo->owner);  // 1
 ```
 
@@ -95,7 +125,7 @@ echo mem::refs($solo->owner);  // 1
 allocation:
 
 ```echo
-$own = 'hello world';
+$own = 'hello world, 16+';
 $own = $own->clone();
 
 echo mem::refs($own->owner);   // 1

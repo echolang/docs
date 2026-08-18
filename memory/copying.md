@@ -360,8 +360,12 @@ This is what `mem::buffer<T>` is built on, and it is the reason `array<T>` can b
 It is refused on a class and on an interface, with a sentence each explaining why the question does not
 apply: a class is already one object, and an interface stores nothing.
 
+[`atomic<T>`](/memory/atomics) is the other type that is unique so a copy cannot memcpy a word.
+That copy would be a non-atomic access.
+
 ## Next
 
 - [Ownership and moving](/memory/ownership) for `mv`, destruction and the alternative to copying.
 - [Structs](/language/structs) for constructors, destructors and `const function`.
 - [Classes](/language/classes) for reference counting and what a handle really is.
+- [Atomics](/memory/atomics) for `atomic<T>`, which is unique for the same reason.

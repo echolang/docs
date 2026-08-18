@@ -47,6 +47,7 @@ const sidebar = [
       { text: 'Nullability', link: '/memory/nullability' },
       { text: 'Pointers and references', link: '/memory/pointers' },
       { text: 'Unsafe', link: '/memory/unsafe' },
+      { text: 'Atomics', link: '/memory/atomics' },
     ],
   },
   {
@@ -94,6 +95,7 @@ const sidebar = [
       },
       { text: 'Math', link: '/stdlib/math' },
       { text: 'Environment', link: '/stdlib/env' },
+      { text: 'Threads', link: '/stdlib/thread' },
     ],
   },
   {

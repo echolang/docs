@@ -186,6 +186,10 @@ error: 'grup' is not a test filter, expected one of: name, group, file, module.
 Written more than once, filters **add up**. Two `group:` words run both groups rather than intersecting to
 nothing.
 
+`--timeout <ms>` is the other valve: a test that is still running when the clock fires is killed and
+reported as timed out, rather than hanging the run until something outside echoc stops it. Zero, and
+the default of not passing the flag at all, wait forever.
+
 A filter that matches no test at all is an error, not a green run of nothing:
 
 ```

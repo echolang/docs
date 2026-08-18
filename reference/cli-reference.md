@@ -1,6 +1,6 @@
 # CLI reference
 
-`echoc` has four subcommands and twenty-eight options. That's the whole surface, and it's one list: what you
+`echoc` has four subcommands and twenty-nine options. That's the whole surface, and it's one list: what you
 type, what `--help` prints, and what a refusal names all come from the same place. There is no second table
 that can drift.
 
@@ -101,6 +101,7 @@ for the host CPU is an illegal instruction on the machine next door rather than 
 | `--color <when>` | | all | `auto\|always\|never` | `auto` | colourise diagnostics. Also spelled `--colour` |
 | `--silent` | | all | flag | off | do not draw the progress checklist. Silences that and nothing else |
 | `--verbose` | | test | flag | off | list every test, with how long each one took |
+| `--timeout <ms>` | | test | milliseconds | none | kill a test that is still running after this many milliseconds |
 
 `--verbose` replaces the per-test lines with a listing: every test under the file it is written in, its group
 and its duration, a count and a total per file, and whatever a test printed. That last part includes a

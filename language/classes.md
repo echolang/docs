@@ -71,6 +71,29 @@ echo mem::refs($a);        // 2
 `mem::refs` and `mem::weaks` exist for exactly this: understanding what your program is actually
 doing. They are not something to build logic on.
 
+## The count is cheap until you share it
+
+The default retain is a load, an add and a store. That is correct for every program that never
+shares a handle across threads, and cheaper. Mark the class when a handle will be copied onto
+another thread with no lock held:
+
+```echo
+#[atomic]
+class Counter
+{
+    int32 $hits;
+}
+
+Counter $c = Counter(0);
+echo $c->hits;        // 0
+```
+
+The count becomes an atomic RMW. The fields do not. Two threads writing `$hits` still race: put
+the word in an [`atomic<T>`](/memory/atomics), or put the object behind a
+[`mutex`](/stdlib/thread). It is refused on a struct and on an interface, where there is no count.
+
+[Atomics](/memory/atomics) is the chapter. [Threads](/stdlib/thread) is why you would mark one.
+
 ## When the destructor runs
 
 Not at the closing brace. When the **last** reference goes away:
@@ -378,3 +401,5 @@ payload dies when the strong count hits zero, and the block is freed when the we
 - [Structs](/language/structs) for the value half, and the constructor rules both share.
 - [Interfaces](/language/interfaces) for storing a class behind a contract.
 - [Nullability](/memory/nullability) for `T?`, `guard`, `??` and `?->`.
+- [Atomics](/memory/atomics) for `#[atomic]` and `atomic<T>`.
+- [Threads](/stdlib/thread) for starting a second thread.

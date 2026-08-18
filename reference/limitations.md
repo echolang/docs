@@ -215,15 +215,29 @@ Prebuilt binaries exist for exactly two platforms:
 **No Windows, no Intel Mac, no Linux on ARM.** Building from source works on more than that, but Windows in
 particular has never been run: the linker flags render and nothing has ever executed them.
 
-Related, on linking: there is no pkg-config integration and no way to choose static versus dynamic linkage
-for a dependency.
+Related, on linking: there is no pkg-config integration. Static versus dynamic is
+`#[link: lib { name: "foo", linkage: static }]`.
 
 ## Concurrency
 
-There is none. No threads, no async, no channels.
+[Threads](/stdlib/thread) exist. `std::thread::spawn` starts an OS thread, a `handle` joins it, a
+`mutex<T>` sleeps, a `task<T>` brings a value back. That is the whole of it, and this is what it is
+not:
 
-Reference counts are not atomic, which is correct today precisely because there is no way to make a second
-thread. Any concurrency story has to deal with that first.
+**No async, no `future`, no channels.** A value comes back through a `mutex` or a `task<T>`. There
+is no type named `future` and no function named `async`.
+
+**No condition variable, no `rwlock`.** `once` re-entry on the same object waits for itself.
+
+**No `thread_local`.** A static's initializer is thread-safe (the first caller runs it, everyone
+else waits), but there is no per-thread global.
+
+**No memory-ordering parameter.** [`atomic<T>`](/memory/atomics) is sequentially consistent. An
+ordering is a claim about two accesses and nothing in the language can check it.
+
+**Unmarked class counts are still a load, an add and a store.** Sharing one of those handles
+across threads is a data race. [`#[atomic]`](/memory/atomics) is the opt-in, and it covers the
+count, not the fields. There is no race detector. Echo will not stop you.
 
 ## Found something not on this list?
 

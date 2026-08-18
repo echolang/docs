@@ -127,7 +127,7 @@ fifteen for a `float64`. Ask for `{$x:.17g}` when you need a value to round-trip
 ## split / join / trim
 
 ```echo
-array<string> $parts = str::split('SG-1,SG-9,SG-11', ',');
+str::parts $parts = str::split('SG-1,SG-9,SG-11', ',');
 echo $parts->count();               // 3
 
 echo str::join($parts, ' / ');      // SG-1 / SG-9 / SG-11
@@ -141,6 +141,13 @@ echo "|{$trimmed}|";                // |Chulak|
 `n` separators give `n + 1` parts, always. Remember that one, because it's the rule that
 makes `str::join(str::split($t, $s), $s)` give `$t` back. An empty text splits to one empty part, and `',a,'`
 on `','` gives three.
+
+The parts are **offsets** into the source, not a new `string` each. That is why a 400 000-field
+split is one retain of the text plus an array of `{off, len}`, and why a short source can stay
+inline: `at()` rebuilds the window from the live source. `$p->at($i)` is a `string::view`.
+`$p->owned()` is the list of owning strings, and you reach for it when a part has to outlive `$p`.
+A part of at most `string::INLINE` bytes becomes its own inline value; a longer one retains the
+parent buffer.
 
 Note the extra variable on that last line. A hole opens on `{$` and nothing else, so `"|{str::trim($p)}|"`
 is ordinary text rather than a call, and the result has to be bound before you can interpolate it.
@@ -225,9 +232,12 @@ and no reference count, which is what a scan over thirty headers needs.
 | `string::append(ptr<const uint8>, usize)` | `append` for a pointer and a length |
 | `string::capacity()` | text bytes the buffer can hold without growing |
 | `str::concat(const string& $a, const string& $b) : string` | the two joined. what interpolation lowers to |
-| `str::split(const string& $t, const string& $sep) : array<string>` | `n` separators give `n + 1` parts |
-| `str::join(const array<string>& $parts, const string& $sep) : string` | the inverse, in one allocation |
+| `str::split(const string& $t, const string& $sep) : str::parts` | `n` separators give `n + 1` windows into `$t` |
+| `str::parts::owned() : array<string>` | the same parts as owning strings. short ones stay inline; longer ones retain the parent |
+| `str::join(const str::parts& $p, const string& $sep) : string` | the inverse of `split`, in one allocation |
+| `str::join(const array<string>& $parts, const string& $sep) : string` | the same, over a list you built |
 | `str::trim` / `ltrim` / `rtrim` `(const string&) : string` | ASCII whitespace off both ends, or one |
+| `str::trim` / `ltrim` / `rtrim` `(string::view) : string::view` | the same, over a window |
 | `str::lpad` / `rpad` `(const string&, usize $width, uint8 $fill) : string` | widen to `$width` **bytes** |
 | `str::repeat(const string& $t, usize $times) : string` | `$t` written over |
 | `str::int(const string& $t) : int64?` | base ten, optional sign, nothing else |

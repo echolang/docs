@@ -567,4 +567,6 @@ You can now read Echo. Pick whichever of these is the reason you are here:
 - [Coming from PHP](/guide/coming-from-php) for the differences listed bluntly, in one table.
 - [Ownership and moving](/memory/ownership) for the concept most likely to bite you.
 - [Modules](/projects/modules) to set up a real project with more than one file.
+- [Threads](/stdlib/thread) to start an OS thread, and [Atomics](/memory/atomics) for what is safe
+  to share across one.
 - [What is missing](/reference/limitations) before you plan anything around a feature.

@@ -40,8 +40,25 @@ sign of trouble is `ld` complaining about something nobody wrote. With the tag, 
 the line it is on.
 
 The other reason is that a tagged value can grow fields later without a second grammar appearing inside the
-string. `lib { name: "palette", linkage: static }` is a shape this already supports; `lib:palette:static`
-is a parser hiding in a string literal.
+string. `lib { name: "palette", linkage: static }` is that shape; `lib:palette:static` is a parser hiding
+in a string literal.
+
+<!-- verify: skip -->
+```echo
+#[link: lib "palette"]
+#[link: lib { name: "pthread", runtime: process }]
+#[link: lib { name: "ssl", file: "libssl.so.3" }]
+#[link: lib { name: "foo", linkage: static }]
+```
+
+`name` is the linker name (`-l`). `runtime: process` is for a library whose symbols are already in the
+running process — glibc folded pthread into libc; Darwin's is libSystem — so `echoc run` must not try to
+open a file that is a linker script or is absent. `file` is the exact shared-object name when you know the
+SONAME and the unversioned `libssl.so` is the wrong thing to open. `linkage: static` seats an archive on
+`echoc build` and refuses `echoc run`, because there is nothing to `dlopen`.
+
+`--link lib:pthread` on the command line is the defaults: dynamic, and `run` will look for a loadable
+file. A record is a manifest spelling.
 
 Paths in a `search` or an `object` resolve against the manifest's own directory, so a library can be depended
 on from anywhere. Both are checked when the manifest is read, rather than much later:
@@ -140,7 +157,9 @@ echoc run --link search:../vendor
 16
 ```
 
-An `object` is the one that cannot, and it is a refusal with a sentence rather than a silent difference:
+`echoc run` looks for a **loadable** file: a real shared object, not the linker name. If `libfoo.so` is a
+GNU ld script and `libfoo.so.1` sits next to it, `run` opens the latter. `runtime: process` skips the open
+altogether. `linkage: static` and an `object` cannot be opened at all:
 
 ```
 [error] Cannot Run This Program
@@ -184,10 +203,9 @@ the question you actually have in that moment.
 
 ## What is not here yet
 
-Two gaps, before you plan around this. There is no pkg-config integration, so a library whose
-flags come out of `pkg-config --libs` has to be spelled out by hand. And there is no way to ask for static
-rather than dynamic linkage for a particular dependency: you get the platform linker's default. Both are on
-[the list](/reference/limitations).
+There is no pkg-config integration, so a library whose flags come out of `pkg-config --libs` has to be
+spelled out by hand. That one is still on [the list](/reference/limitations). Static linkage is
+`linkage: static` on the record, above.
 
 Link requirements are also, deliberately, **not** part of a module's cache key. They change no compiled
 object, only the link step, so changing one does not invalidate anything.
