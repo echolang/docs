@@ -225,10 +225,11 @@ Related, on linking: there is no pkg-config integration. Static versus dynamic i
 `mutex<T>` sleeps, a `task<T>` brings a value back. That is the whole of it, and this is what it is
 not:
 
-**No async, no `future`, no channels.** A value comes back through a `mutex` or a `task<T>`. There
-is no type named `future` and no function named `async`.
+**No async, no `future`, no `select`.** A value comes back through a `mutex`, a `task<T>`, or a
+[`channel`](/stdlib/thread#a-stream-of-values-is-a-channel). There is no type named `future` and no
+function named `async`. Waiting on several channels at once is not a type.
 
-**No condition variable, no `rwlock`.** `once` re-entry on the same object waits for itself.
+**No `rwlock`.** `once` re-entry on the same object still waits for itself.
 
 **No `thread_local`.** A static's initializer is thread-safe (the first caller runs it, everyone
 else waits), but there is no per-thread global.

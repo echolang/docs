@@ -1,8 +1,8 @@
 # Installation
 
-Echo is one binary called `echoc`. There is no runtime to install beside it, and no standard library to put
-somewhere on disk. A released `echoc` carries the stdlib inside itself, so installing Echo means putting a
-single file on your `PATH`.
+A released Echo is two binaries: `echoc` is the compiler, `epm` is the package manager. There is no runtime
+to install beside them, and no standard library to put somewhere on disk. A released `echoc` carries the
+stdlib inside itself, so installing Echo means putting those two files on your `PATH`.
 
 ## The one-liner
 
@@ -23,13 +23,14 @@ Then check it worked:
 
 ```bash
 echoc --version
+epm --version
 ```
 
-If that prints a version number, you're done.
+If those print version numbers, you're done.
 
 ## Supported platforms
 
-There are exactly two prebuilt binaries:
+There are exactly two prebuilt archives, each holding `echoc` and `epm`:
 
 | Platform | Asset |
 |---|---|
@@ -54,6 +55,12 @@ xcode-select --install
 On Linux, install `clang` from your package manager. Skip this and `run` keeps working fine. `build` fails
 with a message about not finding the linker, which is a confusing error to debug if you don't know to look
 here.
+
+## epm needs git
+
+`epm` itself is self-contained, the same way `echoc` is. Adding or installing a package checks the tree out
+with `git`, so `git` has to be on your `PATH`. macOS already has one once the Xcode tools are there. On Linux,
+install it from the distro.
 
 ## Building from source
 

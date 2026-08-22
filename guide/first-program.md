@@ -165,19 +165,29 @@ echoc build --debug -o hello hello.eco
 
 ## More than one file
 
-Once a program outgrows one file, you give it a directory and a manifest instead. Create `module.eco`:
+Once a program outgrows one file, you give it a directory and a manifest instead. `epm init` is how
+you get both:
+
+```bash
+epm init greeter
+```
+
+It asks a few questions, writes a `module.eco` and a `src/` next to you, and you run it with no
+arguments at all:
+
+```bash
+cd greeter
+echoc run
+```
+
+Here is the core of what that manifest is saying. You can write the same file by hand. The point of
+`epm init` is that you do not have to remember the attributes.
 
 ```echo
 #[module: "greeter"]
 #[version: "0.1.0"]
 
 #[sources: "src/*.eco"]
-```
-
-Put your `.eco` files in `src/`, then run it with no arguments at all:
-
-```bash
-echoc run
 ```
 
 `echoc` finds the `module.eco` in your working directory and builds the whole thing.

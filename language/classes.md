@@ -37,6 +37,28 @@ echo $a->value;     // 99, because there is only one object
 That's the whole decision: **one owner and a copy, or many owners and a shared object.** Everything below
 follows from it.
 
+## Putting a struct on the heap
+
+A class is a struct on the heap. If the payload is already a struct, wrap it:
+
+```echo
+struct Point
+{
+    int32 $x;
+    int32 $y;
+}
+
+rc<Point> $p = rc<Point>(1, 2);
+echo $p->value->x;         // 1
+```
+
+`rc<T>` is a class in the standard library. `rc<Point>` is a class, so it satisfies `T : class`,
+it has identity, and `erased::from` will take it. `Point` itself will not. Copying the handle is a
+retain; the `Point` inside is copied once, at construction.
+
+`rc<int32>(7)` seats a value that is already an `int32`. `rc<Point>(1, 2)` forwards into
+`Point(1, 2)`. [Generics](/language/generics) is the factory that uses this.
+
 ## Which one should you reach for
 
 Reach for a `struct` by default. It's cheaper, it has no allocation, and a value you can't accidentally

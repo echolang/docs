@@ -5,7 +5,8 @@ Sometimes a library is already on disk next to your project. That's `#[depends:]
 
 Sometimes it isn't. You want libcurl, it lives in a git repo, and you'd rather not clone it by
 hand. That's `#[requires:]`. **epm** is the tool that puts the sources in `vendor/`. After
-`epm install` you run `echoc` the way you always did. epm never wraps the compiler.
+`epm install` you run `echoc` the way you always did. epm never wraps the compiler. A released
+`epm` arrives next to `echoc` from the [install one-liner](/guide/installation).
 
 <!-- verify: skip -->
 ```echo
@@ -68,8 +69,9 @@ module.eco:7: the package "libcurl" is not in 'vendor/'.
 ## What epm writes, and what it does not
 
 epm reads a manifest through `echoc -p manifest`, so the grammar has one implementation. The lock is
-JSON. epm never writes Echo attribute syntax, except for the one line `epm add` inserts and `epm
-remove` deletes.
+JSON. epm writes Echo attribute syntax in two places, and they are different jobs. `epm init` writes
+a whole new `module.eco` into a directory that did not have one. `epm add` inserts one `#[requires:]`
+line and `epm remove` deletes it. An existing manifest is otherwise left alone.
 
 ```bash
 echoc build -p manifest -m module.eco

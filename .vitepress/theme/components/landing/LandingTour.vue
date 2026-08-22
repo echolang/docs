@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // The six-chapter tour. A sticky rail on the left names the chapters, the articles scroll past on the right,
-// and whichever article has crossed 42% of the viewport is the active one — the rail highlights it and the
+// and whichever article has crossed 42% of the viewport is the active one: the rail highlights it and the
 // other five dim.
 //
 // The rail is a scroll *indicator*, so below 960px it is not stacked above the content, it is dropped: over
@@ -9,11 +9,11 @@ import { onBeforeUnmount, onMounted, ref } from 'vue'
 import CodeWindow from './CodeWindow.vue'
 
 const chapters = [
-  'There is no main',
   'One type, forever',
+  'guard unwraps',
   'Structs are values',
   'Classes are the other half',
-  'Arrays hold one type',
+  'match is an expression',
   'Operators are declarations',
 ]
 
@@ -43,10 +43,11 @@ onBeforeUnmount(() => window.removeEventListener('scroll', onScroll))
 <template>
   <section id="tour" class="tour">
     <div class="intro">
-      <p class="eyebrow">the whirlwind version</p>
-      <h2>The language in six snippets.</h2>
+      <p class="eyebrow">the language, quickly</p>
+      <h2>This is what you write.</h2>
       <p class="lede">
-        Most of this reads like PHP. The parts that do not are the point.
+        A file is a program. Every name has one type. The rest is the stuff I wanted when I sat down to
+        actually write something.
       </p>
     </div>
 
@@ -62,7 +63,7 @@ onBeforeUnmount(() => window.removeEventListener('scroll', onScroll))
           <span class="num">{{ String(n + 1).padStart(2, '0') }}</span>
           <span>{{ chapter }}</span>
         </a>
-        <a class="onward" href="#memory">→ then the memory model</a>
+        <a class="onward" href="#also">→ and then this</a>
       </nav>
 
       <div class="steps">
@@ -72,15 +73,23 @@ onBeforeUnmount(() => window.removeEventListener('scroll', onScroll))
           class="step"
           :class="{ 'is-dim': spy && active !== 0 }"
         >
-          <h3>There is no main</h3>
+          <h3>One type, forever</h3>
           <p class="says">
-            Top-level statements in a file are the program. Declarations can go anywhere, statements run top
-            to bottom. That is the whole rule.
+            The type is decided at the declaration and cannot change. Write it, or let the initializer say
+            it. Either way, that is the type now.
           </p>
           <CodeWindow>
-            <pre class="eco-code"><span class="k">echo</span> <span class="s">"this runs"</span><span class="p">;</span></pre>
+            <pre class="eco-code">$count = <span class="s">3</span><span class="p">;</span>              <span class="c">// int32</span>
+<span class="k">string</span> $name = <span class="s">"Echo"</span><span class="p">;</span>
+
+<span class="k">echo</span> <span class="s">"{$name}: {$count}"</span><span class="p">;</span>
+
+$count = <span class="s">"three"</span><span class="p">;</span>        <span class="x">// will not compile</span></pre>
           </CodeWindow>
-          <p class="aside">No boilerplate, no imports. A file is a program.</p>
+          <p class="aside">
+            No <code>main</code>. The file is the program. More in
+            <a href="/language/types">Types</a>.
+          </p>
         </article>
 
         <article
@@ -89,20 +98,36 @@ onBeforeUnmount(() => window.removeEventListener('scroll', onScroll))
           class="step"
           :class="{ 'is-dim': spy && active !== 1 }"
         >
-          <h3>Variables have one type, forever</h3>
+          <h3>guard unwraps</h3>
           <p class="says">
-            The type is fixed at the declaration, and the compiler knows it before your program runs.
+            A <code>T?</code> is a value that might not be there. Nesting <code>if ($x != null)</code>
+            until the pyramid is taller than the function is the usual answer.
+            <code>guard</code> declares a real <code>T</code> into the enclosing scope instead.
           </p>
           <CodeWindow>
-            <pre class="eco-code">$count = <span class="s">3</span><span class="p">;</span>         <span class="c">// int32, inferred</span>
-$ratio = <span class="s">0.5</span><span class="p">;</span>       <span class="c">// float64, inferred</span>
-<span class="k">string</span> $name = <span class="s">"Echo"</span><span class="p">;</span>
+            <pre class="eco-code"><span class="k">function</span> <span class="f">lookup</span><span class="p">(</span><span class="k">int32</span> $key<span class="p">)</span> : <span class="k">int32</span><span class="p">?</span>
+<span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span>$key <span class="p">&gt;</span> <span class="s">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> $key * <span class="s">2</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="k">null</span><span class="p">;</span>
+<span class="p">}</span>
 
-$count = <span class="s">"three"</span><span class="p">;</span>   <span class="x">// error: cannot assign 'string' to 'int32'</span></pre>
+<span class="k">function</span> <span class="f">doubled</span><span class="p">(</span><span class="k">int32</span> $key<span class="p">)</span> : <span class="k">int32</span>
+<span class="p">{</span>
+    <span class="k">int32</span> $value = <span class="k">guard</span> <span class="f">lookup</span><span class="p">(</span>$key<span class="p">)</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="s">-1</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> $value<span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">echo</span> <span class="f">doubled</span><span class="p">(</span><span class="s">3</span><span class="p">);</span>        <span class="c">// 6</span></pre>
           </CodeWindow>
           <p class="aside">
-            No dynamic typing, no unions, no <code>mixed</code>. <code>const</code> makes it read-only on top
-            of that.
+            The <code>else</code> has to leave, which is what makes the line after it safe. An ordinary
+            <code>if ($x != null)</code> does not narrow the type. Only
+            <a href="/memory/nullability">guard</a> does.
           </p>
         </article>
 
@@ -114,8 +139,8 @@ $count = <span class="s">"three"</span><span class="p">;</span>   <span class="x
         >
           <h3>Structs are values</h3>
           <p class="says">
-            There is no <code class="bright">new</code>. You call the type. A struct lives where you put it, a
-            local lives on the stack, and assigning it copies it.
+            There is no <code>new</code>. You call the type. A struct lives where you put it. A local lives
+            on the stack, and assigning it copies it.
           </p>
           <CodeWindow>
             <pre class="eco-code"><span class="k">struct</span> <span class="t">Point</span>
@@ -148,8 +173,30 @@ $b-&gt;x = <span class="s">10.0</span><span class="p">;</span>
             so assigning one shares it.
           </p>
           <CodeWindow>
-            <pre class="eco-code">$a = <span class="t">Account</span><span class="p">(</span><span class="s">"Mario"</span><span class="p">,</span> <span class="s">100</span><span class="p">);</span>
-$b = $a<span class="p">;</span>            <span class="c">// NOT a copy. same object, one more owner</span>
+            <pre class="eco-code"><span class="k">class</span> <span class="t">Account</span>
+<span class="p">{</span>
+    <span class="k">private string</span> $owner<span class="p">;</span>
+    <span class="k">private int64</span> $balance<span class="p">;</span>
+
+    <span class="k">constructor</span><span class="p">(</span><span class="k">string</span> $owner<span class="p">,</span> <span class="k">int64</span> $opening<span class="p">)</span>
+    <span class="p">{</span>
+        $this-&gt;owner = $owner<span class="p">;</span>
+        $this-&gt;balance = $opening<span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">function</span> <span class="f">deposit</span><span class="p">(</span><span class="k">int64</span> $amount<span class="p">)</span> : <span class="k">void</span>
+    <span class="p">{</span>
+        $this-&gt;balance = $this-&gt;balance + $amount<span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">const function</span> <span class="f">balance</span><span class="p">()</span> : <span class="k">int64</span>
+    <span class="p">{</span>
+        <span class="k">return</span> $this-&gt;balance<span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+$a = <span class="t">Account</span><span class="p">(</span><span class="s">"Mario"</span><span class="p">,</span> <span class="s">100</span><span class="p">);</span>
+$b = $a<span class="p">;</span>            <span class="c">// not a copy. same object, one more owner</span>
 $b-&gt;<span class="f">deposit</span><span class="p">(</span><span class="s">50</span><span class="p">);</span>
 
 <span class="k">echo</span> $a-&gt;<span class="f">balance</span><span class="p">();</span> <span class="c">// 150</span></pre>
@@ -173,23 +220,31 @@ $b-&gt;<span class="f">deposit</span><span class="p">(</span><span class="s">50<
           class="step"
           :class="{ 'is-dim': spy && active !== 4 }"
         >
-          <h3>Arrays hold one type</h3>
+          <h3>match is an expression</h3>
           <p class="says">
-            In PHP an array is a hash map that will take anything. In Echo it is a growable buffer of exactly
-            one type, and it is an object, so the operations live on it.
+            An enum can carry data per case. <code>match</code> reads which one you are holding, and it has
+            to cover all of them. Leave a case out and it will not compile.
           </p>
           <CodeWindow>
-            <pre class="eco-code"><span class="k">array</span><span class="p">&lt;</span><span class="k">int32</span><span class="p">&gt;</span> $numbers = <span class="p">[</span><span class="s">1</span><span class="p">,</span> <span class="s">2</span><span class="p">,</span> <span class="s">3</span><span class="p">];</span>
-$numbers<span class="p">[] =</span> <span class="s">4</span><span class="p">;</span>            <span class="c">// append</span>
-$numbers-&gt;<span class="f">push</span><span class="p">(</span><span class="s">5</span><span class="p">);</span>         <span class="c">// the same thing, spelled out</span>
+            <pre class="eco-code"><span class="k">enum</span> <span class="t">Distance</span>
+<span class="p">{</span>
+    <span class="k">case</span> <span class="f">meters</span><span class="p">(</span><span class="k">int32</span> $v<span class="p">);</span>
+    <span class="k">case</span> <span class="f">miles</span><span class="p">(</span><span class="k">int32</span> $v<span class="p">);</span>
+<span class="p">}</span>
 
-<span class="k">foreach</span> <span class="p">(</span><span class="s">0</span> <span class="k">..</span> <span class="s">3</span> <span class="k">as</span> $i<span class="p">) {</span>
-    <span class="k">echo</span> $i<span class="p">;</span>                <span class="c">// 0 1 2</span>
-<span class="p">}</span></pre>
+<span class="k">function</span> <span class="f">to_meters</span><span class="p">(</span><span class="t">Distance</span> $d<span class="p">)</span> : <span class="k">int32</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="k">match</span> <span class="p">(</span>$d<span class="p">)</span> <span class="p">{</span>
+        <span class="t">Distance</span><span class="p">::</span><span class="f">meters</span><span class="p">(</span>$v<span class="p">)</span> =&gt; $v<span class="p">,</span>
+        <span class="t">Distance</span><span class="p">::</span><span class="f">miles</span><span class="p">(</span>$v<span class="p">)</span> =&gt; $v * <span class="s">1609</span><span class="p">,</span>
+    <span class="p">};</span>
+<span class="p">}</span>
+
+<span class="k">echo</span> <span class="f">to_meters</span><span class="p">(</span><span class="t">Distance</span><span class="p">::</span><span class="f">miles</span><span class="p">(</span><span class="s">2</span><span class="p">));</span>    <span class="c">// 3218</span></pre>
           </CodeWindow>
           <p class="aside">
-            Here is the fun part: <code>..</code> is not syntax. It is an ordinary operator from the standard
-            library that returns a <code>range&lt;T&gt;</code>, which brings us to the last one.
+            Add a fourth case a year from now and the compiler walks you around every
+            <a href="/language/enums">match</a>.
           </p>
         </article>
 
@@ -202,19 +257,30 @@ $numbers-&gt;<span class="f">push</span><span class="p">(</span><span class="s">
           <h3>Operators are declarations</h3>
           <p class="says">
             You can overload the built-in ones for your own types, and declare entirely new ones with their
-            own precedence. Suffix operators are my favourite bit.
+            own precedence. Suffix operators are my favourite bit: they turn a number into a typed unit.
           </p>
           <CodeWindow>
-            <pre class="eco-code"><span class="k">operator</span> <span class="p">(</span><span class="k">uint64</span> $a<span class="p">)</span><span class="f">mm</span> : <span class="t">Distance</span> <span class="p">{</span> <span class="k">return</span> <span class="t">Distance</span><span class="p">(</span>$a<span class="p">); }</span>
-<span class="k">operator</span> <span class="p">(</span><span class="k">uint64</span> $a<span class="p">)</span><span class="f">cm</span> : <span class="t">Distance</span> <span class="p">{</span> <span class="k">return</span> <span class="t">Distance</span><span class="p">(</span>$a * <span class="s">10</span><span class="p">); }</span>
-<span class="k">operator</span> <span class="p">(</span><span class="k">uint64</span> $a<span class="p">)</span><span class="f">m</span>  : <span class="t">Distance</span> <span class="p">{</span> <span class="k">return</span> <span class="t">Distance</span><span class="p">(</span>$a * <span class="s">1000</span><span class="p">); }</span>
+            <pre class="eco-code"><span class="k">struct</span> <span class="t">Length</span>
+<span class="p">{</span>
+    <span class="k">uint64</span> $millimeters<span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">operator</span> <span class="p">(</span><span class="t">Length</span> $a<span class="p">)</span> + <span class="p">(</span><span class="t">Length</span> $b<span class="p">)</span> : <span class="t">Length</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="t">Length</span><span class="p">(</span>$a-&gt;millimeters + $b-&gt;millimeters<span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">operator</span> <span class="p">(</span><span class="k">uint64</span> $a<span class="p">)</span><span class="f">mm</span> : <span class="t">Length</span> <span class="p">{</span> <span class="k">return</span> <span class="t">Length</span><span class="p">(</span>$a<span class="p">); }</span>
+<span class="k">operator</span> <span class="p">(</span><span class="k">uint64</span> $a<span class="p">)</span><span class="f">cm</span> : <span class="t">Length</span> <span class="p">{</span> <span class="k">return</span> <span class="t">Length</span><span class="p">(</span>$a * <span class="s">10</span><span class="p">); }</span>
+<span class="k">operator</span> <span class="p">(</span><span class="k">uint64</span> $a<span class="p">)</span><span class="f">m</span>  : <span class="t">Length</span> <span class="p">{</span> <span class="k">return</span> <span class="t">Length</span><span class="p">(</span>$a * <span class="s">1000</span><span class="p">); }</span>
 
 $distance = <span class="s">1m</span> + <span class="s">50cm</span> + <span class="s">500mm</span><span class="p">;</span>
 <span class="k">echo</span> $distance-&gt;millimeters<span class="p">;</span>    <span class="c">// 2000</span></pre>
           </CodeWindow>
           <p class="aside">
-            The compiler knows nothing about <code>..</code> or <code>1m</code>. Both are library code you
-            could have written.
+            The compiler knows nothing about <code>..</code> or <code>1m</code>. Both are ordinary
+            declarations you could have written.
+            <a href="/language/operators">Operators →</a>
           </p>
         </article>
       </div>
@@ -322,7 +388,7 @@ h2 {
   display: flex;
   flex-direction: column;
   gap: 6rem;
-  padding: 2.5rem 0 7.5rem;
+  padding: 2.5rem 0 3rem;
 }
 
 .step {

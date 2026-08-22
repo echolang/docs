@@ -50,6 +50,30 @@ echo zero<int32>();     // 0
 `T` appears only in the return type there, and a return type is not something the compiler can read
 backwards from the call. Write it out.
 
+A prefix is enough when some parameters are named and the rest sit in the arguments:
+
+```echo
+function make<T, A>(A $arg) : T
+{
+    return T($arg);
+}
+
+class Handle
+{
+    int32 $n;
+
+    constructor(int32 $n)
+    {
+        $this->n = $n;
+    }
+}
+
+echo make<Handle>(7)->n;     // 7, A is int32
+```
+
+`make<Handle>(7)` names `T`. `A` comes from `7`. Writing a second type argument is still allowed;
+writing a third, when there are only two, is not.
+
 ## Generic types
 
 A struct or class can take type parameters too:
@@ -120,6 +144,7 @@ Five names cover the numeric cases, and they are not interfaces, just built-in v
 | `signed` | signed integers |
 | `unsigned` | unsigned integers |
 | `floating` | `float32` and `float64` |
+| `class` | any class, including a generic instantiation such as `Box<int32>` |
 
 ```echo
 function double<T : numeric>(T $value) : T
@@ -142,6 +167,183 @@ function halve<T : integer>(T $value) : T
 echo halve(1.5);
 // error: Type parameter 'T' of 'halve' is constrained to 'integer' but was given 'float64'
 ```
+
+`class` is the one of these that is not a closed list. There is no finite set of classes to expand, so it
+asks "is this a class" — a `Box<int32>` counts, a `struct` does not. A struct that wants in is wrapped in a
+class, not admitted as itself.
+
+```echo
+class Handle
+{
+    int32 $n;
+}
+
+function id<T : class>(T $value) : T
+{
+    return $value;
+}
+
+echo id(Handle(7))->n;      // 7
+echo id(1);
+// error: Type parameter 'T' of 'id' is constrained to 'class' but was given 'int32'
+```
+
+## Constructing through a type parameter
+
+Inside a generic body, `T` is a type. You can construct it, and you can call a static on it, the same
+way you would if you had written the bound type by name:
+
+```echo
+class Handle
+{
+    int32 $n;
+
+    constructor(int32 $n)
+    {
+        $this->n = $n;
+    }
+
+    static function from(int32 $n) : Handle
+    {
+        return Handle($n);
+    }
+}
+
+function make<T : class>(int32 $n) : T
+{
+    return T($n);
+}
+
+function spawn<T : class>(int32 $n) : T
+{
+    return T::from($n);
+}
+
+echo make<Handle>(7)->n;     // 7
+echo spawn<Handle>(3)->n;    // 3
+```
+
+Nothing here is a new kind of call. `T::from(...)` is a static whose owner is not concrete yet, so
+resolution waits until monomorphization names `Handle`. `T(...)` is a constructor call on that same
+wait: constructors live under the type's name, and once `T` is `Handle` the overload set is
+`Handle`'s.
+
+There are no Echo variadics. Two arities are two overloads of `make`, distinguished by argument
+count the same way any other pair of functions is. A prefix of type arguments is enough:
+`make<Handle>(7)` names `T` and infers `A` from `7`. Writing more than the function has is still
+an error.
+
+A struct is not a class, so `make<YetAnotherOne>(3.14)` is refused at the call. Wrap it. `rc<T>`
+is that wrapper, in the standard library:
+
+```echo
+struct YetAnotherOne
+{
+    float64 $n;
+}
+
+function make<T : class, A>(A $arg) : T
+{
+    return T($arg);
+}
+
+$c = make<rc<YetAnotherOne>>(3.14);
+echo $c->value->n;           // 3.140000
+```
+
+`rc<T>` has a seating constructor for a ready `T`, and forwarding constructors that call `T(...)`
+with the arguments you passed. `rc<YetAnotherOne>` is a class. The key, if you put it in a map, is
+`type_id<rc<YetAnotherOne>>()`, distinct from any other `rc<U>`. [Classes](/language/classes) is
+that wrapper.
+
+## Type identity, and a map of instances
+
+`type_id<T>()` is a value: the identity of `T`, something you can store, hash and compare. It is
+not reflection. It does not name constructors or fields. Two calls with the same `T` are the same
+id, including across modules.
+
+```echo
+echo type_id<int32>() == type_id<int32>();     // 1
+echo type_id<int32>() == type_id<int64>();     // 0
+```
+
+A class's id is the same word `instanceof` already compares. `rc<int32>` and `rc<string>` are two
+ids, because they are two types.
+
+That makes a map of instances possible, keyed by the type you put in:
+
+```echo
+map<type_id, int32> $sizes = map<type_id, int32>();
+$sizes[type_id<int32>()] = 4;
+echo $sizes->get(type_id<int32>());            // 4
+```
+
+The map's value still has to be one type. For objects that is `erased`: an owning class handle with
+no interface the service has to implement. `erased::from($obj)` retains. `assume<T>($held)` is the
+reverse, a promise that the slot is a `T`, and it is refused outside `unsafe`. Wrong `T` is the
+same kind of bug as promoting the wrong address. [Unsafe](/memory/unsafe) is that chapter.
+
+```echo
+class Handle
+{
+    int32 $n;
+}
+
+Handle $h = Handle(7);
+erased $held = erased::from($h);
+
+unsafe {
+    Handle $back = assume<Handle>($held);
+    echo $back->n;                             // 7
+}
+```
+
+A struct has no handle to erase. `erased::from` carries `T : class`, so the compiler refuses it at
+the call, the same wording as `make<YetAnotherOne>` against `T : class`. Wrap the struct.
+
+Putting those together is a container you write, not something the language ships:
+
+```echo
+class Handle
+{
+    int32 $n;
+
+    constructor(int32 $n)
+    {
+        $this->n = $n;
+    }
+}
+
+class Container
+{
+    map<type_id, erased> $instances;
+
+    function make<T : class, A>(A $arg) : T
+    {
+        type_id $id = type_id<T>();
+
+        if ($this->instances->has($id)) {
+            erased $held = $this->instances->get($id);
+            unsafe {
+                return assume<T>($held);
+            }
+        }
+
+        T $fresh = T($arg);
+        $this->instances[$id] = erased::from($fresh);
+        return $fresh;
+    }
+}
+
+Container $container = Container(map<type_id, erased>());
+Handle $first = $container->make<Handle>(7);
+Handle $again = $container->make<Handle>(99);
+echo $first->n;                                // 7
+echo $again->n;                                // 7, same object
+```
+
+The `99` is ignored because the slot is already filled. There is no `Service` interface. The
+container promises the slot is `T` because it is the only writer of that key.
 
 ### Interface constraints
 

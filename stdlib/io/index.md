@@ -64,12 +64,28 @@ The methods:
 | `write(ptr<const uint8>, usize)` | raw, when you already have a pointer and a length |
 | `flush()` | flush every buffered stdio stream |
 | `fd() : int32` | the descriptor this stream names |
+| `isatty() : bool` | true when this descriptor is a terminal |
+| `columns() : int32` | the window width, or 0 when this is not a terminal |
 | `readline() : string?` | the next line without its newline, or `null` at end of input |
 
 `write` uses the string's **length**, never a terminator. A substring shares its parent's buffer and simply
 stops early, so `%s` or `strlen` would run off the end of one.
 
 A stream does not own the descriptor and never closes it. A [`std::io::file`](/stdlib/io/files) does.
+
+## Asking whether this is a terminal
+
+Colour, a live line, and a help page that wraps to the window all need to know whether anybody is looking. `isatty` is that question. `columns` is the width the kernel reports, or 0 when there is no window:
+
+```echo
+if (std::io::stderr->isatty()) {
+    std::io::eprintln('this is a terminal');
+}
+
+int32 $width = std::io::stdout->columns();
+```
+
+A pipe, a file, and a closed fd all answer false / 0. There is no error to recover from: "not a terminal" and "not open" are the same answer for every caller this exists for. What to *do* with a 0 (wrap to 80, do not wrap at all) stays in the caller.
 
 ## Reading a line
 

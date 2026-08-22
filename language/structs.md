@@ -524,8 +524,8 @@ That prints `connected`, then `7`, then `disengaged`. The destructor ran at the 
 end of the program.
 
 Once a struct has a destructor it **owns** something as far as the compiler is concerned, and the rules in
-[Ownership and moving](/memory/ownership) start to apply: it can't be captured by a closure, and copying it
-becomes something you have to think about.
+[Ownership and moving](/memory/ownership) start to apply: copying it is refused unless you have said how,
+so a closure captures it only with `function[mv $x]()` or a copy constructor.
 
 ## Copy constructors
 

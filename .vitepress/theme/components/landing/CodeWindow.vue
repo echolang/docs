@@ -1,7 +1,7 @@
 <script setup lang="ts">
-// The one code window on the landing page. The hero, the PHP contrast block, all six tour steps and both
-// ownership cards are this component wearing different chrome — three traffic lights and a filename, a
-// coloured label, or no bar at all.
+// The one code window on the landing page. The hero, the PHP contrast block, the tour steps, the also-this
+// cards and both ownership cards are this component wearing different chrome: three traffic lights and a
+// filename, a coloured label, or no bar at all.
 //
 // The snippet is **not** slotted into a `<pre>` in here, and that is load-bearing: Vue's template compiler
 // only preserves whitespace inside a `<pre>` written in the *same* template, so slot content authored

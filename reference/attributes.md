@@ -252,13 +252,13 @@ chapter; [Threads](/stdlib/thread) is why you would mark one.
 
 ### The library's three
 
-`#[core: name]` binds a type the compiler needs to be able to name. The vocabulary is nine names: `string`,
-`string_view`, `array`, `map`, `buffer`, `iterator`, `iterable`, `const_iterable`, `keyed`. The compiler
+`#[core: name]` binds a type the compiler needs to be able to name. The vocabulary includes `string`,
+`string_view`, `array`, `map`, `buffer`, `iterator`, `iterable`, `const_iterable`, `keyed`, `type_id`, `erased`. The compiler
 resolves the shape by property name, so it is a binding rather than a hardcoded layout, and `--no-stdlib`
 leaves every one of them unbound.
 
-`#[builtin: name]` marks a bodyless function the compiler answers at the call site. Twenty-six names:
-`size_of`, `align_of`, `is_trivially_copyable`, `needs_destruction`, `take`, `init`, `die`, `assert`,
+`#[builtin: name]` marks a bodyless function the compiler answers at the call site. The names include
+`size_of`, `align_of`, `is_trivially_copyable`, `needs_destruction`, `type_id`, `erased_from`, `erased_retain`, `erased_release`, `assume`, `take`, `init`, `die`, `assert`,
 `ref_count`, `weak_count`, `dprint`, `alloc_bytes`, `realloc_bytes`, `free_bytes`, `live_allocations`,
 `process_argc`, `process_argv`, `process_envp`, `exit`, `atomic_load`, `atomic_store`, `atomic_add`,
 `atomic_sub`, `atomic_exchange`, `atomic_compare_exchange`, `atomic_fence`. Anything else is

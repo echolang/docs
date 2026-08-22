@@ -139,7 +139,8 @@ A struct lives where you put it, costs nothing to create, and is copied on assig
 heap, is reference counted, and is shared on assignment. Coming from PHP, `class` is the one that behaves the
 way you already expect.
 
-Pick per type, at the declaration. There is no way to say "this one struct, on the heap, this once".
+Pick per type, at the declaration. `rc<Point>` is the way to put a struct you already have behind a
+class handle, when a factory asks for `T : class`. [Classes](/language/classes) is that wrapper.
 
 ## Ownership will be the new idea
 

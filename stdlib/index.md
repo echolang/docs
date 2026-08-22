@@ -30,7 +30,7 @@ range<int32> $seven = 0 .. 7;
 assert($chevrons->count() == 3);
 ```
 
-`array`, `map`, `ordered_map`, `string`, `slice`, `range`, `result`, plus `die`, `assert` and `dprint`. You write
+`array`, `map`, `ordered_map`, `string`, `slice`, `range`, `result`, `rc`, `type_id`, `erased`, plus `die`, `assert` and `dprint`. You write
 these every day, so they cost you no namespace at all.
 
 **Tier two is still about the language, but you don't write it every line.** A short namespace:

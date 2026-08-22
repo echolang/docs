@@ -4,6 +4,10 @@
 // one, Echo on LAP_PHP_MS / LAP_ECO_MS — the strip holds that for HOLD_MS and starts over.
 //
 // The two durations are the ratio the strip exists to show, so they are stated here and nowhere else.
+//
+// Positions are written onto the nodes as `transform`, not through Vue as `left` / `width`. Layout
+// properties snap to device pixels, and PHP's crawl is a few pixels a second, so a `left` update was a
+// visible hitch every quarter-second. A transform composites at subpixel and does not wait on a render.
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 const LAP_ECO_MS = 3000
@@ -12,13 +16,17 @@ const LAP_PHP_MS = 210000
 const HOLD_MS = 2000
 /** How long a counter stays scaled up after it ticks. */
 const POP_MS = 120
+/** The dot is 22px wide, so its travel is the track minus its own width. */
+const DOT_PX = 22
 
 const TOTAL_LAPS = Math.floor(LAP_PHP_MS / LAP_ECO_MS)
 
 const strip = ref<HTMLElement>()
+const ecoDot = ref<HTMLElement>()
+const phpDot = ref<HTMLElement>()
+const ecoTrail = ref<HTMLElement>()
+const phpTrail = ref<HTMLElement>()
 
-const ecoAt = ref(0)
-const phpAt = ref(0)
 const ecoLabel = ref('ready')
 const phpLabel = ref('ready')
 const ecoLit = ref(false)
@@ -53,6 +61,21 @@ function popPhp(text: string) {
   phpPopTimer = setTimeout(() => (phpPop.value = false), POP_MS)
 }
 
+function place(dot: HTMLElement | undefined, trail: HTMLElement | undefined, at: number) {
+  if (!dot || !trail) return
+  const travel = Math.max(0, (dot.parentElement?.clientWidth ?? 0) - DOT_PX)
+  dot.style.transform = `translate3d(${at * travel}px, 0, 0)`
+  trail.style.transform = `scaleX(${at})`
+}
+
+function placeEco(at: number) {
+  place(ecoDot.value, ecoTrail.value, at)
+}
+
+function placePhp(at: number) {
+  place(phpDot.value, phpTrail.value, at)
+}
+
 function reset() {
   started = null
   lastLap = 0
@@ -64,8 +87,8 @@ function tick(now: number) {
 
   if (started === null) {
     started = now
-    ecoAt.value = 0
-    phpAt.value = 0
+    placeEco(0)
+    placePhp(0)
     ecoLabel.value = 'ready'
     phpLabel.value = 'ready'
     ecoLit.value = false
@@ -76,7 +99,8 @@ function tick(now: number) {
 
   // PHP arrives. Both counters settle, the strip holds, then it all starts again.
   if (elapsed >= LAP_PHP_MS) {
-    phpAt.value = 1
+    placePhp(1)
+    placeEco(1)
     popPhp('done 1x')
     popEco(`done ${TOTAL_LAPS}x`)
     visible = false
@@ -85,10 +109,10 @@ function tick(now: number) {
     return
   }
 
-  phpAt.value = elapsed / LAP_PHP_MS
+  placePhp(elapsed / LAP_PHP_MS)
 
   const laps = Math.floor(elapsed / LAP_ECO_MS)
-  ecoAt.value = (elapsed % LAP_ECO_MS) / LAP_ECO_MS
+  placeEco((elapsed % LAP_ECO_MS) / LAP_ECO_MS)
   if (laps > lastLap) {
     lastLap = laps
     popEco(`done ${laps}x`)
@@ -97,8 +121,8 @@ function tick(now: number) {
 
 /** The settled state, with nothing moving — what reduced motion gets instead of the loop. */
 function settle() {
-  ecoAt.value = 1
-  phpAt.value = 1
+  placeEco(1)
+  placePhp(1)
   ecoLabel.value = `done ${TOTAL_LAPS}x`
   phpLabel.value = 'done 1x'
   ecoLit.value = true
@@ -135,11 +159,6 @@ onBeforeUnmount(() => {
   clearTimeout(restartTimer)
   clearTimeout(wakeTimer)
 })
-
-/** The dot is 22px wide, so its travel is the track minus its own width. */
-function lane(at: number) {
-  return `calc(${at * 100}% - ${at * 22}px)`
-}
 </script>
 
 <template>
@@ -147,8 +166,8 @@ function lane(at: number) {
     <div ref="strip" class="strip">
       <div class="who is-eco">Echo</div>
       <div class="track">
-        <div class="trail is-eco" :style="{ width: lane(ecoAt) }" />
-        <div class="dot is-eco" :style="{ left: lane(ecoAt) }">
+        <div ref="ecoTrail" class="trail is-eco" />
+        <div ref="ecoDot" class="dot is-eco">
           <span class="pulse" aria-hidden="true" />
           <span class="core" />
         </div>
@@ -157,8 +176,8 @@ function lane(at: number) {
 
       <div class="who">PHP</div>
       <div class="track">
-        <div class="trail" :style="{ width: lane(phpAt) }" />
-        <div class="dot" :style="{ left: lane(phpAt) }">
+        <div ref="phpTrail" class="trail" />
+        <div ref="phpDot" class="dot">
           <span class="core" />
         </div>
       </div>
@@ -202,6 +221,7 @@ function lane(at: number) {
 }
 
 .track {
+  --dot: 22px;
   position: relative;
   height: 22px;
   border-bottom: 1px dashed rgb(255 255 255 / 0.09);
@@ -211,9 +231,13 @@ function lane(at: number) {
   position: absolute;
   left: 0;
   bottom: -1px;
+  width: calc(100% - var(--dot));
   height: 2px;
   border-radius: 2px;
   background: rgb(255 255 255 / 0.12);
+  transform: scaleX(0);
+  transform-origin: left center;
+  will-change: transform;
 }
 
 .trail.is-eco {
@@ -224,8 +248,9 @@ function lane(at: number) {
   position: absolute;
   left: 0;
   bottom: -11px;
-  width: 22px;
-  height: 22px;
+  width: var(--dot);
+  height: var(--dot);
+  will-change: transform;
 }
 
 .core {
@@ -326,6 +351,11 @@ function lane(at: number) {
 
   .count {
     transition: none;
+  }
+
+  .dot,
+  .trail {
+    will-change: auto;
   }
 }
 </style>

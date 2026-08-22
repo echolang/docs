@@ -38,25 +38,25 @@ import CodeWindow from './CodeWindow.vue'
         <div class="glow glow-indigo" aria-hidden="true" />
 
         <CodeWindow title="hello.eco" tone="brand" dots>
-          <pre class="eco-code"><span class="k">function</span> <span class="f">total</span><span class="p">(</span><span class="k">const array</span><span class="p">&lt;</span><span class="k">int32</span><span class="p">&gt;&amp;</span> $prices<span class="p">)</span> : <span class="k">int32</span>
+          <pre class="eco-code"><span class="k">function</span> <span class="f">double</span><span class="p">(</span><span class="k">int</span> $n<span class="p">)</span> : <span class="t">result</span><span class="p">&lt;</span><span class="k">int</span><span class="p">,</span> <span class="k">string</span><span class="p">&gt;</span>
 <span class="p">{</span>
-    <span class="k">int32</span> $sum <span class="p">=</span> <span class="s">0</span><span class="p">;</span>
-
-    <span class="k">foreach</span> <span class="p">(</span>$prices <span class="k">as</span> $price<span class="p">)</span> <span class="p">{</span>
-        $sum <span class="p">=</span> $sum + $price<span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span>$n <span class="p">&lt;</span> <span class="s">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="p">.</span><span class="f">error</span><span class="p">(</span><span class="s">'negative'</span><span class="p">);</span>
     <span class="p">}</span>
 
-    <span class="k">return</span> $sum<span class="p">;</span>
+    <span class="k">return</span> <span class="p">.</span><span class="f">ok</span><span class="p">(</span>$n * <span class="s">2</span><span class="p">);</span>
 <span class="p">}</span>
 
-$cart <span class="p">=</span> <span class="p">[</span><span class="s">10</span><span class="p">,</span> <span class="s">20</span><span class="p">,</span> <span class="s">12</span><span class="p">];</span>
+<span class="k">int</span> $n = <span class="k">guard</span> <span class="f">double</span><span class="p">(</span><span class="s">21</span><span class="p">)</span> <span class="k">else</span> <span class="p">(</span>$err<span class="p">)</span> <span class="p">{</span>
+    <span class="f">die</span><span class="p">(</span>$err<span class="p">);</span>
+<span class="p">}</span>
 
-<span class="k">echo</span> <span class="f">total</span><span class="p">(</span>$cart<span class="p">);</span></pre>
+<span class="k">echo</span> <span class="s">"got {$n}"</span><span class="p">;</span></pre>
 
           <template #footer>
             <span class="prompt">$</span>
             <span>echoc run hello.eco</span>
-            <span class="result">42</span>
+            <span class="result">got 42</span>
             <span class="caret" aria-hidden="true" />
           </template>
         </CodeWindow>

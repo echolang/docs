@@ -113,7 +113,8 @@ echo shared();      // 42
 
 ## What you can capture
 
-Anything that doesn't own a resource. Primitives, pointers and plain structs are all fine:
+Primitives, pointers, and plain structs copy into the environment. A class handle or a `string`
+is retained. A struct with a copy constructor is copied:
 
 ```echo
 struct Chevron
@@ -133,8 +134,26 @@ function encode() : int32
 echo encode();      // 42
 ```
 
-Capture is by copy. A `string` or a class handle is retained into the environment; a struct with a
-copy constructor is copied; a `#[unique]` type is refused, because there is nothing to copy:
+The copy is of the *variable*, not "whatever it points at." A class handle or a `string` is a
+retain. A `T&` or a `ptr<T>` is one word, the address. The bytes on the other side of that
+address are still shared:
+
+```echo
+int32 $n = 42;
+ptr<int32> $p = &$n;
+
+function<int32()> $f = function() : int32 { return $p; };
+
+echo $f();      // 42
+```
+
+There is no `function[&$blob]()`. Capture does not alias a local. If the blob is a
+[class](/language/classes), capture the handle and the payload stays on the heap. If it is a
+struct, capture `&$blob` (or a `ptr<T>`) and keep the struct alive for as long as the closure
+runs. [Threads](/stdlib/thread#share-the-object-not-a-copy-of-it) is the page that puts that on
+another core.
+
+A `#[unique]` type is refused, because there is nothing to copy:
 
 ```echo
 #[unique]
@@ -149,13 +168,50 @@ function outer() : usize
     function<usize()> $f = function() : usize { return $t->id; };
     return $f();
 }
-// error: '$t' is a 'Token', which cannot be copied
+// error: 'Token' is unique: exactly one value may name its storage, so it is moved and never copied
 ```
 
-The original local still owns its copy. The environment is a minted `#[atomic]` class, so the
-closure can be spawned onto another thread. [Threads](/stdlib/thread) is that page.
+To hand the local over instead of copying it, name it in a capture list with `mv`. The source is
+then dead in the enclosing body, the same way `mv $t` is anywhere else:
 
-Capturing through **two** levels of closure is also refused, for now:
+```echo
+#[unique]
+struct Token
+{
+    usize $id;
+}
+
+function outer() : usize
+{
+    Token $t = Token(3);
+    function<usize()> $f = function[mv $t]() : usize { return $t->id; };
+    return $f();
+}
+
+echo outer();       // 3
+```
+
+A written list is closed: only those names are captured, each copy or move as written.
+`function[$n]()` copies `$n` and refuses anything else. `function[]()` captures nothing. No
+list at all is the default, every enclosing local the body reads is copied.
+
+```echo
+function only_n() : int32
+{
+    int32 $n = 5;
+    function<int32()> $f = function[$n]() : int32 { return $n; };
+    return $f() + $n;
+}
+
+echo only_n();      // 10
+```
+
+The original local still owns its copy when you did not write `mv`. The environment is a minted
+`#[atomic]` class, so the closure can be spawned onto another thread. [Threads](/stdlib/thread) is
+that page.
+
+Capturing through two levels of closure works. The outer closure captures the local, and the inner
+one captures the outer environment's property:
 
 ```echo
 function outer() : int32
@@ -167,11 +223,12 @@ function outer() : int32
     };
     return $f();
 }
-// error: '$n' is declared outside the closure that encloses this one. Capturing through a closure is
-//        not supported yet - capture it in the outer closure first.
+
+echo outer();       // 5
 ```
 
-Both of these are on [the list](/reference/limitations).
+A named `function` between the two has no environment, so it cannot hand a capture through. Pass
+the value as an argument, or write the inner body as a closure too.
 
 ## And a C function pointer is a different type
 

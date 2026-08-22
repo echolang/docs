@@ -11,6 +11,7 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import CodeWindow from './CodeWindow.vue'
 import InstallCommand from './InstallCommand.vue'
+import LandingAlso from './LandingAlso.vue'
 import LandingHero from './LandingHero.vue'
 import LandingRace from './LandingRace.vue'
 import LandingTour from './LandingTour.vue'
@@ -29,6 +30,13 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => window.removeEventListener('scroll', onScroll))
+
+const phpErrors = [
+  "The function 'gettype' could not be found",
+  "Invalid type conversion: cannot assign 'int32' to 'string'",
+  "cannot assign null to 'string' - add '?' to its type if it may be absent",
+  "Invalid type conversion: cannot assign 'float64' to 'string'",
+]
 
 const gaps = [
   'holes in the type system',
@@ -72,21 +80,23 @@ foreach ($things as $t) {
           <p class="arrow">↓&nbsp;&nbsp;echoc build legacy.php</p>
 
           <div class="errors">
-            <p>The function 'gettype' could not be found</p>
-            <p>Invalid type conversion: cannot assign 'int32' to 'string'</p>
-            <p>cannot assign null to 'string' - add '?' to its type if it may be absent</p>
-            <p class="errors-foot">4 errors, nothing was compiled. Three of them are on line one.</p>
+            <p v-for="err in phpErrors" :key="err" :title="err">{{ err }}</p>
+            <p
+              class="errors-foot"
+              title="4 errors, nothing was compiled. Three of them are on line one."
+            >4 errors, nothing was compiled. Three of them are on line one.</p>
           </div>
         </div>
       </div>
     </section>
 
     <LandingTour />
+    <LandingAlso />
 
     <!-- Ownership -->
     <section id="memory" class="memory">
       <div class="memory-inner">
-        <p class="eyebrow green">the part you cannot skim</p>
+        <p class="eyebrow green">the memory model</p>
         <h2 class="wide">Every value has exactly one owner.</h2>
         <p class="says wide">
           When the owner goes out of scope, the value is destroyed. You can hand ownership to somebody else,
@@ -333,6 +343,7 @@ h2.huge {
 }
 
 .stack {
+  min-width: 0;
   display: grid;
   gap: 0.75rem;
 }
@@ -346,6 +357,7 @@ h2.huge {
 }
 
 .errors {
+  min-width: 0;
   border-radius: var(--eco-radius);
   border: 1px solid rgb(255 110 140 / 0.24);
   background: rgb(255 110 140 / 0.05);
@@ -358,6 +370,9 @@ h2.huge {
 
 .errors p {
   margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .errors .errors-foot {

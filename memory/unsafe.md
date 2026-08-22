@@ -1,7 +1,8 @@
 # Unsafe
 
-`unsafe` sounds like a mode. It is not. **It is permission for exactly one operation: turning a raw
-address into a trusted borrow.**
+`unsafe` sounds like a mode. It is not. **It is permission for two promises about a word the type
+system cannot check:** turning a raw address into a trusted borrow, and recovering a class handle
+from erasure.
 
 ```echo
 ptr<int32> $slots = mem::alloc<int32>(4);
@@ -16,9 +17,9 @@ echo $slots:$[0];       // 7
 mem::free($slots);
 ```
 
-That's the whole feature. An `unsafe` block is an ordinary block in every other respect: it opens a scope,
-its locals are destroyed at the brace, and it compiles to exactly the same thing. The only difference is what
-the type checker will accept inside it.
+An `unsafe` block is an ordinary block in every other respect: it opens a scope, its locals are destroyed
+at the brace, and it compiles to exactly the same thing. The only difference is what the type checker will
+accept inside it.
 
 Useful in the right hands and very dangerous in the wrong ones. You know the drill.
 
@@ -127,6 +128,35 @@ echo $glyph->symbol;    // 7
 
 A method's receiver is a borrow, so calling one through a `ptr<T>` mints one. Same operation, same promise,
 no cast anywhere in sight.
+
+## The other promise: assume
+
+`assume<T>($held)` is the same kind of claim about a different word. You have an `erased`, you keyed it
+by `type_id<T>()`, and you are promising the slot is a `T`. The compiler cannot check that. Wrong `T`
+is a typed view of the wrong object, which is why the word is required:
+
+```echo
+class Handle
+{
+    int32 $n;
+}
+
+Handle $h = Handle(7);
+erased $held = erased::from($h);
+
+unsafe {
+    Handle $back = assume<Handle>($held);
+    echo $back->n;          // 7
+}
+```
+
+Do it outside a block and the compiler refuses, at the call, the same way it refuses a raw-to-borrow
+promotion. It is `static_cast`, not `dynamic_cast`: there is no `instanceof` check, and a mismatch is
+not a `null`. The object's own teardown is unaffected, because `erased` stored the release thunk at
+`from`, where `T` was still known.
+
+It is not a second language. Two promises, both "I know the type of this word." [Generics](/language/generics)
+is where `erased` and `type_id` sit in a container.
 
 An `unsafe` block is **not** inherited by a function declared inside it. The promise is about a region of
 source you are looking at, and a body written somewhere else is not one.
