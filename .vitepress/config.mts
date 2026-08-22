@@ -121,6 +121,11 @@ export default defineConfig({
 
   cleanUrls: true,
   lastUpdated: true,
+  
+  srcExclude: ['README.md'],
+  sitemap: {
+    hostname: 'https://echoc.dev/',
+  },
 
   // A `head` href is **not** rewritten against `base` the way a themeConfig image is, so if `base` above
   // ever stops being '/', this path has to gain the same prefix by hand.
