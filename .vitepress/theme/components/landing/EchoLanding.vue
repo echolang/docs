@@ -13,7 +13,7 @@ import CodeWindow from './CodeWindow.vue'
 import InstallCommand from './InstallCommand.vue'
 import LandingAlso from './LandingAlso.vue'
 import LandingHero from './LandingHero.vue'
-import LandingRace from './LandingRace.vue'
+// import LandingRace from './LandingRace.vue'
 import LandingTour from './LandingTour.vue'
 
 const progress = ref(0)
@@ -50,7 +50,7 @@ const gaps = [
     <div class="progress" :style="{ width: `${progress.toFixed(2)}%` }" aria-hidden="true" />
 
     <LandingHero />
-    <LandingRace />
+    <!-- <LandingRace /> -->
 
     <!-- The first question everybody asks -->
     <section class="contrast">
