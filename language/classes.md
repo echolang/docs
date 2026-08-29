@@ -17,7 +17,8 @@ $sgc->lock();
 echo $sgc->lockedChevrons;     // 1
 ```
 
-Same syntax, same constructors, same methods, same `const function`. **The semantics are the opposite.** A
+Same syntax, same constructors, same methods, same `const function`. Field defaults, `$name:`, labels, and
+`init` work the same. [Structs](/language/structs) is that chapter. **The semantics are the opposite.** A
 struct is a value that gets copied. A class lives on the heap, is reference counted, and assigning it hands
 out another name for the same object:
 

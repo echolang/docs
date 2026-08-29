@@ -126,6 +126,8 @@ A `const T&` operand still finds a `const function` conversion. That is the same
 
 **A pointer to a pointer.** `$p as ptr<uint8>` reinterprets the address. `ptr<uint8>($p:$)` is the same conversion written the other way around. No `unsafe` required: computing another address promises nothing. Turning one of those into a `T&` is a different operation and it does need `unsafe`. [Pointers](/memory/pointers) and [Unsafe](/memory/unsafe) have that split.
 
+**A pointer and a C function pointer.** `$p:$ as extern function<int32()>` is a one-word reinterpret, and so is `&name as ptr<uint8>`. That *does* need `unsafe`. A C function pointer is a trusted typed callable: calling through it is the signature you wrote. Write `$p:$` for the same reason the pointer-to-pointer form does: a plain `$p` would load through. `&name` is still the only *safe* producer. [C interop](/projects/c-interop) is why a loader needs the marked one.
+
 ## What it will not do
 
 `as` does not invent a conversion, and it does not unwrap.

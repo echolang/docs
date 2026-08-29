@@ -13,7 +13,7 @@ function double(int32 $n) : int32
 echo double(21);        // 42
 ```
 
-Sixteen names in total: seven on a declaration (four of yours, three for the library), nine that only
+Eighteen names in total: nine on a declaration (six of yours, three for the library), nine that only
 mean something in a `module.eco` manifest. A namespaced name (`#[epm::license:]`) is not on that list
 and is carried rather than refused. The four conditional directives look like attributes and are
 not on that list at all. There's a reason, and it gets its own section.
@@ -67,7 +67,7 @@ scheme with two libraries rather than two schemes.
 
 ## Declaration attributes
 
-Eight names. Five of them are yours:
+Nine names. Six of them are yours:
 
 | Attribute | Value | What it does |
 |---|---|---|
@@ -76,6 +76,7 @@ Eight names. Five of them are yours:
 | `#[unique]` | none | on a struct, says exactly one value may name this storage. The type is moved, never copied |
 | `#[atomic]` | none | on a class, says the reference count is an atomic RMW, so a handle may be retained and released on more than one thread. The contents are not covered |
 | `#[group: "..."]` | string | on a `test`, names the group a test run can select on |
+| `#[tests: expects death]` | tagged name | on a `test`, inverts the pass condition: the child must exit non-zero |
 
 And three belong to the standard library. They are documented here so that reading `stdlib/` makes sense, not
 so you write them:
@@ -212,6 +213,29 @@ the only attribute here whose value is free text checked against nothing. Writte
 test it does nothing at all, per the section below on placement.
 
 [Testing](/projects/testing) is the whole of what it is for.
+
+### #[tests:]
+
+Inverts the pass condition of a `test`. The tag vocabulary is closed at `expects` and the value
+vocabulary is closed at `death`, the same tagged-value shape as `#[link: lib "GL"]` — a future knob is
+a new tag, not a new attribute name.
+
+<!-- verify: test -->
+```echo
+#[tests: expects death]
+test an_unloaded_call_dies
+{
+    die('not loaded');
+}
+```
+
+The child has to exit non-zero. A hang is still a timeout. `die` and a failed `assert` both count: they
+are the same abort. This is not the `tests` *condition* (`#[if: tests]`), which is a directive value; this
+is an attribute name.
+
+Written on something that is not a test it does nothing at all, per the section below on placement.
+
+[Testing](/projects/testing) owns the runner.
 
 ### #[unique]
 
@@ -363,7 +387,7 @@ I'd like the first case to be an error too. It is not today, and if you find you
 ## When the name is wrong
 
 ```
-unknown attribute 'bultin', expected one of: inline, implicit, intrinsic, builtin, core, unique, atomic, group, module, version, depends, sources, target, link, cc, build_dir, requires
+unknown attribute 'bultin', expected one of: inline, implicit, intrinsic, builtin, core, unique, atomic, group, tests, module, version, depends, sources, target, link, cc, build_dir, requires
 ```
 
 The attribute is then skipped and the declaration after it still parses, which is the point: the error you

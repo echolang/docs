@@ -188,9 +188,9 @@ That also means `public struct Gate` still publishes its constructor and every m
 You mark the type, then you mark the inside. `private` stays the type, not the file: neighbours in the same
 module still don't get in.
 
-One consequence people trip over: a single `private` property suppresses the field-wise constructor outright,
-because that constructor writes every property from outside the type. An `internal` property does not:
-the type is still constructible where it is today. [Structs](/language/structs) has the private case in full.
+One consequence people trip over: a `private` property is omitted from the implicit constructor. It needs
+a field initializer, or the type must declare a constructor that assigns it. An `internal` property stays
+an implicit parameter. [Structs](/language/structs) has the private case in full.
 
 ## public const is the read-only field you actually wanted
 

@@ -88,12 +88,12 @@ like the released one.
 
 ## Editor support
 
-There is no language server yet, so no autocomplete and no inline errors. Syntax highlighting for `.eco`
-files isn't packaged either. Setting your editor to treat `.eco` as PHP gets you most of the way there, and
-it's what I do while writing these docs.
+`echoc lsp` is the language server: diagnostics, hover, go-to-definition, the outline, find-references,
+workspace symbols and signature help. Completion is not in v1. Point an LSP client at it, or install the [VS Code extension](https://github.com/echolang/echolang-vscode)
+and set `echo.echocPath` at a source build's `build/echoc` if `echoc` is not on your `PATH`.
 
-`echoc build --diagnostics=json` emits one JSON object per diagnostic on stderr. That's stable, and it's
-what an editor integration would consume. If you want to build one, that's the hook.
+Setting your editor to treat `.eco` as PHP still works if you only want colour. The official grammar is
+derived from the compiler's own token list, so `mv`, `guard` and `:$` colour as themselves.
 
 ## Next
 

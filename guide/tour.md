@@ -108,8 +108,9 @@ $b->x = 10.0;
 echo $a->x;         // 3
 ```
 
-There is **no `new`**. You call the type. A struct that declares no constructor gets one taking its
-properties in declaration order for free, which is where `Point(3.0, 4.0)` comes from.
+There is **no `new`**. You call the type. A struct that declares no constructor gets one taking its public
+properties in declaration order for free, and a field default is a parameter default on that constructor.
+That is where `Point(3.0, 4.0)` comes from.
 
 A struct is a value: it lives where you put it, a local lives on the stack, and assigning it copies it.
 Nothing is allocated and nothing is reference counted.
@@ -176,7 +177,7 @@ the object is destroyed and the memory is given back.
 That's the whole struct/class decision: **one owner and a copy, or many owners and a shared object.** Pick
 per type, at the declaration, and every use site follows from it.
 
-Note the `private` on the properties. A struct with a private property loses its free field-wise constructor,
+Note the `private` on the properties. A private field without a default refuses the implicit constructor,
 which is why `Account` writes one out.
 
 [Classes](/language/classes).

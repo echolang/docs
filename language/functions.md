@@ -58,6 +58,110 @@ Declarations are collected before any body is compiled, across every file of the
 no forward declarations and no include order to get right. Only top-level *statements* care about order, and
 those run in filename order.
 
+## Named arguments
+
+Sometimes a function has two or three arguments of the same type and the call site is just a pile of
+numbers. `$name:` binds a parameter by name, in any order, after the positionals:
+
+```echo
+function pair(int32 $a, int32 $b) : int32
+{
+    return $a * 10 + $b;
+}
+
+echo pair(1, 2);            // 12
+echo pair($b: 2, $a: 1);    // 12
+echo pair(1, $b: 2);        // 12
+```
+
+The name is the parameter, dollar sign included. `pair(b: 2)` does not parse.
+
+Positionals fill in order first. After the first `$name:`, everything else has to be named too:
+
+<!-- verify: skip -->
+```echo
+echo pair($a: 1, 2);
+// error: positional argument after named argument
+```
+
+An unknown `$nope:` is an error. A name at most once.
+
+## Defaults fill holes
+
+A parameter may carry `= expr`. After matching, any hole still empty is filled from it:
+
+```echo
+function add(int32 $a, int32 $b = 2) : int32
+{
+    return $a + $b;
+}
+
+echo add(3);                // 5
+echo add(3, 4);             // 7
+echo add($b: 4, $a: 1);     // 5
+```
+
+Defaults do not have to be trailing, because a later parameter can still be named:
+
+```echo
+function wrap(int32 $a = 1, int32 $b) : int32
+{
+    return $a * 10 + $b;
+}
+
+echo wrap($b: 8);           // 18
+```
+
+`wrap(8)` would bind 8 to `$a` and leave `$b` empty, which is an error. Name the one you mean.
+
+## Labels are part of the signature
+
+`$name:` is optional sugar. A **label** is not. Write it with a colon on the declaration, the same way the
+call site writes it, and the call has to use it. Not a positional, not `$name:`:
+
+```echo
+function listen(forEvent: string $name, int32 $code) : int32
+{
+    echo $name;
+    return $code;
+}
+
+echo listen(forEvent: 'click', 7);
+echo listen(forEvent: 'tap', $code: 8);
+```
+
+That prints `click`, then `7`, then `tap`, then `8`. `listen('click', 7)` is an error: the parameter is
+labelled `forEvent`, so the call must say `forEvent:`. `listen($name: 'click', 7)` is the same error. The
+label and the parameter are two different words, on purpose.
+
+Why would you want that? Because the label is part of the overload identity and the `$name` is not. Two
+functions that both take `int32` then `string` are one signature. Two functions that take different labels
+are two:
+
+```echo
+function print(int32 $level, string $message) : int32
+{
+    echo $message;
+    return $level;
+}
+
+function print(fromDecimal: int32 $cents, currency: string $code) : int32
+{
+    echo $code;
+    return $cents;
+}
+
+echo print(1, 'hi');
+echo print(fromDecimal: 100, currency: 'EUR');
+```
+
+`print(100, 'EUR')` is the first overload. The second required its labels. That is the whole reason labels
+exist: they let you have two call shapes that would otherwise be the same types in the same order.
+
+There is no `print` statement in Echo, so declaring one is fine. Unlabelled parameters stay positional, with
+`$name:` as optional sugar. Constructors are functions too, so the same three spellings work on
+`Point(...)`. [Structs](/language/structs) is that chapter.
+
 ## Arguments are copies
 
 By default a parameter is the function's own copy of the value:
@@ -197,6 +301,10 @@ about the second argument specifically.
 The return type is **not** part of the signature. Two functions differing only in what they return are a
 duplicate, not an overload.
 
+Labels are part of that identity. Parameter names are not. `f(int32 $a)` and `f(int32 $b)` collide.
+`f(from: int32 $a)` and `f(to: int32 $a)` do not. [Labels](#labels-are-part-of-the-signature) is the
+section.
+
 ## Generic functions
 
 A function can take type parameters:
@@ -258,13 +366,8 @@ your Echo, and passing a function to C as `extern function<R(P...)>` with `&name
 
 ## What functions cannot do yet
 
-Three things you might reach for that aren't there. All of them are on [the list](/reference/limitations).
+A couple of things you might reach for that aren't there. Both are on [the list](/reference/limitations).
 This is just so you don't spend twenty minutes on the syntax.
-
-**Named arguments.** Arguments are positional. `describe(value: 1)` does not parse.
-
-**Default parameter values.** `function f(int32 $a, int32 $b = 2)` parses, and then the default is thrown
-away. The signature is still `f(int32, int32)` and calling `f(1)` is an error. Do not use it.
 
 **Variadics.** There is no `...`, which is why there is no `printf` and no string formatting.
 
@@ -284,4 +387,6 @@ Make sure every path returns. The compiler will not check for you yet.
 
 - [Closures](/language/closures) for the value form.
 - [Generics](/language/generics) for type parameters.
+- [Structs](/language/structs) for constructors, which are the same call machinery: `$name:`, defaults,
+  labels, and writing any `constructor` deleting the free one.
 - [Ownership and moving](/memory/ownership) for what `mv` and `&` really mean.

@@ -61,29 +61,41 @@ Chevron $first = Chevron(7, 1);
 echo $first->symbol;        // 7
 ```
 
-Two things suppress that free constructor.
+That constructor is an ordinary function. `$name:`, defaults, and labels all work on it. [Functions](/language/functions)
+is the call-site chapter.
 
-**A hand-written constructor with the same signature.** Yours wins, because otherwise there would be two
-candidates taking the same arguments:
+### Property defaults
+
+A property may carry a default. That default is a parameter default on the same constructor, so mixed
+defaults are fine and `$name:` works:
 
 ```echo
 struct Chevron
 {
     int32 $symbol;
     int32 $position;
-
-    constructor(int32 $symbol, int32 $position)
-    {
-        $this->symbol = $symbol % 39;   // there are only 39 glyphs on the ring
-        $this->position = $position;
-    }
+    int32 $locked = 0;
 }
 
-Chevron $wrapped = Chevron(45, 1);
-echo $wrapped->symbol;      // 6
+Chevron $first = Chevron(7, 1);
+Chevron $second = Chevron($symbol: 9, $position: 2, $locked: 1);
+echo $first->locked;        // 0
+echo $second->symbol;       // 9
 ```
 
-A constructor with a *different* signature doesn't suppress it. Both exist, and overload resolution picks:
+`Chevron()` is legal only when every public field has a default. All-defaults do not replace this
+constructor. If `$symbol` and `$position` defaulted too, `Chevron(7, 1)` and `Chevron()` would both work.
+
+A default is an ordinary expression: a literal, a call, another constructor. It cannot name `$this` or
+another instance property. Those do not exist yet. It is a recipe, cloned into each constructor that wants
+it, not a live initializer sitting on the field.
+
+### Writing a constructor deletes the free one
+
+I used to leave the memberwise constructor around when yours took different arguments. Scrap that. It meant
+every type had two ways in, and you had to remember which one you were calling. Writing any `constructor`
+deletes the free one. Named arguments then bind to *that* constructor's parameters, not to fields. There is
+no back door:
 
 ```echo
 struct Chevron
@@ -93,32 +105,172 @@ struct Chevron
 
     constructor(int32 $symbol)
     {
-        $this->symbol = $symbol;
+        $this->symbol = $symbol % 39;
         $this->position = 1;
     }
 }
 
-Chevron $a = Chevron(7);        // yours
-Chevron $b = Chevron(7, 4);     // still the free one
-echo $a->position;              // 1
-echo $b->position;              // 4
+Chevron $a = Chevron(45);
+echo $a->symbol;            // 6
+// Chevron(7, 4) is an error: the memberwise constructor is gone
 ```
 
-**A `private` property.** The free constructor writes every property from outside the type, which is exactly
-what `private` forbids, so it is not generated at all:
+### Field defaults still run in a handwritten body
+
+The recipe still runs first in a constructor you wrote, so a field you did not mention is seated from its
+default:
+
+```echo
+struct Gate
+{
+    int32 $id = 1;
+    int32 $chevrons;
+
+    constructor(int32 $chevrons)
+    {
+        $this->chevrons = $chevrons;
+    }
+}
+
+Gate $g = Gate(7);
+echo $g->id;            // 1
+echo $g->chevrons;      // 7
+```
+
+Here is the catch: a copy constructor fills from `$other`. Running the defaults first would fire them on
+every copy, which is a throwaway allocation if the field owns something, and a wrong answer if the default
+has a side effect. The copy path skips them.
+
+```echo
+struct DialCount
+{
+    static int32 $n = 0;
+
+    public static function bump() : int32
+    {
+        DialCount::$n = DialCount::$n + 1;
+        return DialCount::$n;
+    }
+}
+
+struct Wormhole
+{
+    int32 $id = DialCount::bump();
+
+    constructor() {}
+
+    constructor(Wormhole& $other)
+    {
+        $this->id = $other->id;
+    }
+}
+
+Wormhole $open = Wormhole();
+echo $open->id;             // 1
+Wormhole $backup = $open;
+echo $backup->id;           // 1, bump did not fire
+echo DialCount::$n;         // 1
+```
+
+### Private is omitted, not a third case
+
+A `private` property is not a public argument. It is omitted from the free constructor. Give it a default
+and the type is still constructible; the hidden field is seated from inside:
 
 ```echo
 struct ZPM
 {
-    private int32 $used;
-    int32 $capacity;
+    private int32 $used = 0;
+    int32 $capacity = 4096;
 }
 
-ZPM $module = ZPM(0, 4096);
-// error: The function 'ZPM' could not be found
+ZPM $module = ZPM();
+echo $module->capacity;     // 4096
+ZPM $other = ZPM(8);
+echo $other->capacity;      // 8
 ```
 
-Write your own constructor and the type works again. That's the usual reason to write one.
+`$capacity` is still an implicit parameter. `$used` is not. Leave a private field without a default and
+there is no free constructor at all: `$used` cannot be a public argument, and it cannot be left blank.
+Write a constructor, give the field a default, or assign it in `init`.
+
+An `internal` property stays an implicit parameter. [Visibility](/language/visibility) is the rest of
+`private`.
+
+## `init` runs after every successful construction
+
+Some fields are not arguments. They are computed from the ones that are. `init` is that computation, and it
+runs at the end of every constructor that actually returns: the implicit one, a handwritten one, a copy. A
+`die` path does not return, so `init` does not run.
+
+```echo
+struct Chevron
+{
+    int32 $symbol;
+    int32 $position;
+    int32 $encoded;
+
+    init
+    {
+        $this->encoded = $this->symbol * 39 + $this->position;
+    }
+}
+
+Chevron $first = Chevron(7, 1);
+echo $first->encoded;       // 274
+// Chevron($encoded: 0) is an error: `$encoded` is not a parameter
+```
+
+A field `init` assigns on every completing path is **derived**. It is omitted from the implicit constructor.
+A field default on a derived field is dead. Drop it.
+
+Both arms of an `if` count. Assign `$encoded` in the `then` and forget the `else`, and that is not every path.
+
+`init` may read a field only if every constructor assigned it on the way in. The implicit constructor does,
+by construction. A handwritten `constructor()` that never writes `$symbol` cannot then have `init` read
+`$this->symbol`.
+
+A copy still runs `init`. That is how a stamp that is derived from construction stays a stamp, instead of
+being shared with the original:
+
+```echo
+class Gate
+{
+    int32 $id;
+}
+
+struct DialCount
+{
+    static int32 $n = 0;
+
+    public static function bump() : int32
+    {
+        DialCount::$n = DialCount::$n + 1;
+        return DialCount::$n;
+    }
+}
+
+struct Wormhole
+{
+    Gate $gate;
+    int32 $stamp;
+
+    init
+    {
+        $this->stamp = DialCount::bump();
+    }
+}
+
+Wormhole $open = Wormhole(Gate(1));
+echo $open->stamp;          // 1
+Wormhole $backup = $open;
+echo $backup->stamp;        // 2, init ran again
+echo $open->stamp;          // 1
+```
+
+`init` is a word the type body recognises, not a keyword. `mem::init` is still a function. There is no
+parameter list and no call site: `$p->init()` looks up a method named `init` and will not find this. One per
+type. An enum that writes one is an error. [Keywords](/reference/keywords) is the list of contextual words.
 
 ## Writing a constructor
 
@@ -143,6 +295,34 @@ echo $module->charge;       // 0.750000
 `return` at the end: the constructor returns the built value implicitly.
 
 Member access is always `->`, including on `$this`. There is no `.` and no `$this.x`.
+
+Constructors are functions, so labels work. That is the natural way to have two ways in that would otherwise
+be the same types:
+
+```echo
+struct Chevron
+{
+    int32 $symbol;
+
+    constructor(int32 $symbol)
+    {
+        $this->symbol = $symbol % 39;
+    }
+
+    constructor(fromGlyph: int32 $glyph)
+    {
+        $this->symbol = $glyph;
+    }
+}
+
+Chevron $wrapped = Chevron(45);
+echo $wrapped->symbol;                  // 6
+Chevron $literal = Chevron(fromGlyph: 7);
+echo $literal->symbol;                  // 7
+```
+
+`Chevron(fromGlyph: 7)` is the second constructor. `Chevron(45)` is the first, and wraps. There is no free
+memberwise `Chevron(int32)` besides the one you wrote, because writing any constructor deleted it.
 
 ## Methods
 
@@ -558,6 +738,10 @@ echo $duplicate->revision;      // 11
 There is no separate `copy` keyword. A constructor taking `Manifest&` or `const Manifest&` **is** the copy
 constructor, and the `+1` above is how you can see it fire.
 
+Field defaults do not run on this path. The constructor fills from `$other`, and running the defaults first
+would fire them on every copy. [Field defaults still run in a handwritten body](#field-defaults-still-run-in-a-handwritten-body)
+is the catch.
+
 Prefer `const Manifest&` where you can. A copy constructor taking a mutable borrow can't be used to copy out
 of a `const` value, which quietly rules your type out of a few places. [Copying](/memory/copying) has the
 details.
@@ -624,9 +808,10 @@ ZPM $module = ZPM(4096);
 echo $module->remaining();      // 4096
 ```
 
-Nothing outside `ZPM` reads `$used`, and a `private function` is refused from outside the same way. Watch out
-for one thing: on a *top-level* declaration the word means the file rather than the type, which is a
-different question entirely. [Visibility](/language/visibility) is the whole of that.
+Nothing outside `ZPM` reads `$used`, and a `private function` is refused from outside the same way. A
+private property is also omitted from the free constructor, covered above. Watch out for one more thing:
+on a *top-level* declaration the word means the file rather than the type, which is a different question
+entirely. [Visibility](/language/visibility) is the whole of that.
 
 A private property may own something, an `array`, a `string`, another struct that owns one, and hiding it is
 usually the point: what a type keeps behind `private` is normally exactly what it has an invariant about. You

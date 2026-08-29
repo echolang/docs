@@ -393,7 +393,8 @@ enum Side
 
 The layout of an enum belongs to the compiler: a discriminant, and a slot per payload field. A property of
 your own would be seated beside a discriminant it knows nothing about, and a constructor could build a value
-that is none of the cases. A constant is refused for a duller reason: `Side::left` already names a case, so
+that is none of the cases. `init` is a struct and class word for the same reason: an enum has no fields of
+yours to derive. A constant is refused for a duller reason: `Side::left` already names a case, so
 `Side::LIMIT` would make one spelling mean two things.
 
 ## Type parameters work as they do everywhere else

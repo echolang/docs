@@ -1,6 +1,6 @@
 # CLI reference
 
-`echoc` has four subcommands and twenty-nine options. That's the whole surface, and it's one list: what you
+`echoc` has five subcommands and thirty options. That's the whole surface, and it's one list: what you
 type, what `--help` prints, and what a refusal names all come from the same place. There is no second table
 that can drift.
 
@@ -9,6 +9,7 @@ echoc run app.eco
 echoc build -o app src/*.eco
 echoc test --filter group:parsing
 echoc clean -n
+echoc lsp
 ```
 
 [The echoc CLI](/projects/cli) is the chapter with the reasoning. This page is the table.
@@ -20,6 +21,7 @@ echoc run   [options] <sources...> [-- <program arguments>]
 echoc build [options] -o <file> <sources...>
 echoc test  [options] <sources...>
 echoc clean [options]
+echoc lsp   [options]
 ```
 
 | Command | Does | Defaults to |
@@ -28,10 +30,16 @@ echoc clean [options]
 | `build` | compile and link a native executable. Needs `clang` on your PATH | `--release` |
 | `test` | compile and run the `test` blocks, one process each, through the JIT | `--debug` |
 | `clean` | remove what a build produced. Parses no source and runs no pass | n/a |
+| `lsp` | speak the Language Server Protocol over stdin and stdout | `--debug` |
 
-`run` is the only one that takes `--`. `clean` is the only one that takes no sources. `test` is the only one
-that compiles a `test` block at all: every other invocation drops one before it is parsed. See
+`run` is the only one that takes `--`. `clean` and `lsp` take no source files: the workspace arrives from
+the client's `initialize` request, or from `--module`. `test` is the only one that compiles a `test` block
+at all: every other invocation drops one before it is parsed, `lsp` included. See
 [Testing](/projects/testing).
+
+`lsp` publishes diagnostics, hover, go-to-definition, document symbols, find-references, workspace
+symbols and signature help. Completion is not in v1. Stdout is the protocol stream and nothing else;
+logging goes to stderr.
 
 Name no sources at all and your program is whatever manifest the invocation points at: the one `--module`
 names, or the `module.eco` in your working directory. A `*` in a source path is expanded by echoc itself,
@@ -42,8 +50,9 @@ them. See [More than one program](/projects/modules#more-than-one-program).
 
 ## Every option
 
-`compiling` in the third column means `run`, `build` and `test`, and that the option is refused on `clean` by
-name.
+`compiling` in the third column means `run`, `build` and `test`. `lsp` takes `--module`, `--no-stdlib` and
+`--package-dir`; everything else a compile would take is refused by name, because the server renders
+nothing and builds nothing.
 
 ### What is built
 
@@ -53,8 +62,8 @@ name.
 | `--module <manifest>` | `-m` | all | path, repeatable | | build a module from its manifest. A file or a directory holding one |
 | `--target <name>` | | compiling | name, repeatable | every program declared | which of the programs a manifest declares to build. `run` takes exactly one. On `test` it names a `#[target: test]` instead, and an unnamed one narrows nothing |
 | `--filter <spec>` | | test | tagged word, repeatable | every test | which tests to run. A bare word is a name; `group:`, `file:` and `module:` are the tags. One matching nothing is refused |
-| `--build-dir <dir>` | | all | path | `ecobuild` beside the manifest | where build artifacts are written. Outranks `#[build_dir:]` |
-| `--package-dir <dir>` | | compiling | path | the nearest `vendor/` | directory that holds vendored packages. `#[requires: "libcurl"]` resolves to `<dir>/libcurl` |
+| `--build-dir <dir>` | | compiling, clean | path | `ecobuild` beside the manifest | where build artifacts are written. Outranks `#[build_dir:]` |
+| `--package-dir <dir>` | | compiling, lsp | path | the nearest `vendor/` | directory that holds vendored packages. `#[requires: "libcurl"]` resolves to `<dir>/libcurl` |
 | `--link <requirement>` | | compiling | `<scheme>:<value>`, repeatable | | add a link requirement. Merged after the manifest's, so a declaration wins |
 
 ### How it is built
@@ -67,7 +76,7 @@ name.
 | `--debug-symbols` | `-g` | compiling | flag | off | emit DWARF. Implies `--optimize none` unless you stated one |
 | `--no-tbaa` | | compiling | flag | off | emit no type-based alias metadata |
 | `--track-allocations` | | compiling | flag | off | count outstanding allocations. What `mem::live_allocations()` needs |
-| `--no-stdlib` | | compiling | flag | off | compile without the standard library |
+| `--no-stdlib` | | compiling, lsp | flag | off | compile without the standard library |
 | `--emit-stdlib-header` | | compiling | flag | off | regenerate the embedded stdlib header |
 
 `--debug` and `--release` are one question and so are `--no-stdlib` and `--emit-stdlib-header`. Writing both
@@ -97,9 +106,9 @@ for the host CPU is an illegal instruction on the machine next door rather than 
 |---|---|---|---|---|---|
 | `--print <what>` | `-p` | compiling | see below, repeatable | | dump what the compiler built, by layer |
 | `--explain <what>` | | compiling | see below, repeatable | | explain a decision the compiler made |
-| `--diagnostics <mode>` | | all | `auto\|pretty\|ascii\|json` | `auto` | how a diagnostic is drawn |
-| `--color <when>` | | all | `auto\|always\|never` | `auto` | colourise diagnostics. Also spelled `--colour` |
-| `--silent` | | all | flag | off | do not draw the progress checklist. Silences that and nothing else |
+| `--diagnostics <mode>` | | compiling, clean | `auto\|pretty\|ascii\|json` | `auto` | how a diagnostic is drawn |
+| `--color <when>` | | compiling, clean | `auto\|always\|never` | `auto` | colourise diagnostics. Also spelled `--colour` |
+| `--silent` | | compiling, clean | flag | off | do not draw the progress checklist. Silences that and nothing else |
 | `--verbose` | | test | flag | off | list every test, with how long each one took |
 | `--timeout <ms>` | | test | milliseconds | none | kill a test that is still running after this many milliseconds |
 
@@ -119,6 +128,7 @@ pipe records.
 
 | Option | Short | Commands | Does |
 |---|---|---|---|
+| `--stdio` | | lsp | name the stdio transport. It is the only one, so this flag and omitting it are the same thing |
 | `--help` | `-h` | all | the page, or one option in full |
 | `--version` | `-v` | all | print the version |
 
@@ -191,7 +201,7 @@ only thing that goes to stdout.
 | You wrote | You get |
 |---|---|
 | `echoc` | `No command given.` |
-| `echoc frobnicate` | `'frobnicate' is not an echoc command. Write 'run', 'build' or 'clean'.` |
+| `echoc frobnicate` | `'frobnicate' is not an echoc command. Write 'run', 'build', 'test', 'clean' or 'lsp'.` |
 | `echoc run --nonsense` | `Unknown option '--nonsense'.` |
 | `echoc run --optimize hard` | `Unknown '--optimize' value 'hard'. Expected one of: none\|module\|whole.` |
 | `echoc build x.eco` | `'build' needs '-o, --output <file>' - nothing here names the binary.` Reported once the manifest is known, since a project declaring targets names its own |

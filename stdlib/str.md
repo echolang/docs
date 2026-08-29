@@ -155,7 +155,7 @@ is ordinary text rather than a call, and the result has to be bound before you c
 `ltrim` and `rtrim` do one side each. All three answer a **window** rather than a copy, so trimming
 is free. Call `->clone()` on the result if you want the parent's buffer released.
 
-## int and float
+## int, uint, and float
 
 ```echo
 int64 $n = guard str::int('42') else {
@@ -165,7 +165,7 @@ int64 $n = guard str::int('42') else {
 echo $n;        // 42
 ```
 
-Both parsers answer a nullable, so failure is `guard ... else` rather than a sentinel you have to look up.
+The parsers answer a nullable, so failure is `guard ... else` rather than a sentinel you have to look up.
 Nothing is forgiven: no leading whitespace, no separators, no trailing text. `str::trim` first if the text
 came from a line of input.
 
@@ -173,6 +173,21 @@ came from a line of input.
 echo str::int('4kg') ?? -1;       // -1
 echo str::int(' 4') ?? -1;        // -1
 echo str::int('9223372036854775808') ?? -1;    // -1, overflow rather than a wrapped value
+```
+
+`str::int` is base ten, optional sign, `int64?`. `str::uint` is the unsigned twin: base ten, or hex with a
+leading `0x` / `0X`, accumulating `uint64` so `0xFFFFFFFFFFFFFFFF` parses. No sign. Overflow is still `null`,
+never a wrapped value.
+
+```echo
+uint64 $hex = guard str::uint('0x10') else {
+    die('not a number');
+}
+
+echo $hex;                              // 16
+echo str::uint('0xFFFFFFFFFFFFFFFF') == null;   // 0
+echo str::uint('0x10000000000000000') == null;  // 1
+echo str::uint('-1') == null;            // 1
 ```
 
 `str::float` goes through C's `strtod` and requires the whole text to be consumed, which is the
@@ -241,6 +256,7 @@ and no reference count, which is what a scan over thirty headers needs.
 | `str::lpad` / `rpad` `(const string&, usize $width, uint8 $fill) : string` | widen to `$width` **bytes** |
 | `str::repeat(const string& $t, usize $times) : string` | `$t` written over |
 | `str::int(const string& $t) : int64?` | base ten, optional sign, nothing else |
+| `str::uint(const string& $t) : uint64?` | base ten, or hex with `0x` / `0X`. no sign. overflow is `null` |
 | `str::float(const string& $t) : float64?` | through `strtod`, whole text consumed |
 | `str::upper` / `lower` `(const string&) : string` | Unicode uppercase / lowercase. already-cased text shares the buffer |
 | `str::ucfirst` / `lcfirst` `(const string&) : string` | titlecase / lowercase of the first codepoint |

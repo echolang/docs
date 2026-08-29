@@ -1,6 +1,6 @@
 # The echoc CLI
 
-`echoc` has four subcommands and no others. There is no `echoc new`, no `echoc fmt`, no `echoc publish`.
+`echoc` has five subcommands and no others. There is no `echoc new`, no `echoc fmt`, no `echoc publish`.
 What there is instead: **`run` and `build` are not the same build**, and most of the surprises live in the
 ways they differ.
 
@@ -9,9 +9,11 @@ echoc run app.eco               # compile in memory, execute now
 echoc build -o app app.eco      # compile and link a native binary
 echoc test                      # compile and run the test blocks, one process each
 echoc clean                     # remove what a build produced
+echoc lsp                       # language server over stdin and stdout
 ```
 
-That's it. Everything below is flags.
+That's it. Everything below is flags. `lsp` takes `--module`, `--no-stdlib` and `--package-dir`, and
+refuses the rest: it compiles nothing to an executable.
 
 `test` is `run` with a different thing to run, and it gets a chapter of its own in
 [Testing](/projects/testing). Everything on this page about how a program is compiled applies to it

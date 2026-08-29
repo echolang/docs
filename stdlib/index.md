@@ -40,8 +40,8 @@ echo mem::size<int32>();             // 4
 echo hash::of(42) == hash::of(42);      // 1
 ```
 
-`contract::` (interfaces only), `mem::`, `str::`, `arr::` and `hash::`. Container plumbing, mostly. If you're
-writing a data structure you'll live here. Otherwise you'll visit for `mem::size` and leave.
+`contract::` (interfaces only), `mem::`, `str::`, `arr::`, `hash::` and `crash::`. Container plumbing, mostly.
+If you're writing a data structure you'll live here. Otherwise you'll visit for `mem::size` and leave.
 
 **Tier three is ordinary utility with nothing to do with the language.** Fully qualified under `std`:
 
@@ -50,7 +50,7 @@ echo std::math::sqrt(9.0);      // 3.000000
 echo std::env::argc() > 0;      // 1
 ```
 
-`std::math::`, `std::env::`, `std::io::` and `std::thread::`.
+`std::math::`, `std::env::`, `std::io::`, `std::thread::` and `std::time::`.
 
 ## Nothing in the library is special-cased
 
@@ -142,12 +142,14 @@ echo $c->bump(5);       // 7
 | `hash::` | `of` and the composition primitives | [Hashing](/stdlib/hash) |
 | `str::` | `str::from` and the formatting surface, splitting and joining, case conversion, `str::buf`, the C string boundary | [String functions](/stdlib/str) |
 | `arr::` | `merge` and `room` | [Arrays](/stdlib/arr) |
+| `crash::` | `set_hook`, `take_hook`, `default_hook`, `info` | [Crash reports](/stdlib/crash) |
 | `std::io::` | writing text out, streams | [Input and Output](/stdlib/io/) |
 | `std::io::` | `std::io::file`, `open` / `create` / `readfile` / `writefile` | [Files](/stdlib/io/files) |
 | `std::io::` | a buffered `reader` and `writer` | [Readers and writers](/stdlib/io/buffering) |
 | `std::math::` | constants and the numeric functions | [Math](/stdlib/math) |
 | `std::env::` | arguments, environment, directories, `exit` | [Environment](/stdlib/env) |
 | `std::thread::` | `spawn`, `handle`, `task<T>`, `mutex<T>`, `once` | [Threads](/stdlib/thread) |
+| `std::time::` | `duration`, `instant`, `timestamp`, `sleep` | [Time](/stdlib/time) |
 
 ## Next
 
@@ -155,4 +157,5 @@ echo $c->bump(5);       // 7
 - [Memory](/stdlib/mem) for what a container is built out of.
 - [Collections](/collections/arrays) for the types you will actually reach for first.
 - [Threads](/stdlib/thread) for `spawn`, `mutex` and `task`.
+- [Time](/stdlib/time) for durations, clocks and sleep.
 - [Atomics](/memory/atomics) for `atomic<T>` and `#[atomic]`.

@@ -20,6 +20,8 @@ you expected" rather than by topic.
 | Everything is a reference-ish object | `struct` is a value, `class` is reference counted |
 | Garbage collected | Ownership plus reference counting, no GC |
 | `function f($a)` | `function f(int32 $a) : void` |
+| `foo(bar: 1)` | `foo($bar: 1)`. A required name is a **label**: `foo(forEvent: 1)` |
+| Trailing parameter defaults only | Defaults fill holes. A later parameter can still be named |
 | `try` / `catch` / `throw` | No exceptions. `die`, `assert`, `T?`, and `result<T, E>` |
 | `require` / `use` | A `module.eco` manifest and qualified names |
 | Runs on a request, dies | Compiles to a native binary |
@@ -83,8 +85,10 @@ echo $p->length();          // methods
 `->` is used for every member access. Not `.`, not `::`. `::` is reserved for namespaces and nested types
 (`std::math::sqrt`, `string::view`), which is a narrower job than PHP gives it.
 
-A struct with no constructor and no private properties gets a constructor taking its properties in
-declaration order, for free. That is where `Point(1.0, 2.0)` comes from when you never wrote one.
+A struct that declares no constructor gets one taking its public properties in declaration order, for free.
+A field default is a parameter default on that constructor. A `private` property is omitted from it, so give
+that field a default, write a constructor, or assign it in `init`. Writing any `constructor` deletes the
+free one. That is where `Point(1.0, 2.0)` comes from when you never wrote one.
 
 ## echo prints exactly one thing, and adds a newline
 

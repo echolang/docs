@@ -1,8 +1,8 @@
 # Unsafe
 
-`unsafe` sounds like a mode. It is not. **It is permission for two promises about a word the type
-system cannot check:** turning a raw address into a trusted borrow, and recovering a class handle
-from erasure.
+`unsafe` sounds like a mode. It is not. **It is permission for three promises about a word the type
+system cannot check:** turning a raw address into a trusted borrow, recovering a class handle from
+erasure, and reinterpreting a raw word as a C function pointer (or extracting that word).
 
 ```echo
 ptr<int32> $slots = mem::alloc<int32>(4);
@@ -47,6 +47,10 @@ all of it. Nothing has been claimed, so nothing can be violated.
 **A `T&` is the opposite.** It is a trusted typed view, and once you have one the type is the contract: every
 access through it is optimized as a `T`, here and in every function the borrow is passed to. That claim
 travels, it cannot be checked, and it is exactly the thing only you can know. So that's where the word goes.
+
+A C function pointer is the same idea for a callable. `$p as ptr<uint8>` is still free. `$p as extern
+function<int32()>` is not: calling through that word is the signature you wrote. `&name` is the safe
+producer. The cast is the marked one a loader uses. [C interop](/projects/c-interop) has the story.
 
 ## The promise you are signing
 

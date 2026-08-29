@@ -134,6 +134,25 @@ ok   2/2  main/two.eco::still_runs
 Once you have that, you don't need anything else. A matcher library would be a nicer sentence in the
 failure output, and that's all it would be.
 
+Sometimes the point *is* that it dies. A `die` is a failed test unless you say otherwise:
+
+<!-- verify: test -->
+```echo
+#[tests: expects death]
+test an_unloaded_call_dies
+{
+    die('not loaded');
+}
+```
+
+```
+ok   1/1  main/an_unloaded_call_dies.eco::an_unloaded_call_dies
+1 test passed
+```
+
+The child has to *exit* non-zero. A hang is still a timeout, not a death. A failed `assert` counts, because
+it is the same `__eco_abort` a `die` is. Matching the message is not built yet.
+
 Note: `assert` is a debug-build thing. `echoc test` defaults to `--debug` for exactly this reason, and
 `echoc test --release` runs your suite with every assertion elided, which is a run that cannot fail. Try not
 to do that by accident.

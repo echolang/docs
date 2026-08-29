@@ -451,10 +451,28 @@ function double_it(int32 $x) : int32
 echo apply(&double_it, 21);     // 42
 ```
 
-`&name` is the only producer. It is the address of a function this compiler compiled, so the
+`&name` is the only *safe* producer. It is the address of a function this compiler compiled, so the
 signature is checked: primitives, `ptr<T>`, another `extern function`, and `void` as a return.
 A struct by value is refused, because that is where echoc's lowering and clang's ABI classification
 come apart silently. Pass a `ptr<T>`.
+
+The marked unsafe one is the one-word reinterpret between `ptr<T>` and `extern function<R(P...)>`.
+That is what a loader does: `dlsym` hands back a `void*`, you store it typed per slot, and you call
+through it. Any signature is accepted, the way any `ptr` reinterpret is — the signature is your
+promise. Without that cast, only libraries whose symbols are known at link time are bindable.
+
+```echo
+function stub() : int32
+{
+    return 42;
+}
+
+unsafe {
+    ptr<uint8> $p = &stub as ptr<uint8>;
+    extern function<int32()> $back = $p:$ as extern function<int32()>;
+    echo $back();       // 42
+}
+```
 
 A C callback has no environment. State it needs is a static, or arrives through the parameters C
 gives it. That's the honest answer, not a limitation to apologise for. A closure literal at an

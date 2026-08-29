@@ -39,17 +39,21 @@ echo $text;
 
 ## A path is a string
 
-`'gate.txt'` is fine when the current directory is the right place. Anywhere else, build one. Interpolation
-is how:
+`'gate.txt'` is fine when the current directory is the right place. Anywhere else, build one with
+`std::env::DS` between the directory and the name. A hardcoded `/` is the unix spelling, and Windows
+`tmp()` is a backslash path:
 
 ```echo
 string::view $dir = std::env::tmp();
-string $path = "{$dir}/gate.txt";
+string $path = $dir;
+$path->append(std::env::DS);
+$path->append('gate.txt');
 
 echo $path->empty();        // 0
 ```
 
-`cwd()` and `tmp()` are on [Environment](/stdlib/env). There is still no path type behind that string.
+`cwd()`, `tmp()`, `DS`, and `file_url` are on [Environment](/stdlib/env). There is still no path type
+behind that string.
 
 ## A line at a time
 

@@ -118,6 +118,9 @@ echo Point(3)->x;       // 3
 of the actual one. `constructor` is an ordinary identifier the type parser recognises by value, which means a
 struct can have a property called `constructor` and nothing breaks.
 
+`init` in a type body is the same kind of word. `init { $this->encoded = ...; }` is recognised only there,
+and `mem::init` is still a function. [Structs](/language/structs) is the chapter.
+
 Four more words are contextual in the same way, recognised only in one position and ordinary identifiers
 everywhere else:
 

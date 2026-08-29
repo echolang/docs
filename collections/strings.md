@@ -295,6 +295,17 @@ $a = 'hello world';
 echo $a->sub($a->find('world'), 5);     // world
 ```
 
+The two-argument form starts at a byte offset, same sentinel. That is the loop that is not O(n²): calling
+`find($needle)` from zero on every step rescans the prefix already walked. `$from` past the end is `size()`,
+not an assertion.
+
+```echo
+$a = 'hello world';
+
+echo $a->find('o', 5);          // 7, the second o
+echo $a->find('world', 7);      // 11
+```
+
 ## size() and chars() are different questions
 
 `size()` is bytes and is O(1). `chars()` walks the string counting UTF-8 codepoints. That the two

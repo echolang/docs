@@ -176,7 +176,38 @@ hands you an owning `string`.
 
 `home()` is `var('HOME')`, so it is **nullable**. An unset `HOME` has no honest answer, and returning
 `""` would hand you a path that resolves, to the working directory. `tmp()` is `var('TMPDIR', '/tmp')`
-and is *not* nullable, because unlike `HOME` there is an honest answer when the variable is missing.
+on unix and `TEMP` / `TMP` on Windows, and is *not* nullable, because unlike `HOME` there is an honest
+answer when the variable is missing.
+
+The separator between that directory and the rest of a path is `DS`. `/` on unix, a backslash on
+Windows. Same shape as `std::io::NEWLINE`: a string constant, one per OS, no `$`.
+
+```echo
+string $sep = std::env::DS;
+echo $sep->size();          // 1
+```
+
+A hole in an interpolated string has to start with `$`, so `{std::env::DS}` is those letters, not
+the separator. Bind it, or `append`:
+
+```echo
+string::view $dir = std::env::tmp();
+string $path = $dir;
+$path->append(std::env::DS);
+$path->append('gate.txt');
+
+echo $path->empty();        // 0
+```
+
+`file_url` is the other spelling of a path, the one a `file://` consumer wants. Backslashes become
+slashes, a space becomes `%20`, a drive letter keeps its colon:
+
+```echo
+echo std::env::file_url('/tmp/gate.txt');     // file:///tmp/gate.txt
+```
+
+The URL always uses `/`. `DS` is the filesystem spelling. They are not the same string on Windows,
+and that is the whole reason both exist.
 
 ## exit is not a return
 
@@ -221,8 +252,10 @@ and `die`. It does not return a [`result<T, E>`](/stdlib/result).
 | `var(string::view $key, string::view $fallback) : string::view` | its value, or the fallback |
 | `vars() : var_iterator` | a cursor over every variable, for `foreach`. allocates nothing |
 | `cwd() : string` | the current directory, owned |
-| `home() : string::view?` | `HOME`, borrowed. null when unset |
-| `tmp() : string::view` | `TMPDIR`, or `/tmp` |
+| `home() : string::view?` | `HOME` / `USERPROFILE`, borrowed. null when unset |
+| `tmp() : string::view` | `TMPDIR` or `/tmp`; `TEMP` / `TMP` on Windows |
+| `DS` | the directory separator. `/` on unix, `\` on Windows |
+| `file_url(const string&) : string` | `$path` as a `file://` URL |
 
 ## Next
 

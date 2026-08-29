@@ -442,8 +442,8 @@ thread::id $here = thread::current();
 echo $here == thread::current();        // 1
 ```
 
-`yield()` asks the scheduler to run someone else. `sleep($ms)` sleeps, chopped into pieces of at
-most 500 milliseconds so a long sleep is still interruptible by the platform's `usleep` limit.
+`yield()` asks the scheduler to run someone else. `sleep($ms)` is
+[`std::time::sleep`](/stdlib/time) in milliseconds.
 `concurrency()` is how many processors the platform reports, and 1 when it declines:
 
 ```echo

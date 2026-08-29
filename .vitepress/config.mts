@@ -81,6 +81,7 @@ const sidebar = [
       { text: 'Memory', link: '/stdlib/mem' },
       { text: 'Contracts', link: '/stdlib/contract' },
       { text: 'Results', link: '/stdlib/result' },
+      { text: 'Crash reports', link: '/stdlib/crash' },
       { text: 'Hashing', link: '/stdlib/hash' },
       { text: 'String functions', link: '/stdlib/str' },
       { text: 'Arrays', link: '/stdlib/arr' },
@@ -96,6 +97,7 @@ const sidebar = [
       { text: 'Math', link: '/stdlib/math' },
       { text: 'Environment', link: '/stdlib/env' },
       { text: 'Threads', link: '/stdlib/thread' },
+      { text: 'Time', link: '/stdlib/time' },
     ],
   },
   {

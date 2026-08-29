@@ -80,6 +80,9 @@ fatal error: chevron seven will not lock
 
 The `echo "connected"` never happens, and the exit status is 1.
 
+Those two lines are the default report, and you can take them over. [Crash reports](/stdlib/crash) is one
+function you install and Echo calls before the process goes, whatever stopped it.
+
 `die()` also works with no message. Use it where continuing would be worse than stopping: a corrupt file, an
 invariant you rely on that has been violated, a branch that should be unreachable.
 
@@ -235,4 +238,5 @@ And one rule with no exceptions: never put work inside an `assert`.
 
 - [Nullability](/memory/nullability) for `T?`, `guard`, `??` and `?->`.
 - [Control flow](/language/control-flow) for `guard` and how `die` satisfies it.
+- [Crash reports](/stdlib/crash) for replacing the report a stop prints.
 - [The echoc CLI](/projects/cli) for `--debug` and `--release`.

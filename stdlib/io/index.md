@@ -60,7 +60,7 @@ The methods:
 | | |
 |---|---|
 | `write(const string&)` | the string's bytes, nothing else |
-| `writeline(const string&)` | the same, then a newline |
+| `writeline(const string&)` | the same, then `NEWLINE` |
 | `write(ptr<const uint8>, usize)` | raw, when you already have a pointer and a length |
 | `flush()` | flush every buffered stdio stream |
 | `fd() : int32` | the descriptor this stream names |
@@ -86,6 +86,14 @@ int32 $width = std::io::stdout->columns();
 ```
 
 A pipe, a file, and a closed fd all answer false / 0. There is no error to recover from: "not a terminal" and "not open" are the same answer for every caller this exists for. What to *do* with a 0 (wrap to 80, do not wrap at all) stays in the caller.
+
+## NEWLINE
+
+`writeline` does not hardcode `\n`. It writes `std::io::NEWLINE`, which is `\n` on Unix and `\r\n` on Windows.
+
+A Windows console is the reason. `WriteConsoleW` treats a lone LF as "down one row, same column" — the cursor never comes home. `print("foo\n")` still works because `console_write` inserts a CR in front of a bare LF; that is the compatibility path for a literal already in the string. New code that means "end this line" writes the constant.
+
+`readline` accepts LF, CR, and CRLF, and never hands the terminator back. A Windows console Enter is `\r\n`; a Unix file is `\n`. Both are one line.
 
 ## Reading a line
 

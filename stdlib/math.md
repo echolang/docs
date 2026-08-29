@@ -22,8 +22,8 @@ They are **constants, not variables**, which in Echo is a real distinction rathe
 A constant has no storage at all: its expression is copied into each place the name is used. That's what
 lets one live at file scope, where a variable cannot.
 
-Every one of them is a `float64`, because a float literal is double precision unless it ends in `f`. Where
-you want single precision, use the `_F32` twin:
+The circle constants, `E`, and the logs and roots are `float64`, because a float literal is double
+precision unless it ends in `f`. Where you want single precision, use the `_F32` twin:
 
 ```echo
 echo std::math::cos(std::math::PI);         // -1.000000
@@ -32,6 +32,19 @@ echo std::math::cos(std::math::PI_F32);     // -1.000000, but through the float3
 
 See [Constants](/language/constants) for what a `$`-less declaration actually does, including the
 consequence that a constant whose expression calls a function calls it once per use site.
+
+The integer extrema are the other group. Reach for them when a conversion would wrap, not when you
+want to write `9223372036854775807` from memory:
+
+```echo
+echo std::math::MAX_INT64;       // 9223372036854775807
+echo std::math::MIN_INT64;       // -9223372036854775808
+echo std::math::MAX_UINT64;      // 18446744073709551615
+```
+
+`MIN_INT64` is `-MAX_INT64 - 1`, so the magnitude never has to be a literal `int64` cannot hold.
+`isize` / `usize` twins sit beside them; today they match `int64` / `uint64` because the pointer
+width is 8.
 
 ## Every function comes in two, and the argument picks
 
@@ -187,6 +200,9 @@ and `uint64`. `abs` adds a generic form that covers the integer types.
 | `LN_2` | 0.6931471805599453 | `LN_2_F32` |
 | `LN_10` | 2.302585092994046 | `LN_10_F32` |
 | `SQRT_2` | 1.4142135623730951 | `SQRT_2_F32` |
+| `MAX_INT8` .. `MAX_INT64` | width maximum | `MIN_INT8` .. `MIN_INT64` |
+| `MAX_UINT8` .. `MAX_UINT64` | width maximum | |
+| `MAX_ISIZE` / `MAX_USIZE` | pointer-width maximum | `MIN_ISIZE` |
 
 ## Next
 

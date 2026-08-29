@@ -11,13 +11,6 @@ individual compiler bugs. It is the set of holes big enough to change what you w
 
 ## Language features that do not exist
 
-**Named arguments.** Arguments are positional, full stop. `describe(value: 1)` does not parse. Some older
-writing describes this feature as if it exists. It does not.
-
-**Default parameter values.** `function f(int32 $a, int32 $b = 2)` parses and then discards the default. The
-signature stays `f(int32, int32)` and calling `f(1)` is a "no matching overload" error. Do not use it. It
-looking like it works is worse than it not parsing, and that is a bug in its own right.
-
 **Variadic functions.** There is no `...`, and there is deliberately not going to be one: overload
 resolution matches arity exactly, and that is what lets a call with one surviving candidate resolve without
 consulting types at all.
@@ -94,6 +87,12 @@ A crash is at least loud. These are the ones I know about:
 - A typo'd namespaced generic call in a constructor argument.
 - `foreach ($arr->iterate() as $x)`, passing an explicit cursor.
 - `void $x;` hangs the compiler. Nothing refuses a `void` variable, and laying one out never finishes.
+- A nullable used directly as a condition, `if ($x)` where `$x` is a `T?` or a `ptr<T>`. Use `guard`, or
+  compare against something. It should be a diagnostic and it is a failed IR verification instead.
+- `==` between two nullable [C function pointers](/projects/c-interop), which is what you reach for on the
+  value `crash::set_hook` hands back. `guard` it instead. See [Crash reports](/stdlib/crash).
+- Calling through a held C function pointer whose parameter is a struct borrow, `const T&`. The struct is
+  passed by value and IR verification fails. A primitive parameter is fine.
 
 ## Correct code that is rejected
 
@@ -159,7 +158,8 @@ is another allocation. Fine for a sentence, wrong for a loop, and nothing warns 
 `string::append` into one buffer is the tool until there is a proper builder.
 
 **No path type, and no directory listing.** [Files](/stdlib/io/files) opens, reads and writes files. Paths
-are `string`s. There is no `mkdir`, no `stat`, and nothing that lists a directory.
+are `string`s. `std::env::DS` is the separator; `std::env::file_url` turns a native path into a `file://`
+URL. There is no `mkdir`, no `stat`, and nothing that lists a directory.
 
 **`std::io::readline()` on stdin is still unbuffered.** One `read` per byte, so it cannot steal input from
 anything else on fd 0. Wrap stdin in a [`reader`](/stdlib/io/buffering) when you want the window, stdout in a
@@ -172,15 +172,16 @@ anything else on fd 0. Wrap stdin in a [`reader`](/stdlib/io/buffering) when you
 
 ## Tooling
 
-**No language server.** No autocomplete, no inline diagnostics, no go-to-definition. `echoc build
---diagnostics=json` emits JSON Lines on stderr and is stable, so the hook for building one exists. Nothing
-consumes it yet.
+**No completion, and hover in a generic body is the template's types.** `echoc lsp` speaks LSP over stdio:
+diagnostics, hover, go-to-definition, document symbols, find-references, workspace symbols and signature
+help. Completion is out of v1. Instantiated generic bodies are not indexed, so a hover inside `id<T>`
+shows `T` rather than the binding a particular call used. `test` blocks are dropped before they are
+parsed, the same as every command that is not `echoc test`.
 
-**No language support beyond highlighting.** There is an official VS Code extension in
-[echolang-vscode](https://github.com/echolang/echolang-vscode), and its grammar is derived from the
-compiler's own token list, so `mv`, `guard`, `:$`, the attributes and the `#[if:]` directives all colour as
-themselves. That is where it stops. No completion, no diagnostics, no go-to-definition, and nothing for any
-other editor.
+**The VS Code extension is the first client.** [echolang-vscode](https://github.com/echolang/echolang-vscode)
+still owns the TextMate grammar, and now starts `echoc lsp` when it can find the binary. Other editors
+that speak LSP over stdio can point at the same command. There is no completion, and nothing packaged for
+an editor that is not an LSP client.
 
 **No registry yet, and two versions of one package cannot coexist.** `#[requires:]` resolves a name
 against `vendor/`. epm is what fetches. There is no published index in v1, so every requirement
@@ -188,7 +189,7 @@ still writes `source: git "..."`. The tag is the host; a registry is another tag
 Module names are unique in a build, so two versions of `libjson` in one program is an error rather
 than a feature. [Packages](/projects/packages) is the chapter.
 
-**No formatter and no `echoc new`.** The CLI is four subcommands: `run`, `build`, `test`, `clean`.
+**No formatter and no `echoc new`.** The CLI is five subcommands: `run`, `build`, `test`, `clean`, `lsp`.
 
 **The test runner has three gaps.** There is no timeout, so a test that hangs hangs the
 run. There is no standalone test binary, so running a suite needs `echoc` rather than an artifact you can

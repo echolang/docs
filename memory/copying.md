@@ -185,6 +185,10 @@ The same declaration is reached whether you write `$backup = $primary` or spell 
 `GateLog($primary)`. A type gets exactly one copy constructor, so declaring both `GateLog&` and
 `const GateLog&` is an error rather than an overload set.
 
+Field defaults do not run on this path. A copy constructor fills from `$other`, and running the defaults
+first would fire them on every copy. [Structs](/language/structs#field-defaults-still-run-in-a-handwritten-body)
+is the catch.
+
 ## Prefer const on the source
 
 Write `const GateLog&` unless you genuinely need to write to the source. A mutable borrow reserves the right
