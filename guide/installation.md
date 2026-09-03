@@ -1,3 +1,7 @@
+---
+description: 'Install the Echo compiler. macOS Apple Silicon and Linux x86_64 have prebuilt binaries. One command, one binary, no runtime afterwards.'
+---
+
 # Installation
 
 A released Echo is two binaries: `echoc` is the compiler, `epm` is the package manager. There is no runtime

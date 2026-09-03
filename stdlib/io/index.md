@@ -19,8 +19,9 @@ Everything here takes a `string`, and [interpolation](/collections/strings#inter
 becomes one. There is no `printf`-shaped function and there is deliberately not going to be one. A format
 string that is checked when the program runs is a class of bug I would rather the language simply not have.
 
-Files are [their own page](/stdlib/io/files). A buffered `reader` or `writer` is
-[another](/stdlib/io/buffering). This one is printing, streams, and the line you read from stdin.
+Files are [their own page](/stdlib/io/files). Directories are
+[another](/stdlib/io/directories). A buffered `reader` or `writer` is
+[a third](/stdlib/io/buffering). This one is printing, streams, and the line you read from stdin.
 
 ## print, println, and their stderr twins
 
@@ -166,7 +167,8 @@ you can pass around.
 
 ## Next
 
-- [Files](/stdlib/io/files) for opening a path, `readfile` / `writefile`, and `std::io::file`.
+- [Files](/stdlib/io/files) for opening a path, `readfile` / `writefile`, and `foreach` over lines.
+- [Directories](/stdlib/io/directories) for `opendir`, `mkdir`, `rmdir`, and listing children.
 - [Readers and writers](/stdlib/io/buffering) for a window over a stream you do not own.
 - [String functions](/stdlib/str) for `str::from`, `split`, `join`, `trim` and the number parsers.
 - [Environment](/stdlib/env) for arguments, the environment and `exit`.

@@ -13,9 +13,9 @@ pageClass: eco-landing
 sidebar: false
 footer: false
 
-title: Echo
-titleTemplate: 'Echo: PHP syntax, native speed'
-description: A statically typed, natively compiled language with PHP-flavoured syntax. Ownership without a garbage collector, LLVM all the way down to a real binary.
+title: Echo Programming Language
+titleTemplate: false
+description: A language for people who want speed without the ceremony.
 ---
 
 <EchoLanding />

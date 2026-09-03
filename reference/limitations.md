@@ -1,3 +1,7 @@
+---
+description: 'The honest list. Holes in the type system, a tiny stdlib, bugs. Echo is a hobby.'
+---
+
 # What is missing
 
 Echo is a personal project and it is far from production ready. This page is the honest list of what does not
@@ -81,7 +85,6 @@ through a non-nullable type.
 
 A crash is at least loud. These are the ones I know about:
 
-- `echo nothing();` where the function returns `void` segfaults.
 - `return;` at file scope, including from inside a `guard ... else`.
 - `$r = &f();`, taking the address of a call result.
 - A typo'd namespaced generic call in a constructor argument.
@@ -91,33 +94,8 @@ A crash is at least loud. These are the ones I know about:
   compare against something. It should be a diagnostic and it is a failed IR verification instead.
 - `==` between two nullable [C function pointers](/projects/c-interop), which is what you reach for on the
   value `crash::set_hook` hands back. `guard` it instead. See [Crash reports](/stdlib/crash).
-- Calling through a held C function pointer whose parameter is a struct borrow, `const T&`. The struct is
-  passed by value and IR verification fails. A primitive parameter is fine.
 
 ## Correct code that is rejected
-
-**A method call on a `&` or `const &` loop binding.** This is the one most likely to catch you, because a
-read-only borrow loop is the obvious thing to write:
-
-```echo
-struct Item
-{
-    int32 $id;
-
-    const function trace() : void
-    {
-        echo $this->id;
-    }
-}
-
-array<Item> $items = [Item(1), Item(2)];
-
-foreach ($items as const &$item) {
-    $item->trace();     // error: cannot implicitly convert 'const Item&&' to 'const Item&'
-}
-```
-
-Binding by value works, and direct field access on the borrow works. Only the method call fails.
 
 **`mem::size` and `mem::align` in a `const if`.** Layout queries cannot decide a compile-time branch, which is
 what blocks small-buffer optimisation.
@@ -157,9 +135,11 @@ arguments, and no runtime format string, since a spec is written inside a litera
 is another allocation. Fine for a sentence, wrong for a loop, and nothing warns you which one you wrote.
 `string::append` into one buffer is the tool until there is a proper builder.
 
-**No path type, and no directory listing.** [Files](/stdlib/io/files) opens, reads and writes files. Paths
-are `string`s. `std::env::DS` is the separator; `std::env::file_url` turns a native path into a `file://`
-URL. There is no `mkdir`, no `stat`, and nothing that lists a directory.
+**No path type, no recursive walk, no `mkdir_p`.** [Files](/stdlib/io/files) opens, reads and writes
+files. [Directories](/stdlib/io/directories) lists one directory, and `mkdir` / `rmdir` make and
+remove one. Paths are `string`s. `std::env::DS` is the separator; `std::env::join` puts two
+components together with it; `std::env::file_url` turns a native path into a `file://` URL. There is
+no `stat`, no `mkdir_p`, and nothing that walks a tree.
 
 **`std::io::readline()` on stdin is still unbuffered.** One `read` per byte, so it cannot steal input from
 anything else on fd 0. Wrap stdin in a [`reader`](/stdlib/io/buffering) when you want the window, stdout in a

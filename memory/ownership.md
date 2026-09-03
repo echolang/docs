@@ -1,3 +1,7 @@
+---
+description: 'Every value has one owner. Moves are explicit. No garbage collector.'
+---
+
 # Ownership and moving
 
 Every value has exactly one owner, and **when the owner goes out of scope the value is destroyed.** Not

@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitepress'
+import { defineConfig, type HeadConfig } from 'vitepress'
 
 import { echoTheme } from './theme/shiki-echo'
 import echoGrammar from './echo.tmLanguage.json'
@@ -91,6 +91,7 @@ const sidebar = [
         items: [
           { text: 'Printing', link: '/stdlib/io/' },
           { text: 'Files', link: '/stdlib/io/files' },
+          { text: 'Directories', link: '/stdlib/io/directories' },
           { text: 'Readers and writers', link: '/stdlib/io/buffering' },
         ],
       },
@@ -114,7 +115,7 @@ const sidebar = [
 
 export default defineConfig({
   title: 'Echo',
-  description: 'A statically typed, natively compiled language with PHP-flavoured syntax.',
+  description: 'A statically typed, natively compiled programming language.',
   lang: 'en-US',
 
   // `docs/` becomes its own repository later. If it ends up on a GitHub project page rather than a root
@@ -134,6 +135,34 @@ export default defineConfig({
   head: [
     ['link', { rel: 'icon', type: 'image/svg+xml', href: '/echo-logo.svg' }],
   ],
+
+  // Per-page Open Graph / Twitter tags. No og:image yet: the logo is SVG and Slack/X want a PNG.
+  // Homepage OG title is the short brand line, not the document title with the template suffix.
+  transformHead({ pageData }) {
+    const isHome = pageData.relativePath === 'index.md'
+    const title = isHome
+      ? (pageData.title || 'Echo Programming Language')
+      : (pageData.title ? `${pageData.title} | Echo` : 'Echo')
+    const description = pageData.description ?? ''
+    let path = pageData.relativePath === 'index.md'
+      ? '/'
+      : '/' + pageData.relativePath.replace(/\.md$/, '')
+    if (path.endsWith('/index')) {
+      path = path.slice(0, -'index'.length)
+    }
+    const url = 'https://echoc.dev' + path
+    const tags: HeadConfig[] = [
+      ['meta', { property: 'og:type', content: 'website' }],
+      ['meta', { property: 'og:site_name', content: 'Echo' }],
+      ['meta', { property: 'og:title', content: title }],
+      ['meta', { property: 'og:description', content: description }],
+      ['meta', { property: 'og:url', content: url }],
+      ['meta', { name: 'twitter:card', content: 'summary' }],
+      ['meta', { name: 'twitter:title', content: title }],
+      ['meta', { name: 'twitter:description', content: description }],
+    ]
+    return tags
+  },
 
   markdown: {
     // Echo's own TextMate grammar, so `usize`, attributes and `?->` colour as themselves rather than as

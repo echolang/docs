@@ -182,6 +182,33 @@ echo $contact->crew();                  // 200
 One variable, two different concrete types over its lifetime, dispatch decided at runtime. It costs a
 vtable pointer and an indirect call.
 
+A generic class is still a class. Once you have written `View<int32>`, storing it as an interface it
+conforms to is the same widening:
+
+```echo
+interface Store
+{
+    function contains(uint32 $e) : bool;
+}
+
+class View<T> : Store
+{
+    uint32 $id;
+
+    function contains(uint32 $e) : bool
+    {
+        return $e == $this->id;
+    }
+}
+
+View<int32> $ints = View<int32>(1);
+Store $held = $ints;
+echo $held->contains(1);        // 1
+```
+
+Two instantiations in one `array<Store>` dispatch independently, which is the thing a constrained
+generic cannot say: `function f<T: Store>(T& $s)` is one `T` per instantiation.
+
 ### Why a struct cannot do this
 
 Try it and the compiler explains itself:

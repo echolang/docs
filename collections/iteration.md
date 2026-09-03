@@ -1,8 +1,10 @@
 # Iteration
 
-`foreach` walks arrays, maps, strings, slices and ranges, and it does that without a single line in the
-compiler that knows what any of them are. **It knows three interfaces and nothing else**, so a type of
-yours loops exactly as well as the standard library's.
+`foreach` walks arrays, maps, strings, slices, ranges, files, and directories, and it does that without
+a single line in the compiler that knows what any of them are. **It knows three interfaces and nothing
+else**, so a type of yours loops exactly as well as the standard library's. A
+[`std::io::file`](/stdlib/io/files) yields lines. A [`std::io::dir`](/stdlib/io/directories) yields
+`dirent`s.
 
 ```echo
 array<int32> $numbers = [10, 20, 30];
@@ -67,13 +69,24 @@ foreach ($numbers as $y) {
 }
 ```
 
-`const &$x` is the same borrow, read-only and said out loud:
+`const &$x` is the same borrow, read-only and said out loud. A `const` method is fair game; a write
+through `$x` is not:
 
 ```echo
-array<int32> $numbers = [7, 8];
+struct Item
+{
+    int32 $n;
 
-foreach ($numbers as const &$x) {
-    echo $x;            // 7, 8
+    const function trace() : int32
+    {
+        return $this->n;
+    }
+}
+
+array<Item> $items = [Item(7), Item(8)];
+
+foreach ($items as const &$item) {
+    echo $item->trace();        // 7, 8
 }
 ```
 
@@ -104,55 +117,6 @@ The elision is only sound because of a rule you are expected to keep: **do not m
 you are iterating it.** Nothing checks it. Growing a container during a loop re-seats its storage, and the
 cursor is still pointing at the old one, so it is the [slice](/collections/slices) lifetime rule wearing a
 different hat. Collect what you want to change and apply it after the loop.
-
-## Method calls on a borrow binding do not work
-
-This one will catch you, because a read-only borrow loop is the obvious thing to write:
-
-```echo
-struct Item
-{
-    int32 $n;
-
-    const function trace() : void { echo $this->n; }
-}
-
-array<Item> $items = [];
-$items->slot()->n = 5;
-
-foreach ($items as const &$item) {
-    $item->trace();
-}
-// error: cannot implicitly convert 'const Item&&' to 'const Item&'
-```
-
-The receiver ends up as a borrow of a borrow, and nothing unwraps it. Note the method is already
-`const function`, so this is not a constness refusal: it fails the same way for `&$item`.
-
-Two things do work in the meantime: field access on the borrow, and binding by value, which for a
-read-only loop is elided to that same borrow anyway.
-
-```echo
-struct Item
-{
-    int32 $n;
-
-    const function trace() : void { echo $this->n; }
-}
-
-array<Item> $items = [];
-$items->slot()->n = 5;
-
-foreach ($items as const &$item) {
-    echo $item->n;      // 5
-}
-
-foreach ($items as $item) {
-    $item->trace();     // 5
-}
-```
-
-This is a bug, not a design, and it is on [the list](/reference/limitations).
 
 ## A const collection is a different contract
 

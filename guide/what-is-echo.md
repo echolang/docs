@@ -1,3 +1,7 @@
+---
+description: 'Echo is a statically typed, natively compiled programming language. LLVM down to a real binary.'
+---
+
 # What is Echo?
 
 Echo is a statically typed, natively compiled, general-purpose programming language with PHP-flavoured

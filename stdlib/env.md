@@ -180,24 +180,20 @@ on unix and `TEMP` / `TMP` on Windows, and is *not* nullable, because unlike `HO
 answer when the variable is missing.
 
 The separator between that directory and the rest of a path is `DS`. `/` on unix, a backslash on
-Windows. Same shape as `std::io::NEWLINE`: a string constant, one per OS, no `$`.
+Windows. Same shape as `std::io::NEWLINE`: a string constant, one per OS, no `$`. `join` puts a
+directory and a name together with it, and does not add a second separator if the directory already
+ends in one. On Windows a trailing `/` counts, the same as `\`.
 
 ```echo
 string $sep = std::env::DS;
 echo $sep->size();          // 1
+
+string $path = std::env::join(std::env::tmp(), 'gate.txt');
+echo $path->empty();        // 0
 ```
 
 A hole in an interpolated string has to start with `$`, so `{std::env::DS}` is those letters, not
-the separator. Bind it, or `append`:
-
-```echo
-string::view $dir = std::env::tmp();
-string $path = $dir;
-$path->append(std::env::DS);
-$path->append('gate.txt');
-
-echo $path->empty();        // 0
-```
+the separator. Bind it, or `join`.
 
 `file_url` is the other spelling of a path, the one a `file://` consumer wants. Backslashes become
 slashes, a space becomes `%20`, a drive letter keeps its colon:
@@ -255,6 +251,7 @@ and `die`. It does not return a [`result<T, E>`](/stdlib/result).
 | `home() : string::view?` | `HOME` / `USERPROFILE`, borrowed. null when unset |
 | `tmp() : string::view` | `TMPDIR` or `/tmp`; `TEMP` / `TMP` on Windows |
 | `DS` | the directory separator. `/` on unix, `\` on Windows |
+| `join(string::view $dir, string::view $name) : string` | `$dir`, then `DS` if needed, then `$name` |
 | `file_url(const string&) : string` | `$path` as a `file://` URL |
 
 ## Next

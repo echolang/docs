@@ -144,7 +144,8 @@ echo $c->bump(5);       // 7
 | `arr::` | `merge` and `room` | [Arrays](/stdlib/arr) |
 | `crash::` | `set_hook`, `take_hook`, `default_hook`, `info` | [Crash reports](/stdlib/crash) |
 | `std::io::` | writing text out, streams | [Input and Output](/stdlib/io/) |
-| `std::io::` | `std::io::file`, `open` / `create` / `readfile` / `writefile` | [Files](/stdlib/io/files) |
+| `std::io::` | `std::io::file`, `open` / `create` / `readfile` / `writefile`, `foreach` over lines | [Files](/stdlib/io/files) |
+| `std::io::` | `opendir`, `dir`, `dirent`, `mkdir`, `rmdir` | [Directories](/stdlib/io/directories) |
 | `std::io::` | a buffered `reader` and `writer` | [Readers and writers](/stdlib/io/buffering) |
 | `std::math::` | constants and the numeric functions | [Math](/stdlib/math) |
 | `std::env::` | arguments, environment, directories, `exit` | [Environment](/stdlib/env) |

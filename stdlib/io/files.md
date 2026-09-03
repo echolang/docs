@@ -20,8 +20,8 @@ Leave the `else` off when you want the program to stop if the call fails. Write 
 handle the reason: `else ($e) { ... }` still has to leave. `die($e->message())` is legal when you
 want the crash to carry the IO error in your own words.
 
-There is no `mkdir`, no `stat`, and nothing that lists a directory.
-[What is missing](/reference/limitations) has the rest of that list.
+Listing a directory, `mkdir`, and `rmdir` live on [Directories](/stdlib/io/directories). There is
+still no path type.
 
 ## A missing file is `missing()`, not a die
 
@@ -39,29 +39,57 @@ echo $text;
 
 ## A path is a string
 
-`'gate.txt'` is fine when the current directory is the right place. Anywhere else, build one with
-`std::env::DS` between the directory and the name. A hardcoded `/` is the unix spelling, and Windows
+`'gate.txt'` is fine when the current directory is the right place. Anywhere else, `std::env::join`
+puts `DS` between the directory and the name. A hardcoded `/` is the unix spelling, and Windows
 `tmp()` is a backslash path:
 
 ```echo
-string::view $dir = std::env::tmp();
-string $path = $dir;
-$path->append(std::env::DS);
-$path->append('gate.txt');
-
+string $path = std::env::join(std::env::tmp(), 'gate.txt');
 echo $path->empty();        // 0
 ```
 
-`cwd()`, `tmp()`, `DS`, and `file_url` are on [Environment](/stdlib/env). There is still no path type
+`cwd()`, `tmp()`, `DS`, `join`, and `file_url` are on [Environment](/stdlib/env). There is still no path type
 behind that string.
 
 ## A line at a time
 
 `readfile` is the whole file in one string. When the file is large, or you want one line, open a
-`std::io::file` and loop. `writefile` first, so the contents are flushed before anyone else opens the path:
+`std::io::file` and `foreach` it. Newline stripped. `writefile` first, so the contents are flushed
+before anyone else opens the path:
 
 ```echo
 usize $n = guard std::io::writefile('gate.txt', "Abydos\nChulak\nDakara") else ($e) {
+    std::io::eprintln($e->message());
+    return 1;
+}
+
+std::io::file $in = guard std::io::open('gate.txt', .read) else ($e) {
+    std::io::eprintln($e->message());
+    return 1;
+}
+
+foreach ($in as $i => $line) {
+    echo $i;        // 0, then 1, then 2
+    echo $line;     // Abydos, then Chulak, then Dakara
+}
+
+echo $in->error() == null;      // 1
+
+bool $ok = guard std::io::remove('gate.txt') else ($e) {
+    std::io::eprintln($e->message());
+    return 1;
+}
+```
+
+End of file stops the loop. An empty line is an empty string, and it is still a turn. A read that
+fails stops the loop too and leaves the reason on `$in->error()`. Check it if you need to tell a
+short file from a dead disk.
+
+`readline()` is still there when you want the `result` in your own hand. Two guards, two different
+absences: the `result` failing is an IO error, `null` is end of file.
+
+```echo
+usize $n = guard std::io::writefile('gate.txt', "Abydos\nChulak") else ($e) {
     std::io::eprintln($e->message());
     return 1;
 }
@@ -90,13 +118,9 @@ bool $ok = guard std::io::remove('gate.txt') else ($e) {
 }
 ```
 
-Two guards, two different absences. The `result` failing is an IO error. `null` is end of file. An empty
-line is an empty string, not a `null`.
-
 `echo $next` will not compile. A `string?` does not become a `string` after you compared it to `null`,
-so the second `guard` is how you get a value you can print.
-
-There is no `foreach` over a file. The loop is yours.
+so the second `guard` is how you get a value you can print. `foreach` is the version that does not
+make you write that.
 
 ## create truncates, append extends
 
@@ -270,16 +294,19 @@ in a [`reader` or a `writer`](/stdlib/io/buffering). A `std::io::file` already h
 | `std::io::file::read` | into a pointer and a count. `0` is EOF |
 | `std::io::file::readall` | the rest of the file, as a `string` |
 | `std::io::file::readline` | `result<string?, ioerror>`. `ok(null)` is EOF |
+| `foreach` over a `file` | lines, newline stripped. key is the 0-based line number |
+| `std::io::file::error` | `ioerror?`. null unless a read during `foreach` failed |
 | `std::io::file::seek` / `position` / `size` | `result<int64, ioerror>` |
 | `std::io::file::flush` | drain the write window |
 | `std::io::file::close` | flush, then close. void. safe twice |
 | `std::io::file::fd` | the raw descriptor |
-| `ioerror::message` / `missing` / `denied` / `exists` | strerror, and the three questions |
+| `ioerror::message` / `missing` / `denied` / `exists` / `not_a_directory` | strerror, and the four questions |
 
 ## Next
 
+- [Directories](/stdlib/io/directories) for `opendir`, `mkdir`, `rmdir`, and `foreach` over a directory.
 - [Input and Output](/stdlib/io/) for `print`, streams, and the unbuffered stdin line.
 - [Readers and writers](/stdlib/io/buffering) for a window over a stream you do not own.
 - [Results](/stdlib/result) for `guard ... else ($e)` and what a `result` is.
-- [Environment](/stdlib/env) for `tmp()`, `cwd()` and `pid()`.
-- [What is missing](/reference/limitations) for paths, `mkdir`, and directory listing.
+- [Environment](/stdlib/env) for `tmp()`, `cwd()`, `join`, and `pid()`.
+- [What is missing](/reference/limitations) for the path type, recursive walk, and `mkdir_p`.

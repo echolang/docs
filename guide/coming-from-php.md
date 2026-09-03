@@ -1,3 +1,7 @@
+---
+description: 'Same $ and braces. Types, ownership, and a compiler instead of an interpreter.'
+---
+
 # Coming from PHP
 
 Echo's syntax is borrowed from PHP on purpose. Everything underneath it is different on purpose too.
