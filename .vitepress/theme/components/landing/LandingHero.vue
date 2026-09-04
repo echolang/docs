@@ -1,290 +1,250 @@
 <script setup lang="ts">
-// The hero. Two halves: the pitch, and a `hello.eco` window with the command that ran it under the snippet.
-// The backdrop is the site logo drawn very large with each arc pulsing outward in turn — the mark's own
-// ripple, animated. It is decorative, so it is aria-hidden and it stops under prefers-reduced-motion.
-import CodeWindow from './CodeWindow.vue'
+// The hero: one full-viewport statement over a shockwave rolling across a field of pins.
+//
+// The scene is the site's mark taken literally — an emitter firing rings outward — and it is decorative, so
+// it is aria-hidden, it degrades to the radial wash underneath if WebGL is missing, and it holds still under
+// prefers-reduced-motion. Everything that draws it is in shockwave.ts, loaded on mount so three.js is
+// neither in the SSR bundle nor in the initial chunk.
+//
+// The design drew its own header. The site keeps VitePress's instead, which is the same call EchoLanding
+// makes: the real one carries search, the theme toggle and the GitHub link.
+import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { mountShockwave, type ShockwaveHandle } from './shockwave'
+
+const stage = ref<HTMLElement | null>(null)
+let scene: ShockwaveHandle | null = null
+
+onMounted(async () => {
+  if (!stage.value) return
+  try {
+    scene = await mountShockwave(stage.value, { accent: '#008efc' })
+  } catch (e) {
+    // A backdrop is not worth a blank page: if three.js will not load or the GPU will not give us a
+    // context, the wash behind the canvas is the fallback and it is already there.
+    console.error('[hero] shockwave failed to mount', e)
+  }
+})
+
+onBeforeUnmount(() => {
+  scene?.destroy()
+  scene = null
+})
 </script>
 
 <template>
   <header class="hero">
-    <div class="ripple" aria-hidden="true">
-      <svg viewBox="0 0 100 100" fill="none">
-        <circle cx="35" cy="50" r="3" fill="var(--eco-brand-500)" opacity="0.55" />
-        <path class="wave" d="M 44 34.4 A 18 18 0 0 1 44 65.6" />
-        <path class="wave" style="animation-delay: 1.25s" d="M 50 24 A 30 30 0 0 1 50 76" />
-        <path class="wave" style="animation-delay: 2.5s" d="M 56 13.6 A 42 42 0 0 1 56 86.4" />
-        <path class="wave" style="animation-delay: 3.75s" d="M 62 3 A 54 54 0 0 1 62 97" />
-      </svg>
-    </div>
+    <div ref="stage" class="stage" aria-hidden="true" @click="scene?.fire()" />
+    <div class="vignette" aria-hidden="true" />
 
     <div class="inner">
-      <div class="pitch">
-        <h1>Echo goes <span class="brr">brrrrr</span>.</h1>
+      <h1>Echo goes brrrrr.</h1>
 
-        <p class="lede">
-          Echo is a statically typed, natively compiled language with PHP-flavoured syntax. Variables start
-          with <code>$</code>, blocks use braces, <code>echo</code> prints things. Underneath it is much
-          closer to Swift, Rust or C++.
-        </p>
+      <p class="lede">PHP-flavoured syntax, statically typed, compiled to one native binary.</p>
 
-        <div class="actions">
-          <a class="btn btn-brand" href="/guide/installation">Install it</a>
-          <a class="btn btn-ghost" href="/guide/tour">Read the tour</a>
-        </div>
-      </div>
-
-      <div class="window-wrap">
-        <div class="glow glow-brand" aria-hidden="true" />
-        <div class="glow glow-indigo" aria-hidden="true" />
-
-        <CodeWindow title="hello.eco" tone="brand" dots>
-          <pre class="eco-code"><span class="k">function</span> <span class="f">double</span><span class="p">(</span><span class="k">int</span> $n<span class="p">)</span> : <span class="t">result</span><span class="p">&lt;</span><span class="k">int</span><span class="p">,</span> <span class="k">string</span><span class="p">&gt;</span>
-<span class="p">{</span>
-    <span class="k">if</span> <span class="p">(</span>$n <span class="p">&lt;</span> <span class="s">0</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="p">.</span><span class="f">error</span><span class="p">(</span><span class="s">'negative'</span><span class="p">);</span>
-    <span class="p">}</span>
-
-    <span class="k">return</span> <span class="p">.</span><span class="f">ok</span><span class="p">(</span>$n * <span class="s">2</span><span class="p">);</span>
-<span class="p">}</span>
-
-<span class="k">int</span> $n = <span class="k">guard</span> <span class="f">double</span><span class="p">(</span><span class="s">21</span><span class="p">)</span> <span class="k">else</span> <span class="p">(</span>$err<span class="p">)</span> <span class="p">{</span>
-    <span class="f">die</span><span class="p">(</span>$err<span class="p">);</span>
-<span class="p">}</span>
-
-<span class="k">echo</span> <span class="s">"got {$n}"</span><span class="p">;</span></pre>
-
-          <template #footer>
-            <span class="prompt">$</span>
-            <span>echoc run hello.eco</span>
-            <span class="result">got 42</span>
-            <span class="caret" aria-hidden="true" />
-          </template>
-        </CodeWindow>
+      <div class="actions">
+        <a class="btn btn-brand" href="/guide/installation">Install it</a>
+        <a class="btn btn-ghost" href="/guide/tour">Read the tour</a>
       </div>
     </div>
+
+    <p class="strip" aria-hidden="true">
+      <span class="hint">click anywhere to echo</span>
+      <span class="tick" />
+      <span>macOS · Linux · Windows</span>
+    </p>
   </header>
 </template>
 
 <style scoped>
+/* Pulled up under the nav bar, which is transparent at the top of this page: the scene runs to the very top
+   of the window the way the design drew it, rather than starting below a band of flat ground. The content
+   inside pays the nav height back as padding. */
 .hero {
   position: relative;
+  margin-top: calc(-1 * var(--vp-nav-height));
+  height: 100svh;
+  min-height: 40rem;
+  max-height: 60rem;
   overflow: hidden;
-  padding: 5.75rem 1.875rem 5rem;
 }
 
-/* The mark, drawn at 900px and hung off the top right corner. */
-.ripple {
+/* The canvas mounts in here. The gradient is what shows before three.js arrives, and what stays if it never
+   does — so the section is never a black rectangle. */
+.stage {
   position: absolute;
-  top: -300px;
-  right: -280px;
-  width: 900px;
-  height: 900px;
+  inset: 0;
+  cursor: crosshair;
+  background: radial-gradient(ellipse 50% 40% at 50% 62%, rgb(0 142 252 / 0.1), transparent 70%);
+}
+
+/* Darkens the top and bottom of the scene so the headline and the strip sit on ground rather than on grid.
+   The middle two stops are what the copy sits on: a wave crest passing behind the sub-headline is bright
+   enough to swallow it, and this is the layer that holds it back. */
+.vignette {
+  position: absolute;
+  inset: 0;
   pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgb(6 8 12 / 0.9) 0%,
+    rgb(6 8 12 / 0.55) 22%,
+    rgb(6 8 12 / 0.18) 42%,
+    rgb(6 8 12 / 0) 58%,
+    rgb(6 8 12 / 0.7) 100%
+  );
 }
 
-.ripple svg {
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-}
-
-.wave {
-  stroke: var(--eco-brand-500);
-  stroke-width: 0.6;
-  transform-box: view-box;
-  transform-origin: 35px 50px;
-  animation: eco-wave 5s linear infinite;
-}
-
-@keyframes eco-wave {
-  0% {
-    opacity: 0;
-    transform: scale(0.62);
-  }
-
-  18% {
-    opacity: 0.55;
-  }
-
-  100% {
-    opacity: 0;
-    transform: scale(1.3);
-  }
-}
-
+/* Sits below the fixed nav bar, and does not take the pointer: the click that fires a wave has to reach the
+   canvas from anywhere that is not a button. */
 .inner {
   position: relative;
-  max-width: 1280px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
-  gap: 3.75rem;
+  padding: calc(var(--vp-nav-height) + 9vh) 1.875rem 0;
+  display: flex;
+  flex-direction: column;
   align-items: center;
+  gap: 1.625rem;
+  text-align: center;
+  pointer-events: none;
+  animation: eco-hero-in 900ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@keyframes eco-hero-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 h1 {
   margin: 0;
   font-family: var(--eco-font-display);
   font-feature-settings: 'ss01';
-  font-size: clamp(3.375rem, 7vw, 7rem);
-  line-height: 0.92;
+  font-size: clamp(3.5rem, 8.4vw, 7.75rem);
+  line-height: 0.94;
   letter-spacing: -0.05em;
-  font-weight: 400;
+  font-weight: 500;
   text-wrap: balance;
+  color: #f4f4f7;
 }
 
-.brr {
-  color: var(--eco-brand-500);
-}
-
+/* The one line the scene can actually beat: small, mid-grey, and sitting where the wave crest is brightest.
+   The shadow is invisible over the resting field and is what keeps it readable over a passing wave. */
 .lede {
-  margin: 1.75rem 0 0;
-  max-width: 34ch;
-  font-size: 1.25rem;
+  margin: 0;
+  max-width: 44ch;
+  font-size: 1.125rem;
   line-height: 1.5;
   color: var(--eco-ink-muted);
-}
-
-.lede code {
-  font-family: var(--vp-font-family-mono);
-  font-size: 0.9em;
-  color: var(--eco-ink-bright);
-  background: none;
-  padding: 0;
+  text-wrap: balance;
+  text-shadow: 0 1px 18px rgb(6 8 12 / 0.9);
 }
 
 .actions {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 0.75rem;
-  margin-top: 2.25rem;
+  margin-top: 0.375rem;
+  pointer-events: auto;
 }
 
 .btn {
   display: inline-flex;
   align-items: center;
-  padding: 0.875rem 1.5rem;
-  border-radius: var(--eco-radius);
-  font-size: 0.96875rem;
+  height: 2.75rem;
+  padding: 0 1.375rem;
+  border-radius: 9999px;
+  font-size: 0.9375rem;
+  font-weight: 500;
   text-decoration: none;
-  transition: background-color 0.2s, border-color 0.2s;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s;
 }
 
 .btn-brand {
   background: var(--eco-brand-500);
   color: #fff;
-  font-weight: 600;
+  box-shadow: 0 0 0 1px rgb(0 142 252 / 0.4), 0 8px 30px -8px rgb(0 142 252 / 0.6);
 }
 
 .btn-brand:hover {
-  background: #2ba3ff;
+  background: #2aa0ff;
   color: #fff;
 }
 
 .btn-ghost {
   border: 1px solid var(--eco-ink-line-strong);
   color: var(--eco-ink-bright);
-  font-weight: 500;
+  background: rgb(6 8 12 / 0.4);
+  backdrop-filter: blur(8px);
 }
 
 .btn-ghost:hover {
-  border-color: rgb(255 255 255 / 0.42);
-  color: var(--eco-ink-bright);
+  border-color: rgb(255 255 255 / 0.32);
+  color: #fff;
 }
 
-.window-wrap {
-  position: relative;
-}
-
-/* Two blurred washes behind the window, the same pair the old hero used. */
-.glow {
+.strip {
   position: absolute;
-  border-radius: 9999px;
-  filter: blur(40px);
+  left: 0;
+  right: 0;
+  bottom: 1.75rem;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+  font-family: var(--vp-font-family-mono);
+  font-size: 0.78125rem;
+  letter-spacing: 0.02em;
+  color: var(--eco-ink-faintest);
   pointer-events: none;
 }
 
-.glow-brand {
-  top: -12rem;
-  right: -10rem;
-  width: 30rem;
-  height: 30rem;
-  background: radial-gradient(closest-side, rgb(0 142 252 / 0.4), rgb(0 142 252 / 0));
+.tick {
+  width: 1px;
+  height: 0.75rem;
+  background: var(--eco-ink-line-strong);
 }
 
-.glow-indigo {
-  bottom: -9rem;
-  right: -7rem;
-  width: 30rem;
-  height: 30rem;
-  background: radial-gradient(closest-side, rgb(129 140 248 / 0.32), rgb(129 140 248 / 0));
-}
-
-.window-wrap :deep(.eco-window) {
-  position: relative;
-  box-shadow: 0 50px 100px -50px rgb(0 142 252 / 0.5);
-}
-
-.prompt {
-  color: var(--eco-ink-green);
-}
-
-.result {
-  margin-left: auto;
-  color: var(--eco-ink-bright);
-}
-
-.caret {
-  width: 8px;
-  height: 15px;
-  background: var(--eco-brand-500);
-  animation: eco-blink 1.1s steps(1) infinite;
-}
-
-@keyframes eco-blink {
-  0%,
-  49% {
-    opacity: 1;
-  }
-
-  50%,
-  100% {
-    opacity: 0;
-  }
-}
-
-/* The design is drawn at one desktop width. Below 960 the two halves stack and the mark shrinks with
-   them — at 900px it is wider than the phone it would be sitting on. */
 @media (max-width: 960px) {
   .hero {
-    padding: 3.5rem 1.25rem 3.5rem;
+    min-height: 34rem;
   }
 
   .inner {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 2.75rem;
-  }
-
-  .ripple {
-    top: -180px;
-    right: -220px;
-    width: 520px;
-    height: 520px;
+    padding: calc(var(--vp-nav-height) + 7vh) 1.25rem 0;
+    gap: 1.25rem;
   }
 
   .lede {
-    max-width: 46ch;
+    font-size: 1.0625rem;
+  }
+}
+
+/* Narrow enough that the strip would wrap onto two lines and leave the separator dangling on the first.
+   The invitation is the half that goes: it says "click" on a device that has no pointer anyway. */
+@media (max-width: 34rem) {
+  .hint,
+  .tick {
+    display: none;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .wave,
-  .caret {
+  .inner {
     animation: none;
   }
 
-  .wave {
-    opacity: 0.35;
+  /* The scene holds still, so the invitation to click it would be a lie. */
+  .hint,
+  .tick {
+    display: none;
   }
 }
 </style>
