@@ -33,7 +33,11 @@ them.
 | `float32` | 4 bytes | IEEE 754 single |
 | `float64` | 8 bytes | IEEE 754 double |
 | `bool` | 1 byte | `true` or `false` |
-| `void` | n/a | the absence of a value |
+| `void` | — | not a value; a function return that produces nothing |
+
+An inline array is a type constructor, like `ptr<T>`: `int32[4]` is four `int32`s in a row. It is
+storage. The collection with methods, iteration and a destination-typed literal is
+[`fixed_array<T, N>`](/collections/fixed-arrays).
 
 You can ask for a size yourself, which is occasionally handy and is the same number the table claims:
 
@@ -42,8 +46,14 @@ echo mem::size<int32>();     // 4
 echo mem::size<usize>();     // 8 on a 64-bit machine
 ```
 
-`void` is only ever a return type. There is no `void` variable, and a function that returns nothing still
-has to say `: void` out loud. See [Functions](/language/functions).
+`void` is the return type that means the function produces nothing. A function that returns nothing
+still has to say `: void` out loud. It is not a local, a field, a parameter, or a type argument.
+`ptr<void>` is not C's untyped pointer — that is `ptr<Handle>` over an `extern struct`.
+
+A function that can fail and has nothing to hand back on success returns [`status<E>`](/stdlib/status),
+not `result<bool, E>`.
+
+See [Functions](/language/functions).
 
 ## Three aliases, and only three
 

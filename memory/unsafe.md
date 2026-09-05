@@ -272,7 +272,8 @@ echo $glyphs->count();      // 2
 
 `array<T>`, `map<K, V>` and `string` are built on exactly the machinery on this page, and they have already
 paid for it. If you are reaching for `mem::alloc` because you want a growable buffer of things, you want an
-`array<T>`.
+`array<T>`. To let C write into one, `reserve` (or `arr::room`), `spare()`, `commit()`, the same sequence
+[strings](/collections/strings) already had.
 
 The second answer is a borrow. If a function needs to look at your data, `const T&` gives it that with no
 addresses involved and no promise to sign. Raw storage is for when you are the one deciding where values

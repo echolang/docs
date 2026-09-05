@@ -1,7 +1,8 @@
 # Arrays
 
 **An `array<T>` is a growable, contiguous buffer of exactly one type.** It is not a hash map and it is not
-heterogeneous. The brackets are just how you write one.
+heterogeneous. The brackets are just how you write one. When the length is part of the type instead,
+that is a [`fixed_array<T, N>`](/collections/fixed-arrays).
 
 ```echo
 array<int32> $numbers = [1, 2, 3];
@@ -146,6 +147,12 @@ const function empty() : bool
 function reserve(usize $count) : void
 function fit(usize $count) : void
 function shrink() : void
+
+const function room() : usize
+const function data() : ptr<const T>
+function data() : ptr<T>
+function spare() : ptr<T>
+function commit(usize $n) : void
 
 function push(T $value) : void
 function slot() : T&
@@ -407,6 +414,43 @@ The same goes for a literal inside the brackets, since `[1, 2.5]` is those appen
 Note that the element type comes from the **first** element, so `[2.5, 1]` is an `array<float64>` holding
 `2.5` and `1.0`. That ordering rule is deliberate.
 
+## Letting C write into one
+
+Strings already had this: reserve, `spare()`, `commit()`. Arrays were missing it, which is how you ended
+up allocating a sidecar, copying sample by sample, and freeing by hand. The sequence is the same one,
+counted in elements rather than bytes.
+
+```echo
+array<float32> $frames = arr::room<float32>(4);
+
+ptr<float32> $p = $frames->spare();
+$p:$[0] = 1.0f;
+$p:$[1] = 2.0f;
+$frames->commit(2);
+
+echo $frames->count();     // 2
+echo $frames[0];           // 1.000000
+echo $frames->room();      // 2
+```
+
+`arr::room` is the allocation. `spare()` is the first free slot. `room()` is how many elements that
+pointer may accept without growing. `commit($n)` makes those slots live. Growing the buffer after
+`spare()` invalidates the pointer, the same rule `reserve` has always had.
+
+`data()` is the live prefix, for C that already has a length. Empty is `null`.
+
+This is only honest for a `T` that is bytes. C cannot construct an Echo `string`, and `spare` /
+`commit` on an `array<string>` die rather than invent a constructor. `slot()` is the Echo-side fill
+for that `T`.
+
+A [`fixed_array<T, N>`](/collections/fixed-arrays) is already a C buffer: every slot is live, so
+there is no spare. `$quad->data()` is the first element and `N` is the count.
+
+Pass the pointer and the count yourself. A live [`slice<T>`](/collections/slices) is two public words,
+`$data` and `$len`, if the window is already elements.
+
+[C interop](/projects/c-interop) has the rest of the boundary.
+
 ## One thing that compiles and is wrong
 
 It is real, it is silent, and it is on [the list](/reference/limitations).
@@ -417,6 +461,7 @@ pass it in.
 
 ## Next
 
+- [C interop](/projects/c-interop) for handing `data()` and `spare()` to a C function.
 - [Slices](/collections/slices) for handing out a window onto an array without copying it.
 - [Iteration](/collections/iteration) for `foreach`, and for the copy it does not make you pay for.
 - [`arr::merge` and `arr::room`](/stdlib/arr), which do not belong on the type.

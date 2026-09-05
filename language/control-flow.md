@@ -187,6 +187,29 @@ echo doubled(-1);       // -1
 `$value` is declared into the **enclosing** scope, not into the guard, so the rest of the function uses it
 as an ordinary non-null `int32`. No nesting, no unwrapping.
 
+When there is nothing to name, `guard` is a statement of its own:
+
+```echo
+function maybe(int32 $n) : int32?
+{
+    if ($n < 0) {
+        return null;
+    }
+    return $n;
+}
+
+function run(int32 $n) : void
+{
+    guard maybe($n) else { return; }
+    echo $n;
+}
+
+run(7);     // 7
+run(-1);    // nothing
+```
+
+Same rules. No dummy.
+
 Two rules keep that promise honest.
 
 **The subject has to be nullable.** Guarding something that is always present is pointless, and the compiler

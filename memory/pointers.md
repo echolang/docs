@@ -62,7 +62,11 @@ echo $pp;
 Reading `$pp` gave back a `ptr<int32>`, which is an address, and `echo` prints values. This is a good thing
 to have tripped over once: the rule is one level, always, whatever the depth.
 
-`->` is the exception. It reaches through as many levels as it has to:
+There is one case that peels nothing. A pointer to an
+[incomplete type](/projects/c-interop#incomplete-types-a-name-no-layout) has no value behind it, so a read
+of `ptr<Handle> $h` is the address itself. `$h == null` compares that address, no `:$` required.
+
+`->` is the other exception. It reaches through as many levels as it has to:
 
 ```echo
 struct GateAddress
@@ -183,6 +187,9 @@ echo $p[0];
 `$p:$++` and `$p:$--` step by one element, the same way `$p:$ + 1` does. And an address only ever compares
 against another address: `$p == null` compares the *pointee*, which is a mistake with its own diagnostic. See
 [Nullability](/memory/nullability).
+
+`$h:$ + 1` on a pointer to an [incomplete type](/projects/c-interop#incomplete-types-a-name-no-layout) is
+refused: the stride is not known.
 
 Pointer arithmetic is useful in the right hands and very dangerous in the wrong ones. The compiler will not
 save you from walking off the end of an allocation.

@@ -241,6 +241,43 @@ Wormhole $open = guard dial();
 echo $open->id;     // 7
 ```
 
+### Success with nothing to bind
+
+Sometimes the value is not the point. The call either worked or it did not, and there is nothing you
+wanted to name:
+
+```echo
+class Wormhole
+{
+    int32 $id;
+}
+
+function lock(int32 $address) : Wormhole?
+{
+    if ($address == 27) {
+        return Wormhole(1);
+    }
+    return null;
+}
+
+function connect(int32 $address) : void
+{
+    guard lock($address) else {
+        die("no lock");
+    }
+
+    echo "connected";
+}
+
+connect(27);        // connected
+```
+
+Same statement, no dummy. The rest of the scope runs only if the value was there. Leave the `else` off
+and a missing value still stops the program.
+
+A written `else` still has to leave. That is what `guard` means, with or without a name: the rest of
+this scope has no meaning if this failed. Handle-and-continue is `match` or `if`.
+
 ### A written else arm has to leave
 
 ```echo
@@ -480,6 +517,10 @@ echo $p == null;
 ptr<int32> $p = null;
 echo $p:$ == null;      // 1
 ```
+
+A pointer to an [incomplete type](/projects/c-interop#incomplete-types-a-name-no-layout) skips that trap.
+There is no pointee, so `$h == null` on a `ptr<Handle>` is already the address. Same spelling as a class
+handle.
 
 [Pointers and references](/memory/pointers) has the rest of what `:$` does.
 

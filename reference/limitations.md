@@ -35,9 +35,6 @@ point into a value the `match` itself owns and drops. Bind the call to a variabl
 **A call is not an assignment destination.** `$r->unwrap() = 99;` does not parse, even though `unwrap()`
 returns a `T&`. Reading through the borrow and calling a method through it both work.
 
-**Fixed-size arrays.** `FixedArray<T, N>` is a design rather than a feature. Type parameters are types, and
-`N` is a value, so there is currently no way to spell it.
-
 **Map literals.** `["LHR" => "Heathrow"]` does not parse. Construct the map and fill it.
 
 **Exceptions.** No `throw`, no `try`, no `catch`. Recoverable failure is a `T?`, or a
@@ -89,7 +86,6 @@ A crash is at least loud. These are the ones I know about:
 - `$r = &f();`, taking the address of a call result.
 - A typo'd namespaced generic call in a constructor argument.
 - `foreach ($arr->iterate() as $x)`, passing an explicit cursor.
-- `void $x;` hangs the compiler. Nothing refuses a `void` variable, and laying one out never finishes.
 - A nullable used directly as a condition, `if ($x)` where `$x` is a `T?` or a `ptr<T>`. Use `guard`, or
   compare against something. It should be a diagnostic and it is a failed IR verification instead.
 - `==` between two nullable [C function pointers](/projects/c-interop), which is what you reach for on the

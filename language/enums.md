@@ -100,9 +100,102 @@ genuinely *is* the discriminant, so reading it costs nothing. A string can't be 
 one in every value would mean `DistanceUnit::meter` allocated. So the value lives with the declaration,
 `value()` fetches it, and both backings are spelled the same way.
 
+`from` is the other direction. On a closed integer enum it answers `T?`, because the integer might not be
+one of the cases:
+
+```echo
+enum HttpStatus : int32
+{
+    case ok = 200;
+    case not_found = 404;
+}
+
+echo HttpStatus::from(200) != null;     // 1
+echo HttpStatus::from(999) == null;     // 1
+```
+
+That's the honest answer for HTTP. It is the wrong answer for a C error code. A newer miniaudio will invent
+a number you have not named, and `null` is either a lie or a crash at the `guard`. That is the next section.
+
+## An integer enum can be open
+
+Sometimes the set is not actually closed. C error codes are a known handful of integers, plus whatever a
+newer library version invented. You want names and `match` for the ones you know, and you want `-999` to
+still be a value.
+
+Write the known codes with `=`, and one case without:
+
+```echo
+enum Error : int32
+{
+    case invalidArgs = -2;
+    case invalidOperation = -3;
+    case outOfMemory = -4;
+    case other;
+}
+
+Error $known = Error::from(-2);     // Error::invalidArgs
+Error $new   = Error::from(-999);   // Error::other
+
+echo $known->value();               // -2
+echo $new->value();                 // -999
+echo $known == Error::invalidArgs;  // 1
+```
+
+`other` is just a name. Nothing is reserved. What makes the enum open is the shape: exactly one case has
+no `=`, and at least one sibling does. This still auto-numbers and stays closed:
+
+```echo
+enum E : int32 { case a; case b; }     // 0 and 1, closed
+```
+
+Here is the catch. `from` always succeeds, `value()` always hands the integer back, and the round-trip is
+identity: `from($e->value())` is `$e`. You still cannot write `Error(-999)`, and you cannot write
+`Error::other` as a value either. The leftover is whatever integer is not a named case, so constructing
+it by name would not know which integer to store. `from` is how a leftover arrives.
+
+`match` stays exhaustive if you handle `other`. Or `else`. A library bump that invents `-999` cannot
+break existing arms. Adding a **named** case later still can, because that is adding a case, and that is
+supposed to be loud.
+
+```echo
+enum Error : int32
+{
+    case invalidArgs = -2;
+    case other;
+}
+
+function describe(Error $e) : string
+{
+    return match ($e) {
+        Error::invalidArgs => "bad args",
+        Error::other => "miniaudio said something else",
+    };
+}
+
+echo describe(Error::from(-2));      // bad args
+echo describe(Error::from(-999));    // miniaudio said something else
+```
+
+The leftover **is** the integer. Read it with `value()`. It is not a payload, so this will not compile:
+
+```echo
+enum Error : int32
+{
+    case invalidArgs = -2;
+    case other(int32 $code);    // error: the leftover cannot carry a payload
+}
+```
+
+This is the type every C binding actually has. Wrap the raw `int32` on the way in, unwrap it on the way
+out. An open `Error` is still `{ int32 }` in memory, which is not C's `int`, so do not declare the C
+function as returning `Error`. Pass `$e->value()` back. [C interop](/projects/c-interop) is the wrapping
+in context.
+
 ## A case can carry a payload instead
 
-The second thing is a **payload**: values that differ per instance rather than per case.
+The other thing people mean by "an enum with values" is a **payload**: data that differs per instance
+rather than per case.
 
 ```echo
 enum CurlError
@@ -463,8 +556,10 @@ enum CurlError {
 ```
 
 The size is the tag plus the widest case, plus whatever padding their alignment wants. A `cannot_connect`
-is not as wide as `http`. A plain enum is one byte. Copy and teardown still only touch the live case, so
-an `http` being copied does not retain a timeout that is not there.
+is not as wide as `http`. A plain enum is one byte. An integer-backed one, open or closed, is the backing
+integer in a struct: `{ int32 }` for `: int32`. That is why you still cannot hand an `Error` to C as if it
+were `int`. Copy and teardown still only touch the live case, so an `http` being copied does not retain a
+timeout that is not there.
 
 The payload slots are still ordinary properties as far as the rest of the compiler is concerned. That's
 what keeps copy, drop, `match` and debug info from growing an arm per case. The overlay is the lowering.

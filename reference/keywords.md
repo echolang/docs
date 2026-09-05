@@ -36,14 +36,14 @@ identifiers, and nothing about them collides with `for`, `class`, `enum`, `null`
 | `operator` | declares an operator, infix, prefix or `[]` | [Operators](/language/operators) |
 | `namespace` | puts the rest of the file in a namespace | [Namespaces](/language/namespaces) |
 | `use` | binds a shorter name for a namespace, type, function or constant, for this file | [Namespaces](/language/namespaces) |
-| `extern` | opens a block of C declarations, or the C function-pointer type `extern function<R(P...)>` | [C interop](/projects/c-interop) |
+| `extern` | a C surface: `extern { }` of functions and incomplete types, `extern struct Name;`, or the C function-pointer type `extern function<R(P...)>` | [C interop](/projects/c-interop) |
 | `const` | a read-only variable, a constant, or a `const if` | [Constants](/language/constants) |
 | `private` | narrows a declaration to its file, or a member to its own type | [Visibility](/language/visibility) |
 | `internal` | narrows a declaration to its module, which is also the default | [Visibility](/language/visibility) |
 | `public` | widens a declaration to every module | [Visibility](/language/visibility) |
 | `static` | a method or property that belongs to the type, not to a value | [Structs](/language/structs) |
 | `test` | declares a test block, compiled only by `echoc test` | [Testing](/projects/testing) |
-| `enum` | declares a closed set of cases | [Enums](/language/enums) |
+| `enum` | declares a set of cases | [Enums](/language/enums) |
 | `case` | declares one case of an enum | [Enums](/language/enums) |
 
 ### Control flow
@@ -56,7 +56,7 @@ identifiers, and nothing about them collides with `for`, `class`, `enum`, `null`
 | `foreach` | walk anything iterable, with `as` | [Iteration](/collections/iteration) |
 | `as` | a written destination (`$x as T`), and the binding half of a `foreach` | [Casts](/language/casts), [Iteration](/collections/iteration) |
 | `break` / `continue` | leave the loop, or jump to its next step | [Control flow](/language/control-flow) |
-| `guard` | bind a nullable value or leave the scope | [Nullability](/memory/nullability) |
+| `guard` | unwrap, optionally bind, or leave the scope | [Nullability](/memory/nullability) |
 
 ### Values
 

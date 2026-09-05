@@ -114,6 +114,32 @@ CargoBay<int32> $hold = CargoBay<int32>(42);
 echo $hold->log(1.5);
 ```
 
+## Value parameters
+
+A type parameter is a type. Sometimes what you need is a number: the length of a
+[`fixed_array`](/collections/fixed-arrays), the dimension of a matrix. That is a **value parameter**,
+written `const usize N` in the list:
+
+```echo
+struct sized<const usize N>
+{
+    const function n() : usize
+    {
+        return N;
+    }
+}
+
+sized<4> $a = sized<4>();
+echo $a->n();       // 4
+```
+
+`N` is a compile-time integer. Using it as a value (`return N;`) becomes a literal in each
+instance. Using it as a length (`T[N]`) becomes `int32[4]` once `N` is bound. `sized<4>` and
+`sized<8>` are two types.
+
+v1 arguments in that slot are integer literals, or another value parameter. Named constants and
+arithmetic (`WIDTH * HEIGHT`) are not type arguments yet.
+
 ## Multiple type parameters
 
 Separate them with commas. Each is inferred independently:

@@ -46,6 +46,9 @@ echo $good->has_value();    // 1
 echo $bad->failed();      // 1
 ```
 
+A function that can fail and has nothing to hand back should return [`status<E>`](/stdlib/status),
+not `result<bool, E>`. `void` is not a type argument, so there is no `result<void, E>`.
+
 Writing the type twice gets old, and you don't have to. Wherever the destination already names the type,
 drop the owner:
 
@@ -93,10 +96,32 @@ compile.
 
 ## How you read one
 
-`guard` is the shape you want almost always. It declares the variable. Leave the `else` off and a
-failure stops the program, with `E` in the message when `str::from` can print it. Write an `else`
-when you want to handle the reason; that block has to leave: `return`, `break`, `continue` or `die`.
-That's what makes the declaration safe afterwards.
+`guard` is the shape you want almost always. It declares the variable when you want the value. Leave the
+`else` off and a failure stops the program, with `E` in the message when `str::from` can print it. Write
+an `else` when you want to handle the reason; that block has to leave: `return`, `break`, `continue` or
+`die`. That's what makes the declaration safe afterwards.
+
+When the value is not the point — the call worked, or it did not — drop the binding:
+
+```echo
+function start(int32 $n) : result<int32, string>
+{
+    if ($n < 0) {
+        return .error('negative');
+    }
+
+    return .ok($n);
+}
+
+function go(int32 $n) : void
+{
+    guard start($n) else ($e) {
+        die($e);
+    }
+}
+
+go(1);
+```
 
 ```echo
 function first_word(const string& $line) : result<string, int32>

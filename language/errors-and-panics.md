@@ -9,7 +9,7 @@ Most of what exceptions get used for splits cleanly into two cases:
 |---|---|
 | This can fail, and the caller should deal with it | return `T?`, or `result<T, E>` |
 | This cannot fail unless something is broken | `assert`, or `die` |
-| I am not writing an arm for a value that has to be there | `guard expr;` with no `else` |
+| I am not writing an arm for a value that has to be there | `guard expr;` with no `else` — a statement, or `T $x = guard expr;` if you need the value |
 
 The line between them is whether a correct program can hit it. A gate address that will not lock is the
 first. An index past the end of an array you just built is the second.

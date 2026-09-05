@@ -37,6 +37,9 @@ function log(string $message)
 I know that's a few extra characters on every side-effecting function. I prefer it to the alternative, where
 the only way to find out whether something comes back is to read the body.
 
+`void` is not a value. A function that can fail and has nothing to hand back returns
+[`status<E>`](/stdlib/status).
+
 ## Order does not matter
 
 You can call a function before the file declares it:

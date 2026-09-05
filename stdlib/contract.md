@@ -222,10 +222,11 @@ The error is on line one of the struct, not at some far-away `foreach`. That's t
 being declared rather than inferred: the type either says it can do this or it doesn't, and the compiler
 checks the claim where the claim is made.
 
-## unwrappable and failable
+## unwrappable, checkable, and failable
 
-The other two are what `guard` resolves against. Same idea as iteration: no special case anywhere, the
-library's own [`result<T, E>`](/stdlib/result) declares them and so can you.
+The other three are what `guard` resolves against. Same idea as iteration: no special case anywhere.
+[`result<T, E>`](/stdlib/result) declares `unwrappable` and `failable`. [`status<E>`](/stdlib/status)
+declares `checkable` and `failable`. You can write your own.
 
 <!-- verify: skip -->
 ```echo
@@ -235,6 +236,11 @@ interface unwrappable<V>
 {
     const function has_value() : bool;
     function unwrap() : V&;
+}
+
+interface checkable
+{
+    const function has_value() : bool;
 }
 
 interface failable<E>

@@ -55,6 +55,7 @@ const sidebar = [
     items: [
       { text: 'Strings', link: '/collections/strings' },
       { text: 'Arrays', link: '/collections/arrays' },
+      { text: 'Fixed arrays', link: '/collections/fixed-arrays' },
       { text: 'Maps', link: '/collections/maps' },
       { text: 'Slices', link: '/collections/slices' },
       { text: 'Ranges', link: '/collections/ranges' },
@@ -81,6 +82,7 @@ const sidebar = [
       { text: 'Memory', link: '/stdlib/mem' },
       { text: 'Contracts', link: '/stdlib/contract' },
       { text: 'Results', link: '/stdlib/result' },
+      { text: 'Status', link: '/stdlib/status' },
       { text: 'Crash reports', link: '/stdlib/crash' },
       { text: 'Hashing', link: '/stdlib/hash' },
       { text: 'String functions', link: '/stdlib/str' },

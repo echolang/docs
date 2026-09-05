@@ -30,7 +30,7 @@ the exact wording of every conversion the compiler refuses.
 | `float32` | 32 | n/a | IEEE 754 single | IEEE 754 single |
 | `float64` | 64 | n/a | IEEE 754 double | IEEE 754 double |
 | `bool` | 1 | n/a | `false` | `true` |
-| `void` | 0 | n/a | n/a | n/a |
+| `void` | — | n/a | not a value | not a value |
 
 `bool` is one bit in the emitted code and one byte in memory, which is the usual arrangement and never
 something you have to think about.
@@ -273,8 +273,7 @@ promotes raw storage to a typed borrow. That is a different operation with a sim
 
 ## void
 
-`void` is the type of nothing. It is what a function that returns nothing declares, and saying it out loud is
-required:
+`void` is the return type that means the function produces nothing. Saying it out loud is required:
 
 ```echo
 function log(string $line) : void
@@ -285,12 +284,14 @@ function log(string $line) : void
 log("done");        // done
 ```
 
-By intent it appears in return position only. In practice **nothing refuses `void $x;`**: the type checker
-waves it through and the compiler then hangs trying to lay it out. Don't write it. That's a bug, and it is
-on [the list](/reference/limitations).
+It is not a local, a field, a parameter, or a type argument. A boundary that can fail and has nothing
+to hand back returns [`status<E>`](/stdlib/status).
 
-`void` is also not the same thing as "the compiler has not worked this out yet". That's a separate internal
-state you'll never see spelled in your program.
+`ptr<void>` is refused. Echo's untyped handle is `ptr<Handle>` over an `extern struct`. `void[4]` is
+refused too: an array needs a size, and void has none.
+
+`void` is not "the compiler has not worked this out yet". That's a separate internal state you'll never
+see spelled in your program.
 
 ## Next
 

@@ -49,6 +49,9 @@ echo $chevrons->count();        // 1
 disambiguate is to stop using one. Reach for this whenever you know the final size, which is most of the
 time you're filling an array in a loop.
 
+`$a->room()` is a different question: how much of that capacity is still spare. [Arrays](/collections/arrays)
+is where `spare` / `commit` live.
+
 ## The whole surface
 
 | Signature | What it does |

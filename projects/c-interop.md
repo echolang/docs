@@ -70,6 +70,33 @@ The mapping you'll use most:
 This is the one part of Echo where the compiler can't help you at all. Get the signature right once, in one
 place, and never write it again.
 
+## C enums are integers plus leftovers
+
+A C `enum` is an integer with names taped on. A newer version of the library will invent codes you have
+not named. Echo's closed integer enum cannot hold those: `from` answers `T?`, and `null` is a lie or a
+crash the moment miniaudio ships `-999`.
+
+An [open integer enum](/language/enums#an-integer-enum-can-be-open) is the type you actually have:
+
+```echo
+extern { function ma_result() : int32; }
+
+enum Error : int32
+{
+    case ok = 0;
+    case invalidArgs = -2;
+    case other;
+}
+
+Error $e = Error::from(ma_result());
+```
+
+`from` always succeeds. A named code becomes that case. `-999` becomes `Error::other`, and `$e->value()`
+is still `-999`, so you can hand it to `ma_strerror`. `match` stays exhaustive if you handle `other`.
+
+Here is the catch. Do not declare the C function as returning `Error`. The layout is `{ int32 }`, which
+is not C's `int`. Wrap with `from` on the way in, unwrap with `value()` on the way out.
+
 ## Gather the bindings, then wrap them
 
 A C symbol may only be declared **once per module**. Two `extern` blocks naming `getenv` with signatures that
@@ -148,6 +175,105 @@ And this `tm` is **only ever read**. Real `struct tm` has two more fields after 
 writes through the pointer, so leaving them unspelled can't overrun anything. A binding that asked libc to
 *fill* a `tm` of ours would have to declare all of them, and get every one right.
 
+## Incomplete types: a name, no layout
+
+A lot of C libraries never spell the struct. You get a name, a handful of functions that take a pointer to
+it, and that's the whole contract. If those were all `ptr<uint8>`, a `Handle` and a `Resource` would be the
+same type, and you could pass either into the wrong function.
+
+`extern struct` is the name, with no layout:
+
+```echo
+extern struct Handle;
+extern struct Resource;
+
+ptr<Handle> $h = null;
+ptr<Resource> $r = null;
+
+echo ($h == null);      // 1
+echo ($r == null);      // 1
+```
+
+`ptr<Handle>` is not `ptr<Resource>`. Passing one where the other is wanted is a type error, not a comment
+you hope a reader notices:
+
+```echo
+extern struct Handle;
+extern struct Resource;
+
+function start(ptr<Handle> $h) : void
+{
+}
+
+ptr<Resource> $r = null;
+start($r);
+// error: cannot implicitly convert 'ptr<Resource>' to 'ptr<Handle>'
+```
+
+I don't want `void*` with a comment. If two C types are different, the compiler should treat them as
+different.
+
+Here is the catch. A plain read of `ptr<int32>` loads through to the `int32`. A plain read of `ptr<Handle>`
+is the address itself, because there is nothing to load. That's why `$h == null` works without `:$`: the
+pointer is the value. `:$` still names the slot if you want to re-seat it.
+
+You cannot construct a `Handle`, you cannot borrow one, you cannot ask `mem::size<Handle>()`, and you
+cannot offset the pointer. There is no size to stride by:
+
+```echo
+extern struct Handle;
+
+function take(Handle $h) : void
+{
+}
+// error: 'Handle' is an incomplete type, so a value of it cannot exist - name it only as 'ptr<Handle>'
+```
+
+`void *` stays `ptr<uint8>`. Turning one into a `ptr<Handle>` is a written `as`, the same pointer-to-pointer
+reinterpret as everywhere else. The `:$` is doing the job it always does: you want the address, not the
+byte at the other end.
+
+```echo
+extern struct Handle;
+
+ptr<uint8> $raw = null;
+ptr<Handle> $h = $raw:$ as ptr<Handle>;
+echo ($h == null);      // 1
+```
+
+The Echo class around the handle is then just a class. Refcount, `#[atomic]` if it crosses threads, a
+destructor that hands the pointer back to C. It is not a type-safety patch over `void*`. The type safety
+is already on the pointer.
+
+<!-- verify: skip -->
+```echo
+extern struct Handle;
+
+extern {
+    function c_destroy(ptr<Handle> $h) : void;
+}
+
+class Owned
+{
+    ptr<Handle> $raw;
+
+    constructor(ptr<Handle> $raw)
+    {
+        $this->raw = $raw;
+    }
+
+    destructor()
+    {
+        if ($this->raw != null) {
+            c_destroy($this->raw);
+        }
+    }
+}
+```
+
+`extern struct` has no body. If you know the layout, declare a plain `struct` as `tm` does above. You can
+write `struct Handle;` inside the `extern` block too, next to the functions that take it. Same thing.
+
 ## Strings out: `cstr()`
 
 Echo strings are not C strings, but every buffer the standard library allocates has room for one byte past
@@ -220,6 +346,44 @@ $dst:$[3] = 111;
 $body->commit(4);
 
 echo $body;         // Echo
+```
+
+## Arrays out: the same protocol, over elements
+
+Strings were designed for C. Arrays were designed as Echo collections, and then there was no honest way
+to say "write N floats into this buffer." There is now, and it is the string sequence with a different
+unit.
+
+```echo
+array<float32> $frames = arr::room<float32>(4);
+
+ptr<float32> $p = $frames->spare();
+$p:$[0] = 1.0f;
+$p:$[1] = 2.0f;
+$frames->commit(2);
+
+echo $frames->count();     // 2
+echo $frames[0];           // 1.000000
+```
+
+`room()` on the array is how many elements `spare()` can accept without growing. `data()` is the live
+prefix, for C that already has a length. Growing the buffer after `spare()` invalidates the pointer.
+
+A [`fixed_array<T, N>`](/collections/fixed-arrays) is already a C buffer: every slot is live, so there
+is no spare. `$quad->data()` is the first element and `N` is the count.
+
+This only works for a `T` that is bytes. C cannot construct an Echo `string`, and `commit` on an
+`array<string>` dies rather than invent a constructor.
+
+Pass the pointer and the count yourself. A live [`slice<T>`](/collections/slices) is two public words
+(`$data` and `$len`) if the window is already elements:
+
+```echo
+array<int32> $numbers = [1, 2, 3];
+slice<int32> $window = $numbers->sub();
+
+echo $window->data:$ != null;   // 1
+echo $window->len;              // 3
 ```
 
 ## Strings in: borrow or copy
