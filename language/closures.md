@@ -94,6 +94,35 @@ while ($i < 3) {
 Each round captures the value `$i` had that round. The classic "all three closures print 3" bug doesn't
 happen, because there is no shared binding to go stale.
 
+A closure written inside a method may name that type's `private` members, the same way the method can.
+Capture is still a copy: keep a handle, then talk to that:
+
+```echo
+class Host
+{
+    private int32 $hits;
+
+    constructor(int32 $hits)
+    {
+        $this->hits = $hits;
+    }
+
+    function reader() : function<int32()>
+    {
+        Host $host = $this;
+        return function() : int32 {
+            return $host->hits;
+        };
+    }
+}
+
+Host $h = Host(7);
+function<int32()> $read = $h->reader();
+echo $read();       // 7
+```
+
+`Host $host = $this` retains. The closure cannot borrow `$this` across the call.
+
 Captures are stored in an environment allocated when the closure is created and released when the last
 holder of the closure goes out of scope. Copying a closure shares that environment rather than duplicating
 it:

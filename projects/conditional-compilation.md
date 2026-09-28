@@ -59,9 +59,14 @@ why a condition can't name one of your constants, even though `const MAX = 100` 
 of thing it should be able to test. [Constants](/language/constants) explains the timing that makes that
 impossible.
 
-## A condition sees three things
+## A condition sees four things
 
-**`os`**, one of `darwin`, `linux`, `windows`.
+**`os`**, one of `darwin`, `linux`, `windows`, `ios`, `android`.
+
+**`family`**, one of `darwin`, `linux`, `windows`. Derived from `os`, never set on its own. `ios` is
+Darwin-family (same libc, same `-framework`). `android` is Linux-family. Write
+`#[if: family == darwin]` for an ABI question. Write `#[if: os == ios]` when the specific OS is the
+point.
 
 **`arch`**, one of `arm64`, `x86_64`.
 
@@ -89,11 +94,11 @@ These two rules point in opposite directions, and both of them have to.
 An unknown value on a closed axis is refused:
 
 ```
-line 1: unknown os 'darwn', expected one of: darwin, linux, windows
+line 1: unknown os 'darwn', expected one of: darwin, linux, windows, ios, android
 ```
 
 ```
-line 1: unknown condition axis 'platform', expected one of: os, arch
+line 1: unknown condition axis 'platform', expected one of: os, arch, family
 ```
 
 The alternative is a typo that reads as false, so `#[if: os == darwn]` becomes a block that vanishes in
@@ -199,13 +204,18 @@ echoc run --target-arch x86_64 app.eco
 Both are checked against the same closed vocabularies, so a typo is caught here too:
 
 ```
-unknown --target-os 'macos', expected one of: darwin, linux, windows
+unknown --target-os 'macos', expected one of: darwin, linux, windows, ios, android
 ```
 
-Be clear about what this does, though: **it chooses arms, it does not cross-compile.** The code that gets
-selected is still compiled for the machine you are sitting at. It answers "which sources would a Linux build
-use", not "does this Linux build work", and that is genuinely useful for a manifest that gates its own source
-list. It is not a substitute for building on Linux.
+Be clear about what this does, though: **it chooses arms, it does not cross-compile**, with one
+exception. The code that gets selected is still compiled for the machine you are sitting at. It
+answers "which sources would a Linux build use", not "does this Linux build work", and that is
+genuinely useful for a manifest that gates its own source list. It is not a substitute for building
+on Linux.
+
+The exception is Darwin `echoc build --target-os ios`. The iPhone SDKs are on the machine, so that
+command emits simulator objects (`--ios-device` for a physical iPhone). `echoc run --target-os ios`
+stays facts-only, like every other `--target-os`, because `run` has to execute here.
 
 ## `const if` is the other one, and it is not the same
 

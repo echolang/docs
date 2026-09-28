@@ -30,7 +30,7 @@ the exact wording of every conversion the compiler refuses.
 | `float32` | 32 | n/a | IEEE 754 single | IEEE 754 single |
 | `float64` | 64 | n/a | IEEE 754 double | IEEE 754 double |
 | `bool` | 1 | n/a | `false` | `true` |
-| `void` | — | n/a | not a value | not a value |
+| `void` | n/a | n/a | not a value | not a value |
 
 `bool` is one bit in the emitted code and one byte in memory, which is the usual arrangement and never
 something you have to think about.
@@ -42,6 +42,20 @@ echo mem::size<int32>();     // 4
 echo mem::size<bool>();      // 1
 echo mem::size<usize>();     // 8
 ```
+
+## The largest value, by name
+
+You will want the top of a count more often than you want to type eighteen digits. Integer primitives
+answer `min()` and `max()` as statics, folded from the same widths the table above uses:
+
+```echo
+echo usize::max();      // 18446744073709551615
+echo int32::min();      // -2147483648
+echo uint8::max();      // 255
+```
+
+[`std::math::MAX_USIZE`](/stdlib/math) is the same number as a constant. Reach for the type form when
+you are already writing `usize`. There is no `float32::max()`: floats keep the math constants.
 
 ## usize and isize are pointer width, and today that is always 8
 

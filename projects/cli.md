@@ -25,8 +25,9 @@ unchanged, because it is the same compile.
 linked, and the program starts almost immediately. It defaults to `--debug`, so `assert` and the runtime
 checks stay in.
 
-`build` produces a real executable, which needs `clang` on your `PATH` for the link step. It defaults to
-`--release`, so `assert` is compiled out.
+`build` produces a real executable, which needs `clang` for the link step. On macOS and Linux that is
+the one on your `PATH`. A Windows release already has clang, lld-link and a sysroot next to `echoc`.
+It defaults to `--release`, so `assert` is compiled out.
 
 [Your first program](/guide/first-program) has the side-by-side table for what each default actually changes.
 The bit that surprises people: the defaults go opposite ways on purpose, and either can be overridden.
@@ -229,6 +230,12 @@ error: 'build --explain prune' is not something 'build' can answer. It accepts: 
 `memory` is the odd one out: it prints how many allocations your program still held when it ended, which means
 it changes what echoc *emits* rather than reporting what echoc *did*. It implies `--track-allocations`, and
 without that flag `mem::live_allocations()` is refused rather than answered 0.
+
+`--check-refcounts` is the same kind of flag: it changes what the program emits. A release one too
+many stops with the type's name, instead of corrupting the heap and dying later in an unrelated
+`free`. To do that it keeps every class box, poisoned, rather than giving it back. A deliberate
+leak, which is why `--debug` does not switch it on. The cheap `<= 0` compare ahead of a decrement
+is the debug default. The poison is this flag.
 
 ## Diagnostics, and how they are drawn
 

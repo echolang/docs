@@ -453,7 +453,8 @@ with one.
 
 | Axis | Values |
 |---|---|
-| `os` | `darwin`, `linux`, `windows` |
+| `os` | `darwin`, `linux`, `windows`, `ios`, `android` |
+| `family` | `darwin`, `linux`, `windows`. Derived from `os` (`ios` is `darwin`, `android` is `linux`). Never set on its own |
 | `arch` | `arm64`, `x86_64` |
 
 Plus one flag the compiler sets itself, and any bare name you pass with `--define`:
@@ -482,8 +483,8 @@ arm is still caught on your machine.
 
 | Case | Message |
 |---|---|
-| unknown value | `unknown os 'darwn', expected one of: darwin, linux, windows` |
-| unknown axis | `unknown condition axis 'cpu', expected one of: os, arch` |
+| unknown value | `unknown os 'darwn', expected one of: darwin, linux, windows, ios, android` |
+| unknown axis | `unknown condition axis 'cpu', expected one of: os, arch, family` |
 | never closed | `'#[if: ...]' is never closed - add '#[end]'` |
 | axis with no comparison | ``'os' is a condition axis and needs a comparison - write `os == <value>` `` |
 | compared to a literal | `'os' is compared against a bare name, not a literal` |

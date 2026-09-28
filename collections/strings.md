@@ -448,8 +448,9 @@ $name = 'Ronon';
 echo "not a hole: \{$name}";        // not a hole: {$name}
 ```
 
-One consequence of the `{$` rule: a hole has to *start* from a value, so `"{twice($n)}"` is text rather
-than a call. Bind it first.
+Here is the catch: a hole has to *start* from a value. `"{twice($n)}"` and `"{LIMIT}"` look like
+interpolation and are refused, rather than printed as source. Bind the result first, or write `\{`
+for a literal brace.
 
 ### Formats
 

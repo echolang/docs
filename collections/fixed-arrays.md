@@ -68,6 +68,27 @@ echo mem::size<Transform>();    // 64
 
 `$t->m[0]` is a place. Bounds on `fixed_array` live in its operators; indexing `T[N]` directly is the storage primitive, like `mem::buffer::at`.
 
+A constructor would otherwise owe every slot. A field of `fixed_array<T, N>` or of `T[N]` starts as
+N zeros, the same value `fixed_array<T, N>()` builds, so leaving it unassigned is fine:
+
+```echo
+struct Packed
+{
+    fixed_array<uint8, 4> $bytes;
+
+    constructor()
+    {
+    }
+}
+
+Packed $p = Packed();
+echo $p->bytes[0];          // 0
+echo $p->bytes->count();    // 4
+```
+
+An `int32` field still has to be assigned on every path. The zeros are a fact about the inline
+storage, not a general "uninitialized is zero" rule.
+
 ## It iterates like an array
 
 `foreach` has no idea what a `fixed_array` is. The type conforms to `contract::iterable<T>` by handing back a `slice_iterator` over `->sub()`:

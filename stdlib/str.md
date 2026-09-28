@@ -149,8 +149,8 @@ inline: `at()` rebuilds the window from the live source. `$p->at($i)` is a `stri
 A part of at most `string::INLINE` bytes becomes its own inline value; a longer one retains the
 parent buffer.
 
-Note the extra variable on that last line. A hole opens on `{$` and nothing else, so `"|{str::trim($p)}|"`
-is ordinary text rather than a call, and the result has to be bound before you can interpolate it.
+Note the extra variable on that last line. A hole opens on `{$` and nothing else, so
+`"|{str::trim($p)}|"` is refused as a lookalike. Bind the result, then interpolate that.
 
 `ltrim` and `rtrim` do one side each. All three answer a **window** rather than a copy, so trimming
 is free. Call `->clone()` on the result if you want the parent's buffer released.

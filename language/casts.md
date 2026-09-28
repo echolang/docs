@@ -23,10 +23,12 @@ echo 7 as int64 + 1;            // 8
 
 That is `(7 as int64) + 1`. The `as` binds tighter than any binary operator, so the addition happens at `int64`.
 
-A parenthesised group is the other way around. The sum is rebuilt first, then `as` applies to the whole thing:
+A parenthesised group is the other way around. The sum is rebuilt first, then `as` applies to the
+whole thing. Extra parentheses around the cast itself are fine, and they do not change the answer:
 
 ```echo
 echo (7 + 1) as int64;          // 8
+echo ((7 + 1) as int64);        // 8
 echo 1 + 2 as int64;            // 3, which is `1 + (2 as int64)`
 ```
 
@@ -123,6 +125,10 @@ show($ten as Meters);           // 3.048000
 ```
 
 A `const T&` operand still finds a `const function` conversion. That is the same peel an argument gets. [Attributes](/reference/attributes) owns the attribute. This page only cares that a written `as` asks it.
+
+**One stored interface to another.** `$s as Other` is a recast. If the object does not conform, the
+program stops. `$s as Other?` is the same check with absence instead of a stop. Implicit
+`Other $o = $s` is still refused. [Interfaces](/language/interfaces) has the cut.
 
 **A pointer to a pointer.** `$p as ptr<uint8>` reinterprets the address. `ptr<uint8>($p:$)` is the same conversion written the other way around. No `unsafe` required: computing another address promises nothing. Turning one of those into a `T&` is a different operation and it does need `unsafe`. [Pointers](/memory/pointers) and [Unsafe](/memory/unsafe) have that split.
 

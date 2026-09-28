@@ -18,7 +18,9 @@ Two rules apply everywhere:
 class of bug doesn't exist here.
 
 **A condition must be a `bool`.** No truthiness, no zero-is-false. `if ($count)` on an integer is not valid
-Echo. Write the comparison you meant: `if ($count > 0)`.
+Echo. Write the comparison you meant: `if ($count > 0)`. A `T?` or a `ptr<T>` is the same rule:
+[`guard`](/memory/nullability) it, or compare it against `null`. `if ($maybe)` is a located error, not
+a presence test.
 
 ## if, else if, else
 

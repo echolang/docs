@@ -82,12 +82,9 @@ through a non-nullable type.
 
 A crash is at least loud. These are the ones I know about:
 
-- `return;` at file scope, including from inside a `guard ... else`.
 - `$r = &f();`, taking the address of a call result.
 - A typo'd namespaced generic call in a constructor argument.
 - `foreach ($arr->iterate() as $x)`, passing an explicit cursor.
-- A nullable used directly as a condition, `if ($x)` where `$x` is a `T?` or a `ptr<T>`. Use `guard`, or
-  compare against something. It should be a diagnostic and it is a failed IR verification instead.
 - `==` between two nullable [C function pointers](/projects/c-interop), which is what you reach for on the
   value `crash::set_hook` hands back. `guard` it instead. See [Crash reports](/stdlib/crash).
 
@@ -185,16 +182,27 @@ block rather than the object, and an interface value shows two raw pointers. Tho
 
 ## Platforms
 
-Prebuilt binaries exist for exactly two platforms:
+A release is three hosts, and the install scripts only know those three:
 
-- macOS on Apple Silicon
-- Linux on x86_64
+- macOS on Apple Silicon, `echo-macos-arm64`
+- Linux on x86_64, `echo-linux-x86_64`
+- Windows on x86_64, `echo-windows-x86_64` (a zip, and `echo-windows-x86_64-setup.exe`)
 
-**No Windows, no Intel Mac, no Linux on ARM.** Building from source works on more than that, but Windows in
-particular has never been run: the linker flags render and nothing has ever executed them.
+The test suite runs on Linux and on Windows. The Mac archive is built and smoke-tested on Apple Silicon.
+[Installation](/guide/installation) is the command for each.
 
-Related, on linking: there is no pkg-config integration. Static versus dynamic is
-`#[link: lib { name: "foo", linkage: static }]`.
+**No Intel Mac, no Linux on ARM, no Windows on ARM.** The script stops and tells you to build from
+source. It does not pick a neighbour and hope.
+
+iOS is not a fourth download. A Mac cross-compiles to it with `echoc build --target-os ios`. Android
+is a `#[if:]` fact, and there is no Android sysroot.
+
+The Windows archive is a toolchain. clang, lld-link and a sysroot sit next to `echoc`, and
+`echoc build` links with them. CI runs the suite there.
+
+Related, on linking: there is still no pkg-config. A library whose flags come out of
+`pkg-config --libs` is written by hand. Static versus dynamic is
+`#[link: lib { name: "foo", linkage: static }]`. [Linking](/projects/linking) has the record.
 
 ## Concurrency
 

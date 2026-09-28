@@ -96,6 +96,10 @@ echo $hold->manifest();     // 42
 For a type, the arguments are written at construction. `CargoBay<int32>` and `CargoBay<string>` are two
 unrelated types that happen to share a template. A bay rigged for naquadah is not a bay rigged for crates.
 
+The name without arguments is the template, not a type. A local, a field, or a map value has to be
+`CargoBay<int32>`. A map of mixed contents is a different thing, and that value is
+[`erased`](#type-identity-and-a-map-of-instances).
+
 Methods can have their own type parameters on top of the type's:
 
 ```echo
@@ -195,7 +199,7 @@ echo halve(1.5);
 ```
 
 `class` is the one of these that is not a closed list. There is no finite set of classes to expand, so it
-asks "is this a class" — a `Box<int32>` counts, a `struct` does not. A struct that wants in is wrapped in a
+asks "is this a class": a `Box<int32>` counts, a `struct` does not. A struct that wants in is wrapped in a
 class, not admitted as itself.
 
 ```echo

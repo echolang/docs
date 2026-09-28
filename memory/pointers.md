@@ -268,7 +268,7 @@ $view = 20;
 member is const too, which is what makes `const T&` a promise about the whole subtree rather than about one
 field.
 
-## At a call site, the compiler takes the address for you
+## A `T&` destination takes the address for you
 
 A `T&` parameter borrows a named value without you writing anything:
 
@@ -285,6 +285,28 @@ echo $chevrons;     // 7
 
 Writing `bump(&$chevrons)` produces exactly the same call, so use whichever reads better in context. A field
 or an element works the same way.
+
+A `T&` local is the same destination. `$chevrons`, a field, and `$ns[0]` are already places, so they
+bind without `&`:
+
+```echo
+$chevrons = 6;
+int32& $locked = $chevrons;
+$locked = 7;
+echo $chevrons;     // 7
+
+array<int32> $ns = [1, 2];
+int32& $n = $ns[0];
+$n = $n + 1;
+echo $ns[0];        // 2
+```
+
+`int32& $locked = &$chevrons` still works and means the same thing. Write the `&` when the address is
+the point of the line.
+
+A function that returns `T&` auto-borrows a place the same way: `return $a[0]` from `: int32&` is
+`return &$a[0]`. Returning the address of a local is still refused, including `return $x` of a
+by-value parameter. That storage is the callee's.
 
 A `ptr<T>` parameter opts out of that, on purpose. It may be null, so handing it a value is not something the
 compiler will decide for you:

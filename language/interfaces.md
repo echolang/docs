@@ -265,6 +265,43 @@ echo $contact instanceof Vessel;    // 1
 
 Works against the concrete class and against the interface. See [Classes](/language/classes).
 
+`instanceof` does not change the type of the value. Once a class is stored as `Vessel`, you talk to
+it as a `Vessel`. Asking it to be something else is a recast, and you write it:
+
+```echo
+interface Vessel
+{
+    function hyperspace_speed() : int32;
+}
+
+interface Armed
+{
+    function guns() : int32;
+}
+
+class Hatak : Vessel, Armed
+{
+    int32 $glider_bays;
+
+    function hyperspace_speed() : int32 { return 32; }
+    function guns() : int32 { return $this->glider_bays * 2; }
+}
+
+Vessel $contact = Hatak(4);
+Armed $guns = $contact as Armed;
+echo $guns->guns();             // 8
+```
+
+If the object does not conform, the program stops. `$x as Other?` is the same check with absence
+instead of a stop, so you can `guard` it. Implicit `Armed $guns = $contact` is still refused. The
+conversion is written.
+
+A generic `function bind<T : Vessel>(T $x)` can recast inside `if ($x instanceof Armed)` even when
+some instantiations of `T` are not `Armed`. Both arms are type-checked for every `T`. The recast is
+a runtime check, not a static conversion that would refuse the non-conforming ones.
+
+`$contact as Hatak` is the same idea against the class, and hands the object handle back.
+
 ## Requiring an operator
 
 An interface can require an operator, which is how you say "these values can be compared" without naming a

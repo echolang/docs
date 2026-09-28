@@ -200,7 +200,7 @@ An `internal` property stays an implicit parameter. [Visibility](/language/visib
 ## `init` runs after every successful construction
 
 Some fields are not arguments. They are computed from the ones that are. `init` is that computation, and it
-runs at the end of every constructor that actually returns: the implicit one, a handwritten one, a copy. A
+runs at the end of every constructor that actually returns: the implicit one and every one you write. A
 `die` path does not return, so `init` does not run.
 
 ```echo
@@ -230,8 +230,32 @@ Both arms of an `if` count. Assign `$encoded` in the `then` and forget the `else
 by construction. A handwritten `constructor()` that never writes `$symbol` cannot then have `init` read
 `$this->symbol`.
 
-A copy still runs `init`. That is how a stamp that is derived from construction stays a stamp, instead of
-being shared with the original:
+## A copy is not a construction
+
+A copy copies every field, derived ones included. The copy equals its original, and a field you wrote
+after construction stays written. That holds whether the compiler copied the value or moved it, which
+is its choice to make and not something you can see:
+
+```echo
+struct Panel
+{
+    int32 $width;
+    int32 $bg;
+
+    init
+    {
+        $this->bg = 0;
+    }
+}
+
+Panel $main = Panel(640);
+$main->bg = 3;
+Panel $backup = $main;
+echo $backup->bg;           // 3, the copy keeps what you wrote
+```
+
+Want each copy recomputed? Write the copy constructor. `init` runs after it like after any other
+constructor you write, and `$b = $a` calls it just as `Wormhole($a)` does:
 
 ```echo
 class Gate
@@ -255,6 +279,16 @@ struct Wormhole
     Gate $gate;
     int32 $stamp;
 
+    constructor(Gate $gate)
+    {
+        $this->gate = $gate;
+    }
+
+    constructor(const Wormhole& $other)
+    {
+        $this->gate = $other->gate;
+    }
+
     init
     {
         $this->stamp = DialCount::bump();
@@ -264,7 +298,7 @@ struct Wormhole
 Wormhole $open = Wormhole(Gate(1));
 echo $open->stamp;          // 1
 Wormhole $backup = $open;
-echo $backup->stamp;        // 2, init ran again
+echo $backup->stamp;        // 2, init ran after the copy constructor
 echo $open->stamp;          // 1
 ```
 

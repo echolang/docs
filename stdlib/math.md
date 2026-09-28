@@ -40,10 +40,12 @@ want to write `9223372036854775807` from memory:
 echo std::math::MAX_INT64;       // 9223372036854775807
 echo std::math::MIN_INT64;       // -9223372036854775808
 echo std::math::MAX_UINT64;      // 18446744073709551615
+echo usize::max() == std::math::MAX_USIZE;   // 1
 ```
 
-`MIN_INT64` is `-MAX_INT64 - 1`, so the magnitude never has to be a literal `int64` cannot hold.
-`isize` / `usize` twins sit beside them; today they match `int64` / `uint64` because the pointer
+`usize::max()` is the same number as `MAX_USIZE`, spelled on the type. Use whichever you are already
+looking at. `MIN_INT64` is `-MAX_INT64 - 1`, so the magnitude never has to be a literal `int64` cannot
+hold. `isize` / `usize` twins sit beside them; today they match `int64` / `uint64` because the pointer
 width is 8.
 
 ## Every function comes in two, and the argument picks

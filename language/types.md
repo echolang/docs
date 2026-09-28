@@ -33,7 +33,7 @@ them.
 | `float32` | 4 bytes | IEEE 754 single |
 | `float64` | 8 bytes | IEEE 754 double |
 | `bool` | 1 byte | `true` or `false` |
-| `void` | — | not a value; a function return that produces nothing |
+| `void` | n/a | not a value; a function return that produces nothing |
 
 An inline array is a type constructor, like `ptr<T>`: `int32[4]` is four `int32`s in a row. It is
 storage. The collection with methods, iteration and a destination-typed literal is
@@ -46,9 +46,20 @@ echo mem::size<int32>();     // 4
 echo mem::size<usize>();     // 8 on a 64-bit machine
 ```
 
+A sentinel count is a name on the type, not eighteen digits from memory. Integer primitives answer
+`min()` and `max()` as statics:
+
+```echo
+echo usize::max();      // 18446744073709551615
+echo int32::min();      // -2147483648
+```
+
+[`std::math::MAX_USIZE`](/stdlib/math) is the same number as a constant. [Primitive types](/reference/primitive-types)
+has the rest of the table.
+
 `void` is the return type that means the function produces nothing. A function that returns nothing
 still has to say `: void` out loud. It is not a local, a field, a parameter, or a type argument.
-`ptr<void>` is not C's untyped pointer — that is `ptr<Handle>` over an `extern struct`.
+`ptr<void>` is not C's untyped pointer. That is `ptr<Handle>` over an `extern struct`.
 
 A function that can fail and has nothing to hand back on success returns [`status<E>`](/stdlib/status),
 not `result<bool, E>`.

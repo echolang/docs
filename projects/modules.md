@@ -277,6 +277,8 @@ order that works, without naming it. The same is true of link requirements: a mo
 `#[link: lib "m"]` carries it to everything downstream, however many modules sit in between.
 
 That's the property the whole design is built around. A consumer writes `#[depends:]` and nothing else.
+A path module's `#[requires:]` come along too. The compiler looks them up in the program's `vendor/`.
+`epm install` at the program is what fills it. You do not run epm inside the library.
 
 ## Order is decided for you, and a cycle cannot be satisfied
 

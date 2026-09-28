@@ -19,7 +19,7 @@ you'll eventually trip over.
 | Arithmetic | `+` `-` `*` `/` `%` `**` |
 | Comparison | `==` `!=` `<` `>` `<=` `>=` |
 | Logical | `&&` `\|\|` `!` |
-| Bitwise | `&` `\|` `^` `<<` `>>` |
+| Bitwise | `&` `\|` `^` `<<` `>>` `~` |
 | Increment | `++` `--` |
 | Null | `??` `?->` |
 
@@ -41,11 +41,26 @@ echo 7 / 2.0;       // 3.500000
 die("no")` doesn't die, and `true || die("no")` doesn't die. Both sides stay `bool`. There is no
 truthiness. `??` and `?->` are the other forms that skip a side; see [Nullability](/memory/nullability).
 
-The bitwise operators are integers only. A float has no bits as far as the language is concerned:
+The bitwise operators are integers only, including prefix `~`. `~` is the unary half of `& | ^`,
+prefix-only like `!`:
 
+```echo
+echo (~5);          // -6
+echo (~~5);         // 5
+```
+
+A float has no bits as far as the language is concerned:
+
+<!-- verify: skip -->
 ```echo
 echo 1.5 & 2.0;
 // error: operator '&' is not supported on operands of type 'float64' and 'float64'
+```
+
+<!-- verify: skip -->
+```echo
+echo (~1.5);
+// error: operator '~' is not supported on an operand of type 'float64'
 ```
 
 ## Precedence

@@ -114,8 +114,111 @@ echo HttpStatus::from(200) != null;     // 1
 echo HttpStatus::from(999) == null;     // 1
 ```
 
-That's the honest answer for HTTP. It is the wrong answer for a C error code. A newer miniaudio will invent
-a number you have not named, and `null` is either a lie or a crash at the `guard`. That is the next section.
+That's the honest answer for HTTP. `999` is not a status, and `null` says so.
+
+## A named map is a second view of the same cases
+
+Backing is one encoding, and it is the enum's own. Sometimes you need another: the DHD's glyph
+indices, two C libraries that disagree on the numbers. None of those is what the enum *is*. Write
+the relation on the enum, once:
+
+```echo
+enum Glyph
+{
+    case unknown;
+    case earth;
+    case abydos;
+
+    map dhd : int32
+    {
+        .unknown = -1;
+        .earth   = 1;
+        .abydos  = 27;
+    }
+}
+
+echo Glyph::abydos->dhd();                      // 27
+echo Glyph::from(dhd: 27) != null;              // 1
+echo Glyph::from(dhd: 999) == null;             // 1
+
+Glyph $g = Glyph::from(dhd: 999) ?? .unknown;
+echo $g == Glyph::unknown;                      // 1
+```
+
+`$glyph->dhd()` is total: every listed case has a code. `Glyph::from(dhd: $raw)` is partial, because
+`999` is not in the relation. The DHD's own unknown sentinel is `-1`, which is `.unknown`. Those two
+inputs are different facts. `?? .unknown` is the caller's policy, not something the map invents.
+
+`map` is not a reserved word. `map<K, V>` is still the stdlib type. A second map is a second named
+view: `map ancient : int32 { ... }` mints `$glyph->ancient()` and `Glyph::from(ancient: $raw)`. The
+unnamed integer backing, if there is one, still synthesizes unlabelled `from($raw)` and `value()`.
+They do not clash.
+
+A listed case appears once. Every right-hand side is a compile-time integer, or a payload-free enum
+case. Two cases cannot share a code: the reverse would not be a function. There is no `else` to
+write. Cases you leave out are the holes. A payload case has nowhere to sit in a table of tags, so
+a map is a payload-free enum's.
+
+Leave a case out and the forward becomes optional. `Status::from(color: $c)` stays partial either
+way: a colour no status maps to is `null`.
+
+```echo
+enum Color
+{
+    case red;
+    case green;
+    case blue;
+}
+
+enum Status
+{
+    case ok;
+    case warn;
+    case error;
+
+    map color : Color
+    {
+        .ok   = .green;
+        .warn = .blue;
+    }
+}
+
+echo Status::ok->color() != null;           // 1
+echo Status::error->color() == null;        // 1
+
+Color $c = Status::ok->color() ?? .red;
+echo $c == Color::green;                    // 1
+```
+
+The colon already names the destination, so an enum range uses the leading dot, the same shorthand
+a `Color $c = .green` uses. List every case and `$s->color()` is total: a `Color`, not a `Color?`.
+
+The enum does not have to own the map. A DHD binding cannot put codes on a `Glyph` it did not
+declare, so the same relation sits next to the type with `for`:
+
+```echo
+enum Glyph
+{
+    case unknown;
+    case earth;
+    case abydos;
+}
+
+public map dhd : int32 for Glyph
+{
+    .unknown = -1;
+    .earth   = 1;
+    .abydos  = 27;
+}
+
+echo Glyph::abydos->dhd();                      // 27
+echo Glyph::from(dhd: 27) != null;              // 1
+```
+
+Call sites are unchanged: `$glyph->dhd()` and `Glyph::from(dhd: $raw)`. A file-scope map is a
+declaration of this module, so `public` is what a library writes to export it. Leave it off and
+only this module can name the methods. An in-body map stays as reachable as the enum. There is
+still no modifier to write there.
 
 ## An integer enum can be open
 

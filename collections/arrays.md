@@ -130,7 +130,7 @@ array<int32> $numbers = array<int32>();
 
 $numbers->push(1);              // same as $numbers[] = 1
 
-int32& $slot = $numbers->at(0); // same as &$numbers[0]
+int32& $slot = $numbers[0];     // a T& destination takes the address, same as at(0) or &$numbers[0]
 $slot = 5;
 
 echo $numbers[0];               // 5

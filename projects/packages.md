@@ -56,6 +56,11 @@ A requirement in a *vendored* module uses the **root** package directory, not it
 `vendor/echolang/libcurl/module.eco` writing `#[requires: "echolang/libjson"]` finds
 `<root>/vendor/echolang/libjson`.
 
+A `#[requires:]` on a path module is the same lookup. The compiler never reads a `vendor/` next to
+the library. `epm install` at the program walks those path modules, treats their git requires as
+extra solve roots, and vendors into the program's `vendor/`. The path module itself stays where it
+is. You do not re-declare the library's requires, and you do not run epm inside the library.
+
 `../escape`, `foo/../bar` and `foo//bar` are refused, because those would leave `vendor/` or name a
 directory that is not a package. A slash that only nests under `vendor/` is the prefix.
 

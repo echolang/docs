@@ -121,10 +121,13 @@ struct can have a property called `constructor` and nothing breaks.
 `init` in a type body is the same kind of word. `init { $this->encoded = ...; }` is recognised only there,
 and `mem::init` is still a function. [Structs](/language/structs) is the chapter.
 
-Four more words are contextual in the same way, recognised only in one position and ordinary identifiers
+A few more words are contextual in the same way, recognised only in one position and ordinary identifiers
 everywhere else:
 
 - `type`, inside an interface body, declaring an associated type.
+- `map`, inside an enum body, or at file scope as `map dhd : int32 for Glyph { ... }`. It names a
+  second encoding of the cases. `map<K, V>` is still the stdlib type. [Enums](/language/enums) is
+  the chapter.
 - `self`, in `self::NAME`, reaching a constant on the enclosing type.
 - `left` and `right`, inside an `operator(45, left)` precedence clause.
 - `numeric`, `integer`, `signed`, `unsigned` and `floating`, as generic constraint aliases.
@@ -156,6 +159,7 @@ above. [Primitive types](/reference/primitive-types) has the full list.
 | `<<` `>>` | shift left, shift right | [Expressions](/language/expressions) |
 | `&&` `\|\|` | logical and, logical or | [Expressions](/language/expressions) |
 | `\|` `^` | bitwise or, bitwise xor | [Expressions](/language/expressions) |
+| `~` | bitwise not, prefix-only like `!` | [Expressions](/language/expressions) |
 | `<` `>` | comparison, and the brackets around type arguments | [Generics](/language/generics) |
 | `#` `[` `]` | an attribute is `#` followed by a bracketed value | [Attributes](/reference/attributes) |
 | `//` `/* */` | comments. No doc-comment form | |

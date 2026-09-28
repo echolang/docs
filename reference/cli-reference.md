@@ -1,6 +1,6 @@
 # CLI reference
 
-`echoc` has five subcommands and thirty options. That's the whole surface, and it's one list: what you
+`echoc` has five subcommands and thirty-four options. That's the whole surface, and it's one list: what you
 type, what `--help` prints, and what a refusal names all come from the same place. There is no second table
 that can drift.
 
@@ -27,7 +27,7 @@ echoc lsp   [options]
 | Command | Does | Defaults to |
 |---|---|---|
 | `run` | compile and run through the JIT. Nothing is written beside your sources | `--debug` |
-| `build` | compile and link a native executable. Needs `clang` on your PATH | `--release` |
+| `build` | compile and link a native executable. Needs `clang`: bundled on Windows, otherwise the one on your PATH | `--release` |
 | `test` | compile and run the `test` blocks, one process each, through the JIT | `--debug` |
 | `clean` | remove what a build produced. Parses no source and runs no pass | n/a |
 | `lsp` | speak the Language Server Protocol over stdin and stdout | `--debug` |
@@ -76,6 +76,7 @@ nothing and builds nothing.
 | `--debug-symbols` | `-g` | compiling | flag | off | emit DWARF. Implies `--optimize none` unless you stated one |
 | `--no-tbaa` | | compiling | flag | off | emit no type-based alias metadata |
 | `--track-allocations` | | compiling | flag | off | count outstanding allocations. What `mem::live_allocations()` needs |
+| `--check-refcounts` | | compiling | flag | off | trap on releasing an already-dead object. Keeps every class box, poisoned |
 | `--no-stdlib` | | compiling, lsp | flag | off | compile without the standard library |
 | `--emit-stdlib-header` | | compiling | flag | off | regenerate the embedded stdlib header |
 
@@ -88,6 +89,7 @@ halves of either pair is a refusal, not a last-one-wins.
 |---|---|---|---|---|---|
 | `--target-os <name>` | | all | name | the host | evaluate `#[if:]` as if targeting this OS |
 | `--target-arch <name>` | | all | name | the host | the same for the architecture |
+| `--ios-device` | | build | flag | off | with `--target-os ios`, emit for a physical iPhone |
 | `--define <name>` | | all | bare name, repeatable | | declare a flag `#[if: NAME]` can test |
 | `--target-cpu <name>` | | compiling | name | a per-platform baseline | which CPU to select instructions for |
 | `--target-features <list>` | | compiling | comma list of `+f` / `-f` | empty | features to enable or disable |
@@ -98,7 +100,16 @@ than equality.
 `--target-cpu` is **never the host by default**. `native` has to be asked for by name, since a binary built
 for the host CPU is an illegal instruction on the machine next door rather than a diagnostic.
 
-`--target-os` and `--target-arch` change what a `#[if:]` sees and nothing else. They do not cross-compile.
+`--target-os` and `--target-arch` change what a `#[if:]` sees. On every subcommand except one, that
+is all they do: the code is still compiled for this machine.
+
+The exception is Darwin `echoc build --target-os ios`. That is a real cross-compile, to the iOS
+simulator SDK. `--ios-device` switches it to a physical iPhone. `echoc run --target-os ios` still
+only picks `#[if:]` arms and JITs for this machine, which is how a test asserts what the iOS branch
+does. Other names (`linux`, `windows`, `android`) stay facts-only on every subcommand: there is no
+Linux sysroot on a Mac.
+
+`--target-os ios` also selects `family == darwin`. There is no `--target-family`.
 
 ### What echoc tells you
 

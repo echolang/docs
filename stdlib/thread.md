@@ -219,7 +219,26 @@ rather than becoming a rendezvous.
 ## The value lives inside the lock
 
 `mutex<T>` keeps `T` inside the object. There is no way to name it without going through `lock()`.
-`$held->value` is a place:
+`$held->value` is a `T&`: a place, a method receiver, an index. An array behind a mutex is still
+an array:
+
+```echo
+use std::thread;
+
+thread::mutex<array<int32>> $m = thread::mutex<array<int32>>(array<int32>());
+
+{
+    thread::locked<array<int32>> $held = $m->lock();
+    $held->value->push(7);
+    $held->value->push(9);
+    echo $held->value[0];       // 7
+}
+
+thread::locked<array<int32>> $held = $m->lock();
+echo $held->value->count();     // 2
+```
+
+A scalar is the same borrow, just assigned:
 
 ```echo
 use std::thread;
