@@ -30,7 +30,7 @@ range<int32> $seven = 0 .. 7;
 assert($chevrons->count() == 3);
 ```
 
-`array`, `fixed_array`, `map`, `ordered_map`, `string`, `slice`, `range`, `result`, `status`, `rc`, `type_id`, `erased`, plus `die`, `assert` and `dprint`. You write
+`array`, `fixed_array`, `map`, `ordered_map`, `string`, `slice`, `range`, `result`, `status`, `ordering`, `rc`, `type_id`, `erased`, plus `die`, `assert` and `dprint`. You write
 these every day, so they cost you no namespace at all.
 
 **Tier two is still about the language, but you don't write it every line.** A short namespace:
@@ -40,8 +40,9 @@ echo mem::size<int32>();             // 4
 echo hash::of(42) == hash::of(42);      // 1
 ```
 
-`contract::` (interfaces only), `mem::`, `str::`, `arr::`, `hash::` and `crash::`. Container plumbing, mostly.
-If you're writing a data structure you'll live here. Otherwise you'll visit for `mem::size` and leave.
+`contract::` (interfaces only), `mem::`, `str::`, `arr::`, `hash::`, `crash::`, `sort::`,
+`simd::` and `bits::`. Container plumbing, mostly. If you're writing a data structure you'll live
+here. Otherwise you'll visit for `mem::size` and leave.
 
 **Tier three is ordinary utility with nothing to do with the language.** Fully qualified under `std`:
 
@@ -136,10 +137,13 @@ echo $c->bump(5);       // 7
 |---|---|---|
 | root | `array`, `map`, `ordered_map`, `string`, `slice`, `range`, `die`, `assert`, `dprint` | [Collections](/collections/arrays) |
 | root | `result` | [Results](/stdlib/result) |
+| root | `ordering`, `<=>` | [Sorting internals](/stdlib/sort) |
 | root | `atomic<T>` | [Atomics](/memory/atomics) |
-| `contract::` | `iterator`, `iterable`, `const_iterable`, `keyed`, `unwrappable`, `failable` | [Contracts](/stdlib/contract) |
+| `contract::` | `iterator`, `iterable`, `const_iterable`, `keyed`, `unwrappable`, `failable`, `comparable`, `comparator` | [Contracts](/stdlib/contract) |
 | `mem::` | allocation, type queries, `take` / `init`, `buffer<T>`, `mem::atomic::` | [Memory](/stdlib/mem) |
 | `hash::` | `of` and the composition primitives | [Hashing](/stdlib/hash) |
+| `sort::` | the kernels behind `array<T>::sort` | [Sorting internals](/stdlib/sort) |
+| `simd::` | splat, load, store, select, bitmask, any, all | [SIMD](/language/simd) |
 | `str::` | `str::from` and the formatting surface, splitting and joining, case conversion, `str::buf`, the C string boundary | [String functions](/stdlib/str) |
 | `arr::` | `merge` and `room` | [Arrays](/stdlib/arr) |
 | `crash::` | `set_hook`, `take_hook`, `default_hook`, `info` | [Crash reports](/stdlib/crash) |
@@ -155,6 +159,7 @@ echo $c->bump(5);       // 7
 ## Next
 
 - [Contracts](/stdlib/contract) for the interfaces `foreach` uses, and how your own type joins them.
+- [Sorting](/collections/sorting) for `sort`, `sort_unstable`, `by:` and `key:`.
 - [Memory](/stdlib/mem) for what a container is built out of.
 - [Collections](/collections/arrays) for the types you will actually reach for first.
 - [Threads](/stdlib/thread) for `spawn`, `mutex` and `task`.

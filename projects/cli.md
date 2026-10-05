@@ -5,7 +5,7 @@ What there is instead: **`run` and `build` are not the same build**, and most of
 ways they differ.
 
 ```bash
-echoc run app.eco               # compile in memory, execute now
+echoc run app.eco               # compile, link, execute (reuses the module cache)
 echoc build -o app app.eco      # compile and link a native binary
 echoc test                      # compile and run the test blocks, one process each
 echoc clean                     # remove what a build produced
@@ -21,9 +21,9 @@ unchanged, because it is the same compile.
 
 ## `run` is the loop, `build` is the artifact
 
-`run` compiles into memory and executes through the JIT. Nothing is written beside your sources, nothing is
-linked, and the program starts almost immediately. It defaults to `--debug`, so `assert` and the runtime
-checks stay in.
+`run` compiles, links, and execs a scratch binary. It uses the same per-module object cache `build`
+does, so a second `run` after you change one file only rebuilds that file's module. It defaults to
+`--debug`, so `assert` and the runtime checks stay in.
 
 `build` produces a real executable, which needs `clang` for the link step. On macOS and Linux that is
 the one on your `PATH`. A Windows release already has clang, lld-link and a sysroot next to `echoc`.
@@ -33,7 +33,7 @@ It defaults to `--release`, so `assert` is compiled out.
 The bit that surprises people: the defaults go opposite ways on purpose, and either can be overridden.
 
 ```bash
-echoc run --release app.eco     # the release semantics, without linking
+echoc run --release app.eco     # the release semantics, then exec
 echoc build --debug -o app app.eco
 ```
 
@@ -211,9 +211,19 @@ echoc build --explain cache --explain time -o app app.eco
     read sources              4.24 ms
     lex                      26.72 ms
     ...
+  semantic passes           120.00 ms
+    constants                 2.00 ms
+    instances               110.00 ms
+    pointers                  3.00 ms
+    access                    2.00 ms
+    types                     3.00 ms
   emit + link               126.09 ms
     emit objects             25.44 ms
+      optimize               18.00 ms
+      machine code            7.44 ms
     link                    100.63 ms
+  slowest (optimize)
+    Type::method             12.00 ms
 ```
 
 These are ordinary output, not debugging leftovers. The very first run of `time` turned up that expanding the

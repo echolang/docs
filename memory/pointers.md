@@ -370,6 +370,57 @@ ptr<int32> $p = &Outer(Inner(1))->in->tag;
 //        destroyed at the end of this statement. Bind it to a variable first.
 ```
 
+So, what about forwarding a borrow through a local? A `T&` local holds the address it was bound
+to. Returning it is the same question as returning the initializer, so this compiles:
+
+```echo
+struct Store
+{
+    int32 $v;
+
+    function at() : int32&
+    {
+        return $this->v;
+    }
+
+    function first() : int32&
+    {
+        int32& $slot = $this->at();
+        return $slot;
+    }
+}
+
+Store $s = Store(7);
+int32& $r = $s->first();
+$r = 42;
+echo $s->v;     // 42
+```
+
+A class handle is a different shape. The pointer bits live in the object. Loading the field copies
+those bits, so you are not handing back storage that dies when the function returns:
+
+```echo
+class Body
+{
+    ptr<int32> $raw;
+
+    constructor(ptr<int32> $raw)
+    {
+        $this->raw:$ = $raw;
+    }
+}
+
+function skip(Body? $ignore) : ptr<int32>
+{
+    Body $body = guard $ignore else { return null; }
+    return $body->raw;
+}
+
+int32 $n = 7;
+ptr<int32> $p = skip(Body(&$n));
+echo $p;                    // 7
+```
+
 What the compiler will not catch is a pointer that outlives its target through a variable, or one you stashed
 in a struct. Those are yours to keep straight.
 

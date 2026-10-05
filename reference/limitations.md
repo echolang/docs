@@ -37,6 +37,11 @@ returns a `T&`. Reading through the borrow and calling a method through it both 
 
 **Map literals.** `["LHR" => "Heathrow"]` does not parse. Construct the map and fill it.
 
+**SIMD is 16 bytes, and a lane is not a place.** `simd<T, N>` exists: integer, float and bool
+lanes, N a power of two, width at most 16 bytes. There is no `$v[i]`, no implicit splat, and a
+vector by value is refused on `extern`. A comparison answers `simd<bool, N>`, so
+`if ($a == $b)` over two vectors will not compile. See [SIMD](/language/simd).
+
 **Exceptions.** No `throw`, no `try`, no `catch`. Recoverable failure is a `T?`, or a
 [`result<T, E>`](/stdlib/result) when you need a reason. `assert` for "this should never happen", `die`
 for "no recovering from this".
@@ -137,8 +142,6 @@ no `stat`, no `mkdir_p`, and nothing that walks a tree.
 **`std::io::readline()` on stdin is still unbuffered.** One `read` per byte, so it cannot steal input from
 anything else on fd 0. Wrap stdin in a [`reader`](/stdlib/io/buffering) when you want the window, stdout in a
 `writer` when you want the write window. A [`std::io::file`](/stdlib/io/files) is buffered already.
-
-**`map<K, V>` uses linear probing.** It is correct and it is not fast. A better table is planned.
 
 **`std::math::abs<T>`'s generic body is dead for floats**, and `clamp` exists only for `float32` and
 `float64`, with no integer widths.

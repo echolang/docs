@@ -39,6 +39,10 @@ An inline array is a type constructor, like `ptr<T>`: `int32[4]` is four `int32`
 storage. The collection with methods, iteration and a destination-typed literal is
 [`fixed_array<T, N>`](/collections/fixed-arrays).
 
+A vector is a different constructor: [`simd<T, N>`](/language/simd) is N packed lanes, not N slots
+you index. A lane is an integer, a float or a `bool`. N is a power of two. The whole thing is at
+most 16 bytes.
+
 You can ask for a size yourself, which is occasionally handy and is the same number the table claims:
 
 ```echo

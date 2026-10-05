@@ -94,7 +94,7 @@ echo "still here";      // still here
 ```
 
 The full set of names the compiler answers this way: `size_of`, `align_of`, `is_trivially_copyable`,
-`needs_destruction`, `take`, `init`, `die`, `assert`, `ref_count`, `weak_count`, `dprint`, `alloc_bytes`,
+`needs_destruction`, `is_integer`, `take`, `init`, `die`, `assert`, `ref_count`, `weak_count`, `dprint`, `alloc_bytes`,
 `realloc_bytes`, `free_bytes`, `live_allocations`, `process_argc`, `process_argv`, `process_envp` and `exit`.
 Nothing reserves them, so you can declare a function called `assert` and shadow it. I would not.
 
@@ -131,6 +131,8 @@ everywhere else:
 - `self`, in `self::NAME`, reaching a constant on the enclosing type.
 - `left` and `right`, inside an `operator(45, left)` precedence clause.
 - `numeric`, `integer`, `signed`, `unsigned` and `floating`, as generic constraint aliases.
+- `where`, after a function's return type, constraining a type parameter already in scope
+  (`function sort() : void where T : contract::comparable<T>`). A function may still be named `where`.
 
 ## Primitive type names are not keywords either
 

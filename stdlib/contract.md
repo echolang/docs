@@ -295,6 +295,27 @@ per-level flag with no declaration anywhere, and the tagged form is a layout the
 compiler answers for `T?` directly, before these interfaces are consulted at all, which is why `guard` over a
 `T?` still works with `--no-stdlib`.
 
+## Ordering is the same shape as iteration
+
+`comparable<T>` is to `sort` what `iterable<V>` is to `foreach`: one capability, declared, and
+the library methods that need it are constrained with `where`. Only `<`, because a primitive can
+only ever answer an operator, and `int32` has to sort.
+
+```echo
+function lighter<T : contract::comparable<T>>(T $a, T $b) : bool
+{
+    return $a < $b;
+}
+
+echo lighter(1, 3);     // 1
+```
+
+A struct still writes `: contract::comparable<Self>` even if it already has a `<`. Having the
+operator is not the opt-in. [Sorting](/collections/sorting) is the chapter.
+
+`comparator<T>` is the other half, a `compare` that returns `ordering`. That is what
+`sort(by: $c)` takes when the natural order is not the one you want.
+
 ## The protocol is genuinely open
 
 Your own type loops as well as `array<T>` does, and that's not generosity. It's because `array<T>` never
@@ -318,9 +339,12 @@ program compiled without the library has no iteration protocol and `foreach` say
 | `contract::unwrappable<V>` | `const function has_value() : bool` | is there a value. Asked first, and it gates the next one |
 | | `unwrap() : V&` | the value, valid only after `has_value()` said true |
 | `contract::failable<E>` | `failure() : E&` | why there is no value, valid only after `has_value()` said false |
+| `contract::comparable<T>` | `operator (const T& $a) < (const T& $b) : bool` | a type that can be ordered. primitives answer structurally; a struct opts in |
+| `contract::comparator<T>` | `const function compare(const T& $a, const T& $b) : ordering` | an external order, inlined into `sort(by:)` |
 
 ## Next
 
 - [Iteration](/collections/iteration) for `foreach` itself, including the `$k => $v` form.
+- [Sorting](/collections/sorting) for `sort`, `sort_unstable`, `by:` and `key:`.
 - [Interfaces](/language/interfaces) for conformance, associated types and the two jobs an interface does.
 - [Generics](/language/generics) for the type parameters these interfaces constrain.

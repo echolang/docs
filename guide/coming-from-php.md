@@ -31,6 +31,7 @@ you expected" rather than by topic.
 | Runs on a request, dies | Compiles to a native binary |
 | `strtoupper` / `mb_strtoupper` | `str::upper`. there is no byte-corrupting variant; Echo's is the `mb_` one |
 | `ucfirst` / `mb_ucfirst` | `str::ucfirst`. first **codepoint**, not first byte |
+| `sort` / `usort` / `asort` | `$a->sort()` is stable, `$a->sort_unstable()` is not. A user comparator is `sort(by: ...)`. PHP's `usort` means "user"; here `unstable` is the algorithm. [Sorting](/collections/sorting) |
 
 ## Types are not optional
 

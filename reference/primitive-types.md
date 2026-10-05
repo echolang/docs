@@ -35,6 +35,9 @@ the exact wording of every conversion the compiler refuses.
 `bool` is one bit in the emitted code and one byte in memory, which is the usual arrangement and never
 something you have to think about.
 
+[`simd<T, N>`](/language/simd) is not a primitive. It is a type constructor, like `ptr<T>` and
+`T[N]`: N lanes of a primitive, packed. A `bool` lane is one bit. The cap is 16 bytes.
+
 Ask for a size yourself and you get the same numbers:
 
 ```echo

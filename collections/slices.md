@@ -230,8 +230,24 @@ I would rather have this checked than documented, and that is on [the list](/ref
 then it is a rule you keep, not one you are held to. [Pointers and references](/memory/pointers) has the
 same discussion for the rest of the borrowing machinery.
 
+## Sorting a window
+
+The sort methods live here, and they write through into whatever the slice covers. An array's
+`$a->sort()` is `$a->sub()->sort()`. Sort a middle and the outside stays put.
+[Sorting](/collections/sorting) is the chapter.
+
+```echo
+array<int32> $n = [9, 3, 1, 2, 8];
+$n->sub(1, 3)->sort();
+echo $n[0];     // 9
+echo $n[1];     // 1
+echo $n[3];     // 3
+echo $n[4];     // 8
+```
+
 ## Next
 
 - [Arrays](/collections/arrays) for the owning side, and for what makes a buffer move.
+- [Sorting](/collections/sorting) for `sort`, `sort_unstable`, `by:` and `key:`.
 - [Iteration](/collections/iteration) for looping over a slice, including a const one.
 - [Pointers and references](/memory/pointers) for what a borrow is and how far it reaches.

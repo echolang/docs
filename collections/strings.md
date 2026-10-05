@@ -357,7 +357,9 @@ parameter**. A generic body comparing two `K`s writes `$a == $b`, and that has t
 comparison when `K` is a primitive and to a declared operator when it is a struct. There is no `equals` on
 `int32` to call instead. [Maps](/collections/maps) is what needs it.
 
-There is no `+` for strings, and no ordering operators. Use `concat` and `equals`.
+There is no `+` for strings. Use `concat`. Ordering is byte lexicographic: `<`, `>`, `<=`, `>=`
+and `<=>`, all declared, all going through `memcmp` then the lengths. That is what lets
+`array<string>` sort. [Sorting](/collections/sorting) is the chapter.
 
 ## Crossing into C
 
@@ -528,6 +530,7 @@ a sentence.
 ## Next
 
 - [Maps](/collections/maps) for `string` as a key, which is what `==` and `hash::of` are for.
+- [Sorting](/collections/sorting) for `array<string>` and the ordering operators.
 - [Slices](/collections/slices) for the same borrow-a-window idea over arbitrary elements.
 - [Input and Output](/stdlib/io/) for writing text out and reading a line back.
 - [String functions](/stdlib/str) for `str::from`, `split`, `join`, `trim` and the C string boundary.

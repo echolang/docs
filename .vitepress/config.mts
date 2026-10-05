@@ -33,6 +33,7 @@ const sidebar = [
       { text: 'Enums', link: '/language/enums' },
       { text: 'Generics', link: '/language/generics' },
       { text: 'Operators', link: '/language/operators' },
+      { text: 'SIMD', link: '/language/simd' },
       { text: 'Namespaces', link: '/language/namespaces' },
       { text: 'Visibility', link: '/language/visibility' },
       { text: 'Constants', link: '/language/constants' },
@@ -58,6 +59,7 @@ const sidebar = [
       { text: 'Fixed arrays', link: '/collections/fixed-arrays' },
       { text: 'Maps', link: '/collections/maps' },
       { text: 'Slices', link: '/collections/slices' },
+      { text: 'Sorting', link: '/collections/sorting' },
       { text: 'Ranges', link: '/collections/ranges' },
       { text: 'Iteration', link: '/collections/iteration' },
     ],
@@ -85,6 +87,7 @@ const sidebar = [
       { text: 'Status', link: '/stdlib/status' },
       { text: 'Crash reports', link: '/stdlib/crash' },
       { text: 'Hashing', link: '/stdlib/hash' },
+      { text: 'Sorting', link: '/stdlib/sort' },
       { text: 'String functions', link: '/stdlib/str' },
       { text: 'Arrays', link: '/stdlib/arr' },
       {

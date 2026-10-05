@@ -340,6 +340,31 @@ exist.
 
 An interface with an operator requirement can't be a stored type. There is no vtable slot for `<`.
 
+## A primitive can answer an operator-only interface
+
+`int32` cannot write `: contract::comparable<int32>`. There is no declaration to hang a
+conformance on. For an interface whose requirements are all operators, that is fine: the
+operators are the language's own, so the type conforms structurally.
+
+```echo
+function lighter<T : contract::comparable<T>>(T $a, T $b) : bool
+{
+    return $a < $b;
+}
+
+echo lighter(1, 3);         // 1
+echo lighter(1.5, 0.5);     // 0
+```
+
+A `bool` has no `<`, so it does not. A simd comparison produces a mask, not a `bool`, so
+`simd<int32, 4>` does not either.
+
+A struct still has to opt in, even if it already declared `<`. Having the operator is not
+enough. That is the point of the contract: accidental `<` does not make you sortable.
+[Sorting](/collections/sorting) is what that is for.
+
+A method requirement still refuses a primitive. There is no `int32::compare()`.
+
 ## Generic interfaces
 
 An interface can take type parameters, and a conformance names the arguments:
@@ -441,3 +466,4 @@ make the interface generic and pass the type in, as `Comparable<Naquadah>` does 
 - [Generics](/language/generics) for the type parameters these constrain.
 - [Classes](/language/classes) for the half that can be a stored interface value.
 - [Iteration](/collections/iteration) for `contract::iterable` and writing your own cursor.
+- [Sorting](/collections/sorting) for `contract::comparable` and why a primitive can answer it.

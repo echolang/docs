@@ -303,9 +303,21 @@ Let that sink in for a second. **Ranges are not syntax.** They are two operator 
 library file, and `foreach (0 .. 10 as $i)` works because the thing they return declares that it can be
 iterated. Compile with `--no-stdlib` and the dots stop meaning anything.
 
+`<=>` is the same trick. It is declared in the standard library, returns `ordering`, and is
+derived from `<` for any `comparable<T>`. PHP readers know the symbol. It is **not** in the
+language's comparison table, because without the library it is not a symbol at all.
+
+```echo
+echo (1 <=> 2) == ordering::less;       // 1
+echo ('b' <=> 'a') == ordering::greater;    // 1
+```
+
+`string` and `string::view` have a concrete overload that does one `memcmp` and wins the tie
+against the generic form. [Sorting](/collections/sorting) is what you actually call.
+
 One current gap: a generic overload of a symbol that *does* have a built-in meaning is refused, because
 inside the template the operands are still `T` and the compiler answers "that might be a primitive". See
-[Generics](/language/generics).
+[Generics](/language/generics). The generic `<=>` is fine because nothing is built in for it.
 
 ## A word of caution
 
@@ -320,3 +332,4 @@ to look up what your symbol does, a named function was the better call.
 - [Expressions](/language/expressions) for the built-in operators and the precedence table.
 - [Generics](/language/generics) for generic operators and their one limitation.
 - [Interfaces](/language/interfaces) for requiring an operator in a contract.
+- [Sorting](/collections/sorting) for `<=>`, `ordering`, and `sort`.

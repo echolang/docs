@@ -103,6 +103,19 @@ foreach ($quad as $n) {
 
 `->sub()` is written out, the same as on `array<T>`. A slice is a borrow.
 
+## Sorting
+
+Same methods as an array: `sort()`, `sort_unstable()`, plus `by:` and `key:`. The
+length is the type, so there is no growing to think about. [Sorting](/collections/sorting) is
+the chapter.
+
+```echo
+fixed_array<int32, 4> $quad = [4, 1, 3, 2];
+$quad->sort();
+echo $quad[0];      // 1
+echo $quad[3];      // 4
+```
+
 ## It is already a C buffer
 
 Every slot is live and `N` is the type, so there is no spare to commit. `data()` is the first
@@ -140,4 +153,5 @@ echo $copy[0];      // c
 - [C interop](/projects/c-interop) for handing `data()` to a C function.
 - [Arrays](/collections/arrays) for the growable heap collection.
 - [Slices](/collections/slices) for a window onto these elements.
+- [Sorting](/collections/sorting) for `sort` and `sort_unstable`.
 - [Generics](/language/generics) for `const usize N` on your own types.

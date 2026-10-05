@@ -112,9 +112,10 @@ separate functions rather than one with a flag. And note what `move` does *not* 
 and nothing is destroyed, so the number of owners is unchanged. That's what makes it correct for a `T`
 that owns something, with no branch on `T` at all.
 
-`mem::zero<T>` fills `$count` elements with zero bytes.
+`mem::zero<T>` fills `$count` elements with zero bytes. `mem::fill_bytes` is the same call when the
+fill is a byte other than 0.
 
-## Four questions you can ask about a type
+## Questions you can ask about a type
 
 ```echo
 struct Chevron
@@ -126,6 +127,8 @@ echo mem::size<int32>();                     // 4
 echo mem::align<float64>();                  // 8
 echo mem::is_trivially_copyable<Chevron>();     // 1
 echo mem::needs_destruction<string>();          // 1
+echo mem::is_integer<int32>();                  // 1
+echo mem::is_integer<float64>();                // 0
 ```
 
 `size<T>` is the **allocation stride**, so it includes tail padding. `size<T>() * $n` is exactly the
@@ -137,8 +140,14 @@ constructor, and for a struct holding any of those however deep. `needs_destruct
 counterpart: true when a `T` going out of scope has something to give back, false for a primitive, false for
 a pointer, because an address says nothing about what is behind it.
 
-These are the same questions the language already answers for you every time it copies or destroys a value.
-Asking them out loud lets your own code branch on the answer instead of guessing.
+`is_integer<T>` is the numeric twin of those two: signed and unsigned of every width, `usize` and
+`isize`. False for a float, a bool, a pointer, a simd vector, and every declared type.
+[Sorting](/collections/sorting) uses it so `sort()` on an integer array can skip a stability
+nobody can observe. A float has `<` and still has `-0.0 == 0.0`, so it stays on the stable path.
+
+The copy and destruction questions are the same ones the language already answers every time it
+copies or destroys a value. Asking them out loud lets your own code branch on the answer instead of
+guessing. `is_integer` is the same idea for the numeric kind.
 
 ## Those answers are constants, so a `const if` can branch on them
 
@@ -380,6 +389,9 @@ which is why `atomic<T>` keeps the slot private. [Atomics](/memory/atomics) is t
 | `align<T>() : usize` | required alignment in bytes, a compile-time constant |
 | `is_trivially_copyable<T>() : bool` | true when a copy is a byte copy and nothing else |
 | `needs_destruction<T>() : bool` | true when going out of scope has something to give back |
+| `is_integer<T>() : bool` | true for the integer primitives, including `usize` and `isize` |
+| `fill_bytes(ptr<uint8>, uint8, usize) : void` | fills `$bytes` with `$byte`. the byte-width twin of `zero` |
+| `compare_bytes(ptr<const uint8>, ptr<const uint8>, usize) : int32` | lexicographic `memcmp`. sign is the answer, not `-1`/`0`/`1` |
 | `take<T>(T& $place) : T` | hands the value over and empties the place |
 | `init<T>(T& $place, T $value) : void` | stores into a place that holds nothing |
 | `bit_cast<To, From>(From $value) : To` | the bits, read as another type of the same size |

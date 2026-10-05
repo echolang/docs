@@ -187,7 +187,8 @@ echo doubled(-1);       // -1
 ```
 
 `$value` is declared into the **enclosing** scope, not into the guard, so the rest of the function uses it
-as an ordinary non-null `int32`. No nesting, no unwrapping.
+as an ordinary non-null `int32`. No nesting, no unwrapping. This form is an assignment, so a trailing
+semicolon after the else brace is allowed. The braces still close the else.
 
 When there is nothing to name, `guard` is a statement of its own:
 

@@ -298,6 +298,25 @@ CargoBay<function<int32()>> $hold = CargoBay<function<int32()>>(function() : int
 echo $hold->contents();
 ```
 
+## An array of them
+
+A callable is a value, so a list of them is just an array. `foreach` calls through the binding,
+the same `$f(21)` a typed local already was:
+
+```echo
+array<function<int32(int32)>> $steps = array<function<int32(int32)>>();
+$steps[] = function(int32 $n) : int32 { return $n + 1; };
+$steps[] = function(int32 $n) : int32 { return $n * 2; };
+
+foreach ($steps as $step) {
+    echo $step(21);     // 22, then 42
+}
+
+echo $steps[0](41);     // 42
+```
+
+Indexing is the same call: `$steps[0]` is the callable, then `(41)` runs it.
+
 ## Generic inference reaches through a callable
 
 A type parameter can be bound by the callable's own signature, which means the usual higher-order helpers

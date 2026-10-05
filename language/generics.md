@@ -406,6 +406,59 @@ report(ZPM(2.5));       // 2.500000
 This is the compile-time job of an interface, and it is the only way a **struct** can participate in one.
 The call to `draw()` is direct, not dispatched. See [Interfaces](/language/interfaces).
 
+A constraint may name the parameter it constrains. `T : contract::comparable<T>` is that: at
+`T = int32` it becomes "does `int32` conform to `comparable<int32>`". A second parameter can
+name the first, which is how `sort(by: C $c)` writes `C : contract::comparator<T>` on a method
+of `array<T>`.
+
+```echo
+function lighter<T : contract::comparable<T>>(T $a, T $b) : bool
+{
+    return $a < $b;
+}
+
+echo lighter(1, 3);     // 1
+```
+
+### `where` on a method
+
+`array<T>` has to exist for a `T` you never sort. Only the methods that need an order should
+say so. `where` is that: the type stays unconstrained, and one method adds the extra rule after
+the return type.
+
+```echo
+struct Box<T>
+{
+    T $value;
+
+    function lighter(T $other) : bool where T : contract::comparable<T>
+    {
+        return $this->value < $other;
+    }
+}
+
+Box<int32> $a = Box<int32>(1);
+echo $a->lighter(3);        // 1
+```
+
+`where` names a type parameter already in scope, usually the owner's. The body is instantiated
+only when the method is called, so an unconstrained use of `Box<Gate>` still compiles. Call
+`lighter` without the conformance and the error is at *your* call:
+
+<!-- verify: skip -->
+```echo
+struct Gate
+{
+    int32 $address;
+}
+
+Box<Gate> $b = Box<Gate>(Gate(1));
+echo $b->lighter(Gate(2));
+// error: Type parameter 'T' of 'lighter' is constrained to 'contract::comparable<T>' but was given 'Gate'
+```
+
+A function may still be named `where`. The keyword is recognised only after a return type.
+
 ## What monomorphization means for you
 
 Two consequences, one good and one to keep an eye on.
@@ -447,6 +500,7 @@ Three of these come up constantly when writing containers:
 | `mem::size<T>()` | the size in bytes |
 | `mem::is_trivially_copyable<T>()` | whether copying is just copying the bytes |
 | `mem::needs_destruction<T>()` | whether `T` owns something that has to be given back |
+| `mem::is_integer<T>()` | whether `T` is an integer primitive, including `usize` / `isize` |
 
 ## Branching on the answer
 
@@ -548,3 +602,4 @@ Custom symbols such as `..` don't hit this, because nothing is built in for them
 - [Interfaces](/language/interfaces) for constraints beyond the numeric shorthands, and associated types.
 - [Control flow](/language/control-flow) for `const if`.
 - [Memory](/stdlib/mem) for the full list of type queries.
+- [Sorting](/collections/sorting) for `where T : contract::comparable<T>` on a method.

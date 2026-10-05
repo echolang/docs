@@ -451,6 +451,19 @@ Pass the pointer and the count yourself. A live [`slice<T>`](/collections/slices
 
 [C interop](/projects/c-interop) has the rest of the boundary.
 
+## Sorting
+
+`$a->sort()` is stable, `$a->sort_unstable()` is the faster in-place one. Integers, floats and
+strings just work. A struct of yours opts in with `: contract::comparable<Self>` and an
+`operator <`. `by:` and `key:` pick a different order. [Sorting](/collections/sorting) is the
+chapter.
+
+```echo
+array<int32> $n = [3, 1, 2];
+$n->sort();
+echo $n[0];     // 1
+```
+
 ## One thing that compiles and is wrong
 
 It is real, it is silent, and it is on [the list](/reference/limitations).
@@ -463,6 +476,7 @@ pass it in.
 
 - [C interop](/projects/c-interop) for handing `data()` and `spare()` to a C function.
 - [Slices](/collections/slices) for handing out a window onto an array without copying it.
+- [Sorting](/collections/sorting) for `sort`, `sort_unstable`, `by:` and `key:`.
 - [Iteration](/collections/iteration) for `foreach`, and for the copy it does not make you pay for.
 - [`arr::merge` and `arr::room`](/stdlib/arr), which do not belong on the type.
 - [Ownership and moving](/memory/ownership) for what happens when `T` owns something.

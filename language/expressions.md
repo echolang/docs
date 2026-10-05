@@ -23,6 +23,11 @@ you'll eventually trip over.
 | Increment | `++` `--` |
 | Null | `??` `?->` |
 
+`<=>` looks like it belongs in that comparison row. It does not. It is a standard-library
+operator returning [`ordering`](/stdlib/sort), the same trick [`..`](/language/operators) is.
+Compile without the library and it is not a symbol. [Sorting](/collections/sorting) is what
+you actually call.
+
 `**` is exponentiation and is right associative, so `2 ** 3 ** 2` is `2 ** 9`:
 
 ```echo

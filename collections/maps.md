@@ -178,9 +178,10 @@ $m['a'] = 1;
 echo $m->count();       // 1
 ```
 
-Under the hood it is linear probing over a power-of-two number of slots, growing when live entries plus
-tombstones pass three quarters of them. `capacity()` reports slots, which is always larger than the entry
-count and is not a number to do arithmetic against.
+Under the hood it is a Swiss table: 16 control bytes compared at once, quadratic probing over a
+power-of-two number of slots, growing when live entries plus tombstones pass seven eighths of them.
+`capacity()` reports slots, which is always larger than the entry count and is not a number to do
+arithmetic against.
 
 ## Every insert may invalidate every borrow
 
@@ -324,15 +325,12 @@ Bind it to a variable first, and the write has somewhere to land.
 
 ## What is not there yet
 
-Three, stated here because you will look for them.
+Two, stated here because you will look for them.
 
 **No map literal.** Construct and fill.
 
 **No optional lookup.** There is no `$m->find($k)` returning a `V?`, so `has` then `get` is two probes for
 one question.
-
-**`map<K, V>` uses linear probing.** It is correct and it is not fast. A better table is planned, and it is
-on [the list](/reference/limitations) with the rest.
 
 ## Next
 
