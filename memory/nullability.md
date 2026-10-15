@@ -495,6 +495,12 @@ struct Chevron { int32 $symbol; }
 Chevron $locked = Chevron(7);
 echo $locked == null;
 // error: cannot compare 'Chevron' against null - it is always there, write 'Chevron?' if it may be absent
+
+class Wormhole { int32 $id; }
+
+Wormhole $open = Wormhole(1);
+echo $open == null;
+// error: cannot compare 'Wormhole' against null - it is always there, write 'Wormhole?' if it may be absent
 ```
 
 Note that `== null` is the only comparison a nullable answers. `$a == $b` over two `int32?` is not a thing:
@@ -579,7 +585,7 @@ function log(Wormhole? $w) : int32
 }
 
 Wormhole? $none = null;     // the declaration says
-echo log(null);             // the parameter says, -1
+echo log(null);             // -1
 ```
 
 That covers essentially everything you will write. A `null` with no destination at all has nothing to take a

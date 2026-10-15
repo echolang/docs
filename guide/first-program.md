@@ -96,6 +96,11 @@ pointers. There is no `.`, and there is no `::` for instance members. One arrow,
 An Echo array is a container of exactly one type:
 
 ```echo
+function greet(string $who) : void
+{
+    echo "Hello, {$who}!";
+}
+
 array<string> $people = ["Mario", "Ray", "Ronon"];
 
 foreach ($people as $person) {
@@ -113,7 +118,8 @@ Hello, Ronon!
 ```
 
 ```echo
-$people[] = 42;     // will not compile
+array<string> $people = ["Mario"];
+$people[] = 42;     // error: cannot append 'int32' to 'array<string>'
 ```
 
 Because arrays are objects, the things you know from a standard library live on the array itself:
@@ -183,6 +189,7 @@ echoc run
 Here is the core of what that manifest is saying. You can write the same file by hand. The point of
 `epm init` is that you do not have to remember the attributes.
 
+<!-- verify: skip -->
 ```echo
 #[module: "greeter"]
 #[version: "0.1.0"]

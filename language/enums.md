@@ -100,6 +100,18 @@ genuinely *is* the discriminant, so reading it costs nothing. A string can't be 
 one in every value would mean `DistanceUnit::meter` allocated. So the value lives with the declaration,
 `value()` fetches it, and both backings are spelled the same way.
 
+A case's value is a literal written at the backing type, with the same rules as any other literal
+assigned to that type. Hex and binary work, and a value the backing can't hold is an error rather than
+a wrap. `case big = 300;` on an `int8` is refused, the same way `int8 $x = 300;` is.
+
+```echo
+enum Register : uint8
+{
+    case status = 0x10;
+    case control = 0b00100000;
+}
+```
+
 `from` is the other direction. On a closed integer enum it answers `T?`, because the integer might not be
 one of the cases:
 
@@ -141,7 +153,7 @@ echo Glyph::abydos->dhd();                      // 27
 echo Glyph::from(dhd: 27) != null;              // 1
 echo Glyph::from(dhd: 999) == null;             // 1
 
-Glyph $g = Glyph::from(dhd: 999) ?? .unknown;
+Glyph $g = .from(dhd: 999) ?? .unknown;
 echo $g == Glyph::unknown;                      // 1
 ```
 
@@ -237,8 +249,8 @@ enum Error : int32
     case other;
 }
 
-Error $known = Error::from(-2);     // Error::invalidArgs
-Error $new   = Error::from(-999);   // Error::other
+Error $known = .from(-2);     // Error::invalidArgs
+Error $new   = .from(-999);   // Error::other
 
 echo $known->value();               // -2
 echo $new->value();                 // -999
@@ -271,13 +283,36 @@ enum Error : int32
 function describe(Error $e) : string
 {
     return match ($e) {
-        Error::invalidArgs => "bad args",
-        Error::other => "miniaudio said something else",
+        .invalidArgs => "bad args",
+        .other => "miniaudio said something else",
     };
 }
 
-echo describe(Error::from(-2));      // bad args
-echo describe(Error::from(-999));    // miniaudio said something else
+echo describe(.from(-2));      // bad args
+echo describe(.from(-999));    // miniaudio said something else
+```
+
+`other` is leftover integers. `else` is named cases you skipped. Write both if you want both.
+
+```echo
+enum Error : int32
+{
+    case invalidArgs = -2;
+    case invalidOperation = -3;
+    case other;
+}
+
+function describe(Error $e) : string
+{
+    return match ($e) {
+        .invalidArgs => "bad args",
+        .other => "something else",
+        else => "skipped named",
+    };
+}
+
+echo describe(.from(-999));           // something else
+echo describe(.invalidOperation);     // skipped named
 ```
 
 The leftover **is** the integer. Read it with `value()`. It is not a payload, so this will not compile:
@@ -309,7 +344,7 @@ enum CurlError
     case http(int32 $code, string $body);
 }
 
-$err = CurlError::timeout(30);
+CurlError $err = .timeout(30);
 ```
 
 `CurlError` is now a closed set of shapes rather than a closed set of names. A timeout knows how long it
@@ -336,13 +371,13 @@ enum DistanceUnit
 function to_meters(DistanceUnit $u) : int32
 {
     return match ($u) {
-        DistanceUnit::meter($v) => $v,
-        DistanceUnit::kilometer($v) => $v * 1000,
-        DistanceUnit::mile($v) => $v * 1609,
+        .meter($v) => $v,
+        .kilometer($v) => $v * 1000,
+        .mile($v) => $v * 1609,
     };
 }
 
-echo to_meters(DistanceUnit::mile(2));    // 3218
+echo to_meters(.mile(2));    // 3218
 ```
 
 The names in parentheses bind the payload for that arm. They do **not** take part in choosing it:
@@ -359,11 +394,11 @@ A `match` has to cover the enum. Leave one out and you get told which one:
 ```echo
 enum DistanceUnit { case meter; case kilometer; case mile; }
 
-$unit = DistanceUnit::meter;
+DistanceUnit $unit = .meter;
 
 $n = match ($unit) {
-    DistanceUnit::meter => 1,
-    DistanceUnit::kilometer => 2,
+    .meter => 1,
+    .kilometer => 2,
 };
 // error: this 'match' does not cover every case of 'DistanceUnit' - one is left out. Name mile, or
 //        add an 'else' arm.
@@ -377,10 +412,10 @@ When you genuinely only care about one case, `else` covers the rest:
 ```echo
 enum CurlError { case cannot_connect; case timeout(int32 $after); }
 
-$err = CurlError::timeout(30);
+CurlError $err = .timeout(30);
 
 $waited = match ($err) {
-    CurlError::timeout($after) => $after,
+    .timeout($after) => $after,
     else => 0,
 };
 
@@ -393,11 +428,11 @@ renamed out from under it:
 ```echo
 enum Side { case left; case right; }
 
-$s = Side::left;
+Side $s = .left;
 
 $n = match ($s) {
-    Side::left => 1,
-    Side::right => 2,
+    .left => 1,
+    .right => 2,
     else => 3,
 };
 // error: this 'match' already covers every case of 'Side', so its 'else' arm can never run.
@@ -417,12 +452,12 @@ enum CurlError
 function report(CurlError $e) : void
 {
     match ($e) {
-        CurlError::cannot_connect => { echo "refused"; },
-        CurlError::timeout($after) => { echo "timed out after"; echo $after; },
+        .cannot_connect => { echo "refused"; },
+        .timeout($after) => { echo "timed out after"; echo $after; },
     }
 }
 
-report(CurlError::timeout(30));    // timed out after
+report(.timeout(30));    // timed out after
                                    // 30
 ```
 
@@ -439,12 +474,12 @@ enum Side { case left; case right; }
 function to_int(Side $s) : int32
 {
     match ($s) {
-        Side::left => { return -1; },
-        Side::right => { return 1; },
+        .left => { return -1; },
+        .right => { return 1; },
     }
 }
 
-echo to_int(Side::right);      // 1
+echo to_int(.right);      // 1
 ```
 
 An arm may also simply never come back. `die` returns `void`, which would normally clash with an arm
@@ -462,12 +497,12 @@ enum slot
 function must(const slot& $s) : int32
 {
     return match ($s) {
-        slot::filled($v) => $v,
-        slot::blank()    => die('nothing in the slot'),
+        .filled($v) => $v,
+        .blank()    => die('nothing in the slot'),
     };
 }
 
-echo must(slot::blank());
+echo must(.blank());
 ```
 
 ### The binding borrows, it does not copy
@@ -485,20 +520,43 @@ enum Message
 function is_blank(Message $m) : bool
 {
     return match ($m) {
-        Message::empty => true,
-        Message::text($body) => $body->size() == 0,
+        .empty => true,
+        .text($body) => $body->size() == 0,
     };
 }
 
-echo is_blank(Message::text("chevron seven locked"));    // 0
-echo is_blank(Message::empty());                         // 1
+echo is_blank(.text("chevron seven locked"));    // 0
+echo is_blank(.empty());                         // 1
 ```
 
 Methods work on the binding, because a borrow is what a receiver wants anyway. Assign it somewhere that
 outlives the arm and it copies, exactly as reading any other borrow does.
 
+Here is the catch. If an arm binds a payload and then writes the subject (reassign it, `mv` it, or pass
+it as `&`), that would tear the payload out from under its own binding. So the compiler copies the
+subject first, and the bindings borrow the copy. They come out `const`: a write through one would land
+in a copy nobody else can see.
+
+```echo
+enum Message
+{
+    case empty;
+    case text(string $body);
+}
+
+Message $m = .text("still here");
+
+match ($m) {
+    .text($body) => {
+        $m = .empty();
+        echo $body;    // still here
+    }
+    .empty => {}
+}
+```
+
 One thing to watch: an arm's value is typed on its own, with nothing telling a bare literal what to be. So
-`Message::empty => 0` sitting beside an arm that produces a `usize` is two different types, and the compiler
+`.empty => 0` sitting beside an arm that produces a `usize` is two different types, and the compiler
 says so rather than guessing. Write the literal at the type you meant.
 
 That also means a `match` yields a **place** when every one of its arms does. An arm handing back a payload
@@ -514,13 +572,13 @@ enum slot
 function read(const slot& $s) : int32
 {
     return match ($s) {
-        slot::filled($v) => $v,
-        slot::blank()    => 0,
+        .filled($v) => $v,
+        .blank()    => 0,
     };
 }
 
-echo read(slot::filled(7));    // 7
-echo read(slot::blank());      // 0
+echo read(.filled(7));    // 7
+echo read(.blank());      // 0
 ```
 
 The subject has to be storage the program already holds, because the borrow points into it. `match ($this)`
@@ -540,12 +598,12 @@ enum Message
 
 function consume(Message $m) : void {}
 
-$a = Message::text("hello");
-$b = $a;              // copies the string, because that is the live case
+Message $a = .text("hello");
+Message $b = $a;      // copies the string, because that is the live case
 consume($b);
 
-$c = Message::empty();
-$d = $c;              // copies nothing at all
+Message $c = .empty();
+Message $d = $c;      // copies nothing at all
 
 echo "done";          // done
 ```
@@ -605,17 +663,14 @@ enum Slot<T>
 function unwrap_or(Slot<int32> $s, int32 $fallback) : int32
 {
     return match ($s) {
-        Slot<int32>::empty => $fallback,
-        Slot<int32>::filled($v) => $v,
+        .empty => $fallback,
+        .filled($v) => $v,
     };
 }
 
-echo unwrap_or(Slot<int32>::filled(9), 0);      // 9
-echo unwrap_or(Slot<int32>::empty(), -1);       // -1
+echo unwrap_or(.filled(9), 0);      // 9
+echo unwrap_or(.empty(), -1);       // -1
 ```
-
-Writing the owner out in every pattern gets old fast, and the leading dot works in patterns too wherever the
-subject already says what the type is.
 
 ## An enum is how you say what went wrong
 
@@ -633,13 +688,13 @@ enum ParseError
 function explain(ParseError $e) : string
 {
     return match ($e) {
-        ParseError::empty_input => "nothing to parse",
-        ParseError::bad_digit($b) => "unexpected byte",
-        ParseError::too_long($len) => "too long",
+        .empty_input => "nothing to parse",
+        .bad_digit($b) => "unexpected byte",
+        .too_long($len) => "too long",
     };
 }
 
-echo explain(ParseError::bad_digit(122));    // unexpected byte
+echo explain(.bad_digit(122));    // unexpected byte
 ```
 
 The library ships the type that carries one of these back to a caller alongside the value they did not get:

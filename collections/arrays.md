@@ -454,8 +454,8 @@ Pass the pointer and the count yourself. A live [`slice<T>`](/collections/slices
 ## Sorting
 
 `$a->sort()` is stable, `$a->sort_unstable()` is the faster in-place one. Integers, floats and
-strings just work. A struct of yours opts in with `: contract::comparable<Self>` and an
-`operator <`. `by:` and `key:` pick a different order. [Sorting](/collections/sorting) is the
+strings just work. A struct of yours opts in by naming itself, `struct Gate : contract::comparable<Gate>`,
+and an `operator <`. There is no `Self`. `by:` and `key:` pick a different order. [Sorting](/collections/sorting) is the
 chapter.
 
 ```echo

@@ -51,7 +51,7 @@ echo std::math::sqrt(9.0);      // 3.000000
 echo std::env::argc() > 0;      // 1
 ```
 
-`std::math::`, `std::env::`, `std::io::`, `std::thread::` and `std::time::`.
+`std::math::`, `std::env::`, `std::io::`, `std::thread::`, `std::time::` and `std::dynlib::`.
 
 ## Nothing in the library is special-cased
 
@@ -88,7 +88,7 @@ foreach ($b as $e) {
     echo $e;
 }
 // error: 'foreach' needs the iteration protocol, and nothing in this program declares
-//        '#[core: iterator]'. it lives in the standard library, which this compilation left out.
+//        '#[echoc::core: iterator]'. it lives in the standard library, which this compilation left out.
 ```
 
 An untyped array literal has no type to take:
@@ -97,7 +97,7 @@ An untyped array literal has no type to take:
 ```echo
 $a = [1, 2];
 // error: an array literal with no declared type needs the core array type, and nothing in this
-//        program declares '#[core: array]'. it lives in the standard library, which this
+//        program declares '#[echoc::core: array]'. it lives in the standard library, which this
 //        compilation left out - write the type, e.g. 'array<int32> $a = [...];'.
 ```
 
@@ -154,6 +154,7 @@ echo $c->bump(5);       // 7
 | `std::math::` | constants and the numeric functions | [Math](/stdlib/math) |
 | `std::env::` | arguments, environment, directories, `exit` | [Environment](/stdlib/env) |
 | `std::thread::` | `spawn`, `handle`, `task<T>`, `mutex<T>`, `once` | [Threads](/stdlib/thread) |
+| `std::dynlib::` | `library`, `load`, `address` | [Dynamic libraries](/stdlib/dynlib) |
 | `std::time::` | `duration`, `instant`, `timestamp`, `sleep` | [Time](/stdlib/time) |
 
 ## Next

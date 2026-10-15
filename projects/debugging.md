@@ -238,9 +238,9 @@ and the containers stay raw.
 
 Three honest gaps, all on [the list](/reference/limitations).
 
-**A `weak<T>` in a `-g` build currently crashes the compiler.** Not a rendering problem, a real bug: the same
-program builds and runs fine without `-g`. If you hit a segfault from `echoc build -g`, this is the first
-thing to check.
+**A `weak<T>` shows the block rather than the object.** It is described as the class handle it lowers to,
+so you see the reference-counted box it points into, not the fields behind it. Upgrade it with `strong()`
+in the program if you need to look inside.
 
 **An interface value shows two raw pointers**, because the formatter can't yet resolve the vtable back to a
 concrete type:

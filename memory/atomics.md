@@ -73,7 +73,7 @@ atomic<int32> $b = $a;
 
 Move it (`mv $a`) or borrow it. Two live `atomic<T>` values are two words.
 
-Nothing in the compiler knows what an `atomic` is. There is no `#[core:]` binding and there is
+Nothing in the compiler knows what an `atomic` is. There is no `#[echoc::core:]` binding and there is
 deliberately none. The compiler supplies the verbs. This type is ordinary Echo over them.
 
 ## What T is allowed

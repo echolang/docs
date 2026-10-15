@@ -32,7 +32,7 @@ echo (3 <=> 1) == ordering::greater;        // 1
 equal on the first falls through to the second.
 
 ```echo
-ordering $age = ordering::equal;
+ordering $age = .equal;
 ordering $name = 1 <=> 2;
 echo ($age->then($name)) == ordering::less;     // 1
 ```

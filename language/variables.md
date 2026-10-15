@@ -10,7 +10,7 @@ echo $a;        // 25
 
 ```echo
 $a = 25;        // works fine
-$a = "hello";   // will not compile
+$a = "hello";   // error: cannot assign 'string' to 'int32'
 ```
 
 ## Writing the type, or not
@@ -60,7 +60,7 @@ echo $b;        // later
 ```
 
 ```echo
-$c;             // invalid: the type was unknown at declaration
+$c;             // error: the type was unknown at declaration
 $c = 25;
 ```
 
@@ -184,7 +184,7 @@ for (int32 $i = 0; $i < 3; $i++) {
     echo $i;
 }
 
-echo $i;        // error
+echo $i;        // error: '$i' is not declared in the current scope
 ```
 
 No hoisting. No function-wide scope. A loop variable belongs to the loop.

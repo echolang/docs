@@ -61,14 +61,15 @@ impossible.
 
 ## A condition sees four things
 
-**`os`**, one of `darwin`, `linux`, `windows`, `ios`, `android`.
+**`os`**, one of `darwin`, `linux`, `windows`, `ios`, `android`, `wasi`.
 
-**`family`**, one of `darwin`, `linux`, `windows`. Derived from `os`, never set on its own. `ios` is
-Darwin-family (same libc, same `-framework`). `android` is Linux-family. Write
-`#[if: family == darwin]` for an ABI question. Write `#[if: os == ios]` when the specific OS is the
+**`family`**, one of `darwin`, `linux`, `windows`, `wasi`. Derived from `os`, never set on its own. `ios` is
+Darwin-family (same libc, same `-framework`). `android` is Linux-family. `wasi` is its own family, so
+`#[if: family != windows]` does not treat it as POSIX.
+Write `#[if: family == darwin]` for an ABI question. Write `#[if: os == ios]` when the specific OS is the
 point.
 
-**`arch`**, one of `arm64`, `x86_64`.
+**`arch`**, one of `arm64`, `x86_64`, `wasm32`.
 
 **Your own flags**, declared on the command line with `--define`, and written bare:
 
@@ -94,7 +95,7 @@ These two rules point in opposite directions, and both of them have to.
 An unknown value on a closed axis is refused:
 
 ```
-line 1: unknown os 'darwn', expected one of: darwin, linux, windows, ios, android
+line 1: unknown os 'darwn', expected one of: darwin, linux, windows, ios, android, wasi
 ```
 
 ```
@@ -204,18 +205,20 @@ echoc run --target-arch x86_64 app.eco
 Both are checked against the same closed vocabularies, so a typo is caught here too:
 
 ```
-unknown --target-os 'macos', expected one of: darwin, linux, windows, ios, android
+Unknown '--target-os' value 'macos'. Expected one of: darwin|linux|windows|ios|android|wasi.
 ```
 
-Be clear about what this does, though: **it chooses arms, it does not cross-compile**, with one
-exception. The code that gets selected is still compiled for the machine you are sitting at. It
+Be clear about what this does, though: **it chooses arms, it does not cross-compile**, with two
+exceptions. `echoc build --target-os ios` is a real cross to the iPhone SDKs (simulator, or
+`--ios-device` for a physical iPhone). `echoc build --target-os wasi` is `wasm32-unknown-wasip1`
+and needs a WASI SDK. Everything else still compiles for the machine you are sitting at. It
 answers "which sources would a Linux build use", not "does this Linux build work", and that is
-genuinely useful for a manifest that gates its own source list. It is not a substitute for building
-on Linux.
+genuinely useful for a manifest that gates its own source list. It is not a substitute for
+building on Linux.
 
-The exception is Darwin `echoc build --target-os ios`. The iPhone SDKs are on the machine, so that
-command emits simulator objects (`--ios-device` for a physical iPhone). `echoc run --target-os ios`
-stays facts-only, like every other `--target-os`, because `run` has to execute here.
+`echoc run --target-os ios` stays facts-only, because `run` has to execute here.
+`echoc run --target-os wasi` and `echoc test --target-os wasi` are refused: those would pick
+wasi constants and execute them on the host.
 
 ## `const if` is the other one, and it is not the same
 

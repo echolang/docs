@@ -212,7 +212,7 @@
 				{
 					"comment": "The name vocabulary is closed - six declaration attributes and seven manifest ones - so an unknown name is a compile error and is scoped as one.",
 					"name": "meta.attribute.eco",
-					"begin": "(#\\[)\\s*(?:(inline|implicit|intrinsic|builtin|core|unique|module|version|depends|sources|link|cc|build_dir)\\b|([A-Za-z_][A-Za-z0-9_]*))",
+					"begin": "(#\\[)\\s*(?:(inline|implicit|echoc::(?:core|builtin|intrinsic)|unique|module|version|depends|sources|link|cc|build_dir)\\b|([A-Za-z_][A-Za-z0-9_]*))",
 					"end": "\\]",
 					"beginCaptures": {
 						"1": {
@@ -705,7 +705,7 @@
 		"function-calls": {
 			"patterns": [
 				{
-					"comment": "The nineteen names the compiler answers at the call site with no symbol emitted - the '#[builtin:]' vocabulary. Nothing reserves them, so they can be shadowed.",
+					"comment": "The nineteen names the compiler answers at the call site with no symbol emitted - the '#[echoc::builtin:]' vocabulary. Nothing reserves them, so they can be shadowed.",
 					"name": "support.function.builtin.eco",
 					"match": "\\b(size_of|align_of|is_trivially_copyable|needs_destruction|take|init|die|assert|ref_count|weak_count|dprint|alloc_bytes|realloc_bytes|free_bytes|live_allocations|process_argc|process_argv|process_envp|exit)\\b"
 				},

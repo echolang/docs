@@ -13,10 +13,11 @@ function double(int32 $n) : int32
 echo double(21);        // 42
 ```
 
-Eighteen names in total: nine on a declaration (six of yours, three for the library), nine that only
-mean something in a `module.eco` manifest. A namespaced name (`#[epm::license:]`) is not on that list
-and is carried rather than refused. The four conditional directives look like attributes and are
-not on that list at all. There's a reason, and it gets its own section.
+Eighteen names in total: eight on a declaration, ten that only mean something in a `module.eco`
+manifest. A namespaced name (`#[web::js_name:]`, `#[epm::license:]`) is not on that list. echoc
+carries it on the declaration and ignores it during codegen. `echoc::` is reserved for the compiler
+and its standard library. The four conditional directives look like attributes and are not on that
+list at all. There's a reason, and it gets its own section.
 
 ## The value grammar
 
@@ -34,18 +35,18 @@ Seven shapes, and one example of each drawn from the standard library or the tes
 
 | Shape | Example |
 |---|---|
-| string | `#[intrinsic: "llvm.sin"]` |
+| string | `#[echoc::intrinsic: "llvm.sin"]` |
 | int | `#[cc: define { ECO_SHIM_BASE: 40 }]` |
 | float | `1.5`, accepted by the grammar. No attribute reads one today |
 | bool | `#[cc: define { DEBUG: true }]` |
-| name | `#[core: array]` |
+| name | `#[echoc::core: array]` |
 | list | `#[sources: ["src/*.eco", "extra/*.eco"]]` |
 | record | `#[depends: git { url: "...", rev: "v1.2.0" }]` |
 | tagged | `#[link: framework "OpenGL"]`, or `#[requires: "libcurl" { ... }]` with a string tag |
 
 One rule holds the whole thing together: **a bare name means itself.** It is never a constant, never a type
 and never a variable. That's why a closed vocabulary is written bare (`array`, `lib`, `size_of`) and free
-text is quoted. `#[core: array]` names the string `array`, and there is no way for it to accidentally pick up
+text is quoted. `#[echoc::core: array]` names the string `array`, and there is no way for it to accidentally pick up
 a struct called `array` that happens to be in scope.
 
 A trailing comma is legal in both a list and a record. Record keys keep the order you wrote them in.
@@ -67,7 +68,7 @@ scheme with two libraries rather than two schemes.
 
 ## Declaration attributes
 
-Nine names. Six of them are yours:
+Eight names (`wasm` has two forms):
 
 | Attribute | Value | What it does |
 |---|---|---|
@@ -77,15 +78,9 @@ Nine names. Six of them are yours:
 | `#[atomic]` | none | on a class, says the reference count is an atomic RMW, so a handle may be retained and released on more than one thread. The contents are not covered |
 | `#[group: "..."]` | string | on a `test`, names the group a test run can select on |
 | `#[tests: expects death]` | tagged name | on a `test`, inverts the pass condition: the child must exit non-zero |
-
-And three belong to the standard library. They are documented here so that reading `stdlib/` makes sense, not
-so you write them:
-
-| Attribute | Value | What it does |
-|---|---|---|
-| `#[core: name]` | bare name, closed set | binds this type as one the compiler is allowed to talk about |
-| `#[builtin: name]` | bare name, closed set | this bodyless function is answered at the call site, with no symbol emitted |
-| `#[intrinsic: "..."]` | string | this bodyless function is an LLVM intrinsic |
+| `#[export]` / `#[export: "name"]` | none, or a string | this function's symbol is `name` (default: its own unqualified name), unmangled, C ABI. on wasm it is also in the module's export section |
+| `#[wasm: import "<module>"]` | tagged string | this `extern` function is a host import from that wasm module. the import name is the extern's C symbol |
+| `#[wasm: export "memory"]` | tagged string | export the wasm linear memory. a closed object list; a function is `#[export]` |
 
 ### #[inline]
 
@@ -135,10 +130,33 @@ this.
 conversion written out from anywhere that had been handed one.
 
 ```echo
+struct Meters
+{
+    float64 $value;
+}
+
+struct Feet
+{
+    float64 $value;
+
+    #[implicit]
+    const function to_meters() : Meters
+    {
+        return Meters($this->value * 0.3048);
+    }
+}
+
+function show(Meters $m) : void
+{
+    echo $m->value;
+}
+
 function forward(const Feet& $f) : void
 {
     show($f);           // the conversion is found through the borrow
 }
+
+forward(Feet(10.0));    // 3.048000
 ```
 
 A `const` borrow only reaches a conversion declared `const function`. One declared without it would be
@@ -217,7 +235,7 @@ test it does nothing at all, per the section below on placement.
 ### #[tests:]
 
 Inverts the pass condition of a `test`. The tag vocabulary is closed at `expects` and the value
-vocabulary is closed at `death`, the same tagged-value shape as `#[link: lib "GL"]` — a future knob is
+vocabulary is closed at `death`, the same tagged-value shape as `#[link: lib "GL"]`. A future knob is
 a new tag, not a new attribute name.
 
 <!-- verify: test -->
@@ -259,7 +277,7 @@ it exists for, and it needs `private` properties alongside it to close the delib
 ### #[atomic]
 
 `#[atomic]` is the other mark a type can carry, and it is only a class that has a count to mark. An unmarked
-class keeps today's retain — a load, an add and a store — so a program that never shares a handle across
+class keeps today's retain (a load, an add and a store), so a program that never shares a handle across
 threads pays nothing. Mark it when a handle will be copied onto another thread with no lock held:
 
 ```echo
@@ -274,29 +292,64 @@ The count is then an atomic RMW. The fields are not: two threads writing `$hits`
 on a `struct` and on an `interface`, where there is no count. [Atomics](/memory/atomics) is the
 chapter; [Threads](/stdlib/thread) is why you would mark one.
 
-### The library's three
+### #[export]
 
-`#[core: name]` binds a type the compiler needs to be able to name. The vocabulary includes `string`,
-`string_view`, `array`, `map`, `buffer`, `iterator`, `iterable`, `const_iterable`, `keyed`, `type_id`, `erased`. The compiler
-resolves the shape by property name, so it is a binding rather than a hardcoded layout, and `--no-stdlib`
-leaves every one of them unbound.
+The function's symbol is its own unqualified name, unmangled, C ABI. On wasm it is also in the module's
+export section. On a host it is the name `dlsym` looks up.
 
-`#[builtin: name]` marks a bodyless function the compiler answers at the call site. The names include
-`size_of`, `align_of`, `is_trivially_copyable`, `needs_destruction`, `is_integer`, `type_id`, `erased_from`, `erased_retain`, `erased_release`, `assume`, `take`, `init`, `die`, `assert`,
-`ref_count`, `weak_count`, `dprint`, `alloc_bytes`, `realloc_bytes`, `free_bytes`, `live_allocations`,
-`process_argc`, `process_argv`, `process_envp`, `exit`, `atomic_load`, `atomic_store`, `atomic_add`,
-`atomic_sub`, `atomic_exchange`, `atomic_compare_exchange`, `atomic_fence`. Anything else is
-`Unknown compiler builtin '<name>'.`
+```echo
+#[export]
+function add(int32 $a, int32 $b) : int32
+{
+    return $a + $b;
+}
 
-`#[intrinsic: "llvm.sin"]` is the third bodyless form and lowers to an LLVM intrinsic. A string rather than a
-name, because an intrinsic name has dots in it and is free text as far as Echo is concerned.
+echo add(20, 22);       // 42
+```
 
-The three shapes together are what [Functions](/language/functions) means by "a declaration can say where its
-implementation comes from instead of having a body". The fourth way is an `extern { }` block.
+`#[export: "name"]` picks a different symbol. Scalars and `ptr<T>` may cross. A `string`, a struct by
+value, a method, a generic, and `#[inline]` will not.
+
+On a **type**, a bare `#[export]` is legal when that struct answers an `extern interface`. It emits
+the ABI table. `#[export: "name"]` on a type is refused: the table is named from the interface.
+[Extern interfaces](/language/extern-interface) is the chapter.
+
+### #[wasm]
+
+Two wasm things that are not Echo functions: which module an extern is imported from, and the linear
+memory a page reads. The C ABI export of a function is still `#[export]`.
+
+<!-- verify: skip -->
+```echo
+#[wasm: export "memory"]
+
+#[wasm: import "env"]
+extern {
+    function host_now_ms() : float64;
+}
+
+echo host_now_ms() > -1.0;
+```
+
+`import` is legal only on an `extern`. `export "memory"` sits at file scope: written above a
+function, it does not attach to that function. The payload is closed: `memory`.
+[WebAssembly](/projects/webassembly) is the chapter.
+
+### `echoc::` is reserved
+
+The standard library talks to the compiler through three names a program cannot write:
+`#[echoc::core: array]`, `#[echoc::builtin: size_of]`, `#[echoc::intrinsic: "llvm.sin"]`. They bind
+a type the compiler has to name, mark a function the compiler answers at the call site, or lower a
+bodyless declaration to an LLVM intrinsic. You will see them in `stdlib/`. Writing one in your own
+file is a reserved-namespace error. `--no-stdlib` is the escape, because then those names have to
+come from the program.
+
+A bodyless declaration you *can* write is an `extern { }` block. That is the whole of the user-facing
+story; [Functions](/language/functions) has the rest.
 
 ## Manifest attributes
 
-Nine names, legal in a `module.eco` and nowhere useful else. [Modules](/projects/modules) is the chapter;
+Ten names, legal in a `module.eco` and refused in a source file. [Modules](/projects/modules) is the chapter;
 this is the value shapes.
 
 | Attribute | Value | Repeats | Notes |
@@ -306,18 +359,20 @@ this is the value shapes.
 | `#[sources: "src/*.eco"]` | string or list | yes | relative to the manifest. A pattern matching nothing is an error |
 | `#[depends: ...]` | string, `path "..."`, `git { }`, or a list | yes | a path to a manifest that is already on disk |
 | `#[requires: "name" { }]` | string-tagged record, or a list | yes | a package. Fields: `version` and `source` required, `rev` optional. `source` is a tagged locator (`git "..."`). Resolves to `vendor/<name>`; `name` may be `echolang/libcurl`. See [Packages](/projects/packages) |
-| `#[target: <tag> { }]` | tagged record, a bare tag, or a list | yes | tags: `exe`, `test`. An `exe` wants `name` and `entry`, both required, and `entry` must be one of this module's own `sources`. A `test` takes `name`, `groups` and `files`, all optional, and is refused for writing an `entry`; `#[target: test]` on its own is the whole selection |
+| `#[target: <tag> { }]` | tagged record, a bare tag, or a list | yes | tags: `exe`, `test`, `lib`. An `exe` wants `name` and `entry`, both required, and `entry` must be one of this module's own `sources`. `public: true` offers it as a tool, `install: true` marks it for `echoc install`. A `test` takes `name`, `groups` and `files`, all optional, and is refused for writing an `entry`; `#[target: test]` on its own is the whole selection. A `lib` wants `name` and refuses `entry`; on the host that is a `.dylib` / `.so` / `.dll`, on wasi a reactor |
 | `#[link: <tag> "..."]` | tagged | yes | tags: `lib`, `framework`, `search`, `object` |
 | `#[cc: <tag> ...]` | tagged | yes | tags: `sources`, `include`, `define`, `flag` |
 | `#[build_dir: "target"]` | string | no | where artifacts go. Refused if it names the manifest's own directory or an ancestor |
+| `#[hook: before_build { run: ... }]` | tagged record | yes | a dependency's tool to run before the build. See [Tools and hooks](/projects/tools) |
 
 Declaring one of the three no-repeat attributes twice gets you `'module' is declared twice.` and the same
 sentence for `version` and `build_dir`.
 
 ### A target's scope
 
-`#[target: ...]` is the one attribute that may be followed by a `{ ... }`. What is inside belongs to that
-target rather than to the module, and takes effect only for a program that builds it:
+`#[target: ...]` and `#[hook: ...]` may each be followed by a `{ ... }`. What is inside a target's
+scope belongs to that target rather than to the module, and takes effect only for a program that
+builds it:
 
 ```
 #[target: test] {
@@ -333,12 +388,15 @@ Those five are the whole vocabulary, and each means inside a scope exactly what 
 scoped `#[sources:]` is expanded by the same expander, with the same "a pattern matching nothing is an
 error" rule. A scoped `#[cc:]` is refused for options with no `sources:` in the same words.
 
+A hook's `{ ... }` holds `#[requires:]` and `#[depends:]` only. [Tools and hooks](/projects/tools) is
+that chapter.
+
 The four refusals:
 
 | Written | |
 |---|---|
-| a scope on anything but `#[target:]` | `'sources' cannot carry a '{ ... }' scope - only a '#[target: ...]' can, a scope being what one target says for itself.` |
-| a `#[target:]` inside a scope, nested braces included | `'target' cannot be written inside a '{ ... }' scope - a scope is one target speaking for itself, so it holds no targets of its own.` |
+| a scope on anything but `#[target:]` or `#[hook:]` | `'sources' cannot carry a '{ ... }' scope - only a '#[target: ...]' or a '#[hook: ...]' can, a scope being what one of them says for itself.` |
+| a `#[target:]` or `#[hook:]` inside a scope | `'target' cannot be written inside a '{ ... }' scope - scopes do not nest, so a target or a hook is declared at file scope.` |
 | `#[module:]`, `#[version:]` or `#[build_dir:]` inside one | `'version' describes the module, not one of its targets - write it at file scope.` |
 | a scope on a `#[target: [ ... ]]` declaring several | `a '{ ... }' scope belongs to one target, and this '#[target: ...]' declares 2 - write each of them its own.` |
 
@@ -366,41 +424,43 @@ None of this reaches Echo's front end. A `#[cc: define]` macro is visible to the
 `flag` is safe as untyped free text where a link flag would not be, because it reaches one known tool and is
 never read again. [Linking](/projects/linking) has the `#[link:]` half and the reasoning behind the tag.
 
-## Placement is not validated, and that cuts one way only
+## The medium is part of the name
 
-The unknown-name check compares against the union of both lists. So a manifest attribute written in an
-ordinary `.eco` file parses, attaches to the declaration below it, and is read by absolutely nothing:
+A declaration name belongs in a `.eco` file. A manifest name belongs in a `module.eco`. Writing
+`#[depends:]` on a function used to compile and do nothing. It is now an error:
 
-```echo
-#[module: "not-a-manifest"]
-echo "this compiles";       // this compiles
+```
+'depends' is a manifest attribute; it belongs in a module.eco.
 ```
 
-The manifest is the direction that does refuse, because its list is the narrower one. `#[inline]` in a
-`module.eco` is an error naming the nine names a manifest accepts. A `#[epm::license:]` is the
-exception: any `<ns>::<name>` whose namespace is not `echoc` is carried, not refused, and
-`-p manifest` emits it. [Packages](/projects/packages) is why.
+The other direction was already an error. `#[inline]` in a `module.eco` names the ten names a
+manifest accepts.
 
-I'd like the first case to be an error too. It is not today, and if you find yourself wondering why a
-`#[link:]` line had no effect, check which file you put it in.
+A namespaced name is the escape on both sides: `#[epm::license:]` in a manifest, `#[web::js_name: "add"]`
+on a function. echoc does not own the namespace, so it carries the attribute rather than refusing it.
+`-p manifest` emits the manifest ones. `-p decls` emits the source ones. `echoc::` is reserved in
+both files. [Packages](/projects/packages) is why the manifest grew this first.
 
 ## When the name is wrong
 
 ```
-unknown attribute 'bultin', expected one of: inline, implicit, intrinsic, builtin, core, unique, atomic, group, tests, module, version, depends, sources, target, link, cc, build_dir, requires
+unknown attribute 'bultin', expected one of: inline, implicit, unique, atomic, group, tests, export, wasm
 ```
 
 The attribute is then skipped and the declaration after it still parses, which is the point: the error you
 actually needed usually follows immediately.
 
+A bare `builtin` is that same unknown, with a note that it belongs to the standard library, spelled
+`echoc::builtin`. A program cannot write it.
+
 ```
-'mistyped<T>()' was declared but never given a body - write one, or say where its implementation comes from with '#[intrinsic: ...]', '#[builtin: ...]' or an 'extern' block.
+'mystery(int32)' was declared but never given a body - write one, or say where its implementation comes from with an 'extern' block.
 ```
 
 A manifest says it differently, because its list is different:
 
 ```
-module.eco:4: unknown manifest attribute 'source', expected one of: module, version, depends, sources, target, link, cc, build_dir, requires
+module.eco:4: unknown manifest attribute 'source', expected one of: module, version, depends, sources, target, link, cc, build_dir, requires, hook
 ```
 
 ## When the shape is wrong
@@ -453,9 +513,9 @@ with one.
 
 | Axis | Values |
 |---|---|
-| `os` | `darwin`, `linux`, `windows`, `ios`, `android` |
-| `family` | `darwin`, `linux`, `windows`. Derived from `os` (`ios` is `darwin`, `android` is `linux`). Never set on its own |
-| `arch` | `arm64`, `x86_64` |
+| `os` | `darwin`, `linux`, `windows`, `ios`, `android`, `wasi` |
+| `family` | `darwin`, `linux`, `windows`, `wasi`. Derived from `os` (`ios` is `darwin`, `android` is `linux`, `wasi` is `wasi`). Never set on its own |
+| `arch` | `arm64`, `x86_64`, `wasm32` |
 
 Plus one flag the compiler sets itself, and any bare name you pass with `--define`:
 
@@ -483,7 +543,7 @@ arm is still caught on your machine.
 
 | Case | Message |
 |---|---|
-| unknown value | `unknown os 'darwn', expected one of: darwin, linux, windows, ios, android` |
+| unknown value | `unknown os 'darwn', expected one of: darwin, linux, windows, ios, android, wasi` |
 | unknown axis | `unknown condition axis 'cpu', expected one of: os, arch, family` |
 | never closed | `'#[if: ...]' is never closed - add '#[end]'` |
 | axis with no comparison | ``'os' is a condition axis and needs a comparison - write `os == <value>` `` |
@@ -504,5 +564,6 @@ header, because the filter runs before there is a parsed file to point into.
 ## Next
 
 - [Modules](/projects/modules) for what a manifest is and how a dependency resolves.
+- [Tools and hooks](/projects/tools) for `#[hook:]` and `public: true`.
 - [Linking](/projects/linking) for `#[link:]` and `#[cc:]` in use against a real native library.
 - [Conditional compilation](/projects/conditional-compilation) for why the directives are a token filter.

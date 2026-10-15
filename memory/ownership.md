@@ -150,6 +150,9 @@ if (true) {
 // error: '$open' owns a resource and is moved out of on only one branch
 ```
 
+The right side of `||`, `&&`, `??` and `?->` is the same thing in a smaller coat: it only runs some of the
+time. So `$ready || close(mv $open)` gets the same refusal, pointing at the operator rather than an `if`.
+
 A loop gets the same treatment with its own sentence, which is the same reason read backwards: the second
 iteration would move something that left on the first. `'$open' is moved out of inside a loop, so the next
 iteration would move a value that is no longer there.` Declare the value inside the loop, or move it after.

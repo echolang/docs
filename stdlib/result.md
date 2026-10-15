@@ -39,8 +39,8 @@ an enum of your own. Anything.
 Two cases, two constructors. `ok` holds the value. `error` holds the failure.
 
 ```echo
-result<int32, string> $good = result<int32, string>::ok(7);
-result<int32, string> $bad = result<int32, string>::error('nope');
+result<int32, string> $good = .ok(7);
+result<int32, string> $bad = .error('nope');
 
 echo $good->has_value();    // 1
 echo $bad->failed();      // 1
@@ -235,14 +235,14 @@ cannot hand back a place. That last one is why `unwrap()` is a method on the res
 `guard` is the two interfaces spelled for you. When you want the pieces:
 
 ```echo
-result<int32, string> $r = result<int32, string>::ok(41);
+result<int32, string> $r = .ok(41);
 
 echo $r->has_value();       // 1
 echo $r->failed();        // 0
 echo $r->unwrap() + 1;      // 42
 echo $r->or(-1);      // 41
 
-result<int32, string> $e = result<int32, string>::error('bad');
+result<int32, string> $e = .error('bad');
 
 echo $e->failed();        // 1
 echo $e->failure();         // bad
@@ -253,7 +253,7 @@ echo $e->or(-1);      // -1
 
 <!-- verify: dies -->
 ```echo
-result<int32, string> $e = result<int32, string>::error('bad');
+result<int32, string> $e = .error('bad');
 
 echo $e->unwrap();
 ```
@@ -271,7 +271,7 @@ wrong, and then stopping is the only honest answer: the error arm has no `T` to 
 `unwrap() : T&` returns a reference, not a copy. A write through it lands in the result itself:
 
 ```echo
-result<int32, string> $r = result<int32, string>::ok(41);
+result<int32, string> $r = .ok(41);
 
 int32& $slot = $r->unwrap();
 $slot = 9;
@@ -330,8 +330,8 @@ function describe(const string& $text) : string
 {
     int32 $port = guard parse_port($text) else ($why) {
         return match ($why) {
-            ParseError::empty        => 'not a number',
-            ParseError::out_of_range => 'out of range',
+            .empty        => 'not a number',
+            .out_of_range => 'out of range',
         };
     }
 
@@ -348,7 +348,7 @@ and that names `ParseError` for the argument. [Enums](/language/enums) is the ch
 
 ## Nothing in the compiler knows what a result is
 
-`result<T, E>` is ordinary Echo in `stdlib/core/result.eco`. There is no `#[core:]` binding on it, no
+`result<T, E>` is ordinary Echo in `stdlib/core/result.eco`. There is no `#[echoc::core:]` binding on it, no
 node for it, no pass that mentions it. `guard` reaches it through two interfaces any type of yours can
 declare, and `.ok(...)` / `.error(...)` are the same
 [static shorthand](/language/structs#a-static-belongs-to-the-type-not-to-a-value) every enum's cases get.

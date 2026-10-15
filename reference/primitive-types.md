@@ -96,7 +96,7 @@ a variable. See [Generics](/language/generics).
 
 | Literal | Type |
 |---|---|
-| `25` | `int32`, promoted to `int64` only if it does not fit |
+| `25` | `int32`, else `int64`, else `uint64`: the first that holds it, sign included |
 | `0.5` | `float64` |
 | `0.5f` | `float32` |
 | `true` | `bool` |
@@ -137,6 +137,16 @@ uint8 $x = 0xFFFF;
 ```
 
 Write hex or binary when you mean a bit pattern, and put the type in front when the width matters.
+
+### A decimal literal widens until it fits
+
+A decimal literal tries `int32`, then `int64`, then `uint64`. The sign counts, so `-3000000000` is an
+`int64`. A number none of them holds is refused. It never wraps:
+
+```echo
+echo 18446744073709551616;
+// error: The literal '18446744073709551616' does not fit any integer type - the largest is 'uint64'.
+```
 
 ## Every literal form
 
@@ -185,7 +195,7 @@ Written `1-2` you get `unexpected '-2' - two expressions with no operator betwee
 ```echo
 echo "tab:\there";      // tab:	here
 echo "\x41";            // A
-echo "\u{1F600}";       // an emoji
+echo "\u{1F600}";       // 😀
 ```
 
 There is no `\a`, `\b`, `\f` or `\v`, and no unbraced `\uXXXX`. Anything else after a backslash is an error,

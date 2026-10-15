@@ -99,7 +99,7 @@ $whole = $whole->clone();
 $part = $whole->sub(0, 3);
 $part->append('!');
 
-echo $part;     // abc!
+echo $part;     // 012!
 echo $whole;    // 0123456789abcdef
 ```
 
@@ -233,13 +233,12 @@ echo $self;     // abab
 the end of a substring. A window that stops early is still a valid pointer and length:
 
 ```echo
-$owned = 'hello';
+$owned = 'hello hello hello!!';
 $owned = $owned->clone();
-$owned->append(' world');
 
 $head = $owned->sub(0, 5);
 echo $head->terminated();        // 0
-echo $head->data() != null;         // 1
+echo $head->data() != null;      // 1
 ```
 
 To let C write *into* a string, reserve, take `spare()`, then `commit` the count it wrote:
@@ -254,7 +253,7 @@ $p:$[1] = 66;
 $s->commit(2);
 
 echo $s;                // AB
-echo $s->room();        // 6
+echo $s->room();        // 13
 ```
 
 `room()` is how many bytes `spare()` can accept without growing. Growing the buffer after `spare()`

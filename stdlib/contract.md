@@ -310,8 +310,8 @@ function lighter<T : contract::comparable<T>>(T $a, T $b) : bool
 echo lighter(1, 3);     // 1
 ```
 
-A struct still writes `: contract::comparable<Self>` even if it already has a `<`. Having the
-operator is not the opt-in. [Sorting](/collections/sorting) is the chapter.
+A struct still writes `: contract::comparable<Gate>`, naming itself (there is no `Self`), even if
+it already has a `<`. Having the operator is not the opt-in. [Sorting](/collections/sorting) is the chapter.
 
 `comparator<T>` is the other half, a `compare` that returns `ordering`. That is what
 `sort(by: $c)` takes when the natural order is not the one you want.

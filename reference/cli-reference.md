@@ -1,12 +1,13 @@
 # CLI reference
 
-`echoc` has five subcommands and thirty-four options. That's the whole surface, and it's one list: what you
+`echoc` has six subcommands and thirty-six options. That's the whole surface, and it's one list: what you
 type, what `--help` prints, and what a refusal names all come from the same place. There is no second table
 that can drift.
 
 ```bash
 echoc run app.eco
 echoc build -o app src/*.eco
+echoc install
 echoc test --filter group:parsing
 echoc clean -n
 echoc lsp
@@ -19,6 +20,7 @@ echoc lsp
 ```bash
 echoc run   [options] <sources...> [-- <program arguments>]
 echoc build [options] -o <file> <sources...>
+echoc install [options]
 echoc test  [options] <sources...>
 echoc clean [options]
 echoc lsp   [options]
@@ -28,30 +30,35 @@ echoc lsp   [options]
 |---|---|---|
 | `run` | compile and run through the JIT. Nothing is written beside your sources | `--debug` |
 | `build` | compile and link a native executable. Needs `clang`: bundled on Windows, otherwise the one on your PATH | `--release` |
+| `install` | `build` every exe target a manifest declares, then copy each binary into `~/.echo/bin`. See [Putting one on your PATH](/projects/modules#putting-one-on-your-path) | `--release` |
 | `test` | compile and run the `test` blocks, one process each, through the JIT | `--debug` |
 | `clean` | remove what a build produced. Parses no source and runs no pass | n/a |
 | `lsp` | speak the Language Server Protocol over stdin and stdout | `--debug` |
 
 `run` is the only one that takes `--`. `clean` and `lsp` take no source files: the workspace arrives from
-the client's `initialize` request, or from `--module`. `test` is the only one that compiles a `test` block
+the client's `initialize` request, or from `--module`. `install` takes none either, because an installed
+program needs the name a manifest gives it. `test` is the only one that compiles a `test` block
 at all: every other invocation drops one before it is parsed, `lsp` included. See
 [Testing](/projects/testing).
 
 `lsp` publishes diagnostics, hover, go-to-definition, document symbols, find-references, workspace
-symbols and signature help. Completion is not in v1. Stdout is the protocol stream and nothing else;
-logging goes to stderr.
+symbols, signature help, completion, rename, document highlight and inlay hints. Stdout is the protocol
+stream and nothing else; logging goes to stderr.
 
 Name no sources at all and your program is whatever manifest the invocation points at: the one `--module`
 names, or the `module.eco` in your working directory. A `*` in a source path is expanded by echoc itself,
 through the same expander a manifest's `#[sources:]` uses.
 
 If that manifest declares `#[target:]`s, it produces one program per target and `--target` picks between
-them. See [More than one program](/projects/modules#more-than-one-program).
+them. `exe` is a command with an entry file. `lib` is a program with no entry: a shared library on
+the host, a reactor on wasi. `run` refuses a lib. See [Libraries and plugins](/projects/libraries)
+and [WebAssembly](/projects/webassembly).
 
 ## Every option
 
-`compiling` in the third column means `run`, `build` and `test`. `lsp` takes `--module`, `--no-stdlib` and
-`--package-dir`; everything else a compile would take is refused by name, because the server renders
+`compiling` in the third column means `run`, `build`, `install` and `test`. `install` refuses `-o`,
+`--target-os` and `--target-arch`: it names its own binaries, and what it installs runs on this machine. `lsp` takes `--module`, `--no-stdlib`,
+`--package-dir`, `--target-os`, `--target-arch` and `--define`; everything else a compile would take is refused by name, because the server renders
 nothing and builds nothing.
 
 ### What is built
@@ -71,7 +78,7 @@ nothing and builds nothing.
 | Option | Short | Commands | Value | Default | Does |
 |---|---|---|---|---|---|
 | `--debug` | | compiling | flag | on for `run` | keep `assert` and the runtime checks |
-| `--release` | | compiling | flag | on for `build` | drop `assert` and the runtime checks |
+| `--release` | | compiling | flag | on for `build` and `install` | drop `assert` and the runtime checks |
 | `--optimize <mode>` | | compiling | `none\|module\|whole` | `module` | how hard, and over how much at once |
 | `--debug-symbols` | `-g` | compiling | flag | off | emit DWARF. Implies `--optimize none` unless you stated one |
 | `--no-tbaa` | | compiling | flag | off | emit no type-based alias metadata |
@@ -79,6 +86,7 @@ nothing and builds nothing.
 | `--check-refcounts` | | compiling | flag | off | trap on releasing an already-dead object. Keeps every class box, poisoned |
 | `--no-stdlib` | | compiling, lsp | flag | off | compile without the standard library |
 | `--emit-stdlib-header` | | compiling | flag | off | regenerate the embedded stdlib header |
+| `--no-hooks` | | compiling | flag | off | run none of the root manifest's `#[hook:]`s. See [Tools and hooks](/projects/tools) |
 
 `--debug` and `--release` are one question and so are `--no-stdlib` and `--emit-stdlib-header`. Writing both
 halves of either pair is a refusal, not a last-one-wins.
@@ -87,8 +95,8 @@ halves of either pair is a refusal, not a last-one-wins.
 
 | Option | Short | Commands | Value | Default | Does |
 |---|---|---|---|---|---|
-| `--target-os <name>` | | all | name | the host | evaluate `#[if:]` as if targeting this OS |
-| `--target-arch <name>` | | all | name | the host | the same for the architecture |
+| `--target-os <name>` | | all but install | name | the host | evaluate `#[if:]` as if targeting this OS. `echoc build --target-os wasi` is a real cross to `wasm32-unknown-wasip1`; Darwin `build --target-os ios` is the other. `wasi` is refused on `run` and `test` |
+| `--target-arch <name>` | | all but install | name | the host | the same for the architecture |
 | `--ios-device` | | build | flag | off | with `--target-os ios`, emit for a physical iPhone |
 | `--define <name>` | | all | bare name, repeatable | | declare a flag `#[if: NAME]` can test |
 | `--target-cpu <name>` | | compiling | name | a per-platform baseline | which CPU to select instructions for |
@@ -103,11 +111,13 @@ for the host CPU is an illegal instruction on the machine next door rather than 
 `--target-os` and `--target-arch` change what a `#[if:]` sees. On every subcommand except one, that
 is all they do: the code is still compiled for this machine.
 
-The exception is Darwin `echoc build --target-os ios`. That is a real cross-compile, to the iOS
-simulator SDK. `--ios-device` switches it to a physical iPhone. `echoc run --target-os ios` still
-only picks `#[if:]` arms and JITs for this machine, which is how a test asserts what the iOS branch
-does. Other names (`linux`, `windows`, `android`) stay facts-only on every subcommand: there is no
-Linux sysroot on a Mac.
+The exceptions are Darwin `echoc build --target-os ios` and `echoc build --target-os wasi`. iOS is a
+real cross-compile to the simulator SDK; `--ios-device` switches it to a physical iPhone. WASI is
+`wasm32-unknown-wasip1` on every host and needs a WASI SDK (`WASI_SDK_PATH`, `/opt/wasi-sdk`, or
+Homebrew wasi-libc). `echoc run --target-os wasi` and `echoc test --target-os wasi` are refused:
+those would pick wasi constants and execute them on the host. `echoc run --target-os ios` still
+only picks `#[if:]` arms and JITs for this machine. Other names (`linux`, `windows`, `android`)
+stay facts-only on every subcommand: there is no Linux sysroot on a Mac.
 
 `--target-os ios` also selects `family == darwin`. There is no `--target-family`.
 
@@ -116,6 +126,7 @@ Linux sysroot on a Mac.
 | Option | Short | Commands | Value | Default | Does |
 |---|---|---|---|---|---|
 | `--print <what>` | `-p` | compiling | see below, repeatable | | dump what the compiler built, by layer |
+| `--decls-all` | | compiling | flag | off | with `--print decls`, include dependency and stdlib declarations |
 | `--explain <what>` | | compiling | see below, repeatable | | explain a decision the compiler made |
 | `--diagnostics <mode>` | | compiling, clean | `auto\|pretty\|ascii\|json` | `auto` | how a diagnostic is drawn |
 | `--color <when>` | | compiling, clean | `auto\|always\|never` | `auto` | colourise diagnostics. Also spelled `--colour` |
@@ -134,6 +145,12 @@ pipe records.
 |---|---|---|---|---|---|
 | `--with-stdlib` | | clean | flag | off | also remove the standard library's store |
 | `--dry-run` | `-n` | clean | flag | off | print what would be removed, remove nothing |
+
+### Where install puts it
+
+| Option | Short | Commands | Value | Default | Does |
+|---|---|---|---|---|---|
+| `--dir <dir>` | | install | path | `$ECHO_BIN_DIR`, else `~/.echo/bin` | the directory programs are installed into, created if it is missing |
 
 ### General
 
@@ -169,7 +186,9 @@ There are exactly seven short options: `-h`, `-v`, `-o`, `-m`, `-p`, `-g`, `-n`.
 | | `symbols` | the registered symbol table |
 | | `instances` | generic instances and rewired call sites |
 | | `manifest` | the named manifests as JSON, then stop. Does not resolve the graph. Cannot be combined with another `--print` |
-| `--explain` | `cache` | each module's key, whether its artifact is present, and on a miss which input changed |
+| | `decls` | resolved declarations as JSON, after the semantic passes. User modules only unless `--decls-all` |
+| | `tools` | the tools the project's direct dependencies offer, as JSON, then stop. What `epm run` reads. Cannot be combined with another `--print` |
+| `--explain` | `cache` | each module's key, whether its artifact is present, and on a miss which input changed. `up to date` when the whole program was |
 | | `prune` | what the JIT prune dropped. `run` and `test` only |
 | | `memory` | live allocations when the program ended. Implies `--track-allocations` |
 | | `time` | where the compile spent its time, as a tree |
@@ -212,7 +231,7 @@ only thing that goes to stdout.
 | You wrote | You get |
 |---|---|
 | `echoc` | `No command given.` |
-| `echoc frobnicate` | `'frobnicate' is not an echoc command. Write 'run', 'build', 'test', 'clean' or 'lsp'.` |
+| `echoc frobnicate` | `'frobnicate' is not an echoc command. Write 'run', 'build', 'install', 'test', 'clean' or 'lsp'.` |
 | `echoc run --nonsense` | `Unknown option '--nonsense'.` |
 | `echoc run --optimize hard` | `Unknown '--optimize' value 'hard'. Expected one of: none\|module\|whole.` |
 | `echoc build x.eco` | `'build' needs '-o, --output <file>' - nothing here names the binary.` Reported once the manifest is known, since a project declaring targets names its own |
@@ -274,7 +293,9 @@ None of these are flags, and none of them enter a module's cache key.
 | `LC_ALL`, `LC_CTYPE`, `LANG` | containing `UTF-8` or `utf8` means box-drawing characters are safe. Checked in that override order |
 | `COLUMNS` | a positive integer overrides the width used for wrapping |
 | `XDG_CACHE_HOME` | the user cache root becomes `$XDG_CACHE_HOME/echo` |
-| `HOME` | the fallback root, `$HOME/.cache/echo`. Neither set means no user cache |
+| `HOME` | the fallback root, `$HOME/.cache/echo`. Neither set means no user cache. Also where `install` goes: `$HOME/.echo/bin` |
+| `LOCALAPPDATA` | Windows: the cache root `%LOCALAPPDATA%\echo`, and `install`'s `%LOCALAPPDATA%\echo\bin` |
+| `ECHO_BIN_DIR` | where `install` puts programs when `--dir` is not given |
 | `SDKROOT` | the SDK path handed to the link step |
 | `ECO_TRACE_MONO` | present, at any value, traces the monomorphizer per round. A debugging hatch, not a feature |
 

@@ -216,8 +216,9 @@ Point $p = geometry::make(3, 4);
 echo $p->x;     // 3
 ```
 
-Three shapes:
+Three shapes. Each is a different program; writing all four in one file is a duplicate import:
 
+<!-- verify: skip -->
 ```echo
 use std::math;                      // prefix: math::sqrt
 use std::math::sqrt;                // item:   sqrt(...)
@@ -227,8 +228,9 @@ use std::math::sqrt as square_root; // alias
 
 The last segment decides what you bound. A namespace is a prefix, so you still write `math::sqrt`. A
 type, a function or a constant is an item, so the short name stands in every role that name has:
-`Point` as a type, `Point(...)` as a constructor, `Point::origin` as a static. There is no
-`use function` or `use const`. Echo already keeps those in different stores, so one `use` is enough.
+`Point` as a type, `Point(...)` as a constructor, `Point::origin` as a static, `Point::CAPACITY` as a
+constant. There is no `use function` or `use const`. Echo already keeps those in different stores, so
+one `use` is enough.
 
 An alias is only a spelling. The declaration stays where it was, with the same visibility. `use`
 of a name another module did not mark `public` is refused at the `use`.

@@ -78,6 +78,7 @@ crash the moment miniaudio ships `-999`.
 
 An [open integer enum](/language/enums#an-integer-enum-can-be-open) is the type you actually have:
 
+<!-- verify: skip -->
 ```echo
 extern { function ma_result() : int32; }
 
@@ -88,7 +89,7 @@ enum Error : int32
     case other;
 }
 
-Error $e = Error::from(ma_result());
+Error $e = .from(ma_result());
 ```
 
 `from` always succeeds. A named code becomes that case. `-999` becomes `Error::other`, and `$e->value()`
@@ -581,6 +582,11 @@ opposite it to read *toward*, so each element is passed as its own type and a po
 an address, the same thing `->cstr()` has always given you.
 
 ```echo
+extern {
+    function snprintf as c_snprintf(
+        ptr<uint8> $out, usize $size, ptr<const uint8> $format, variadic_args $args) : int32;
+}
+
 ptr<uint8> $buffer = mem::alloc<uint8>(64);
 ptr<uint8> $text = mem::alloc<uint8>(8);
 
@@ -588,6 +594,9 @@ string $format = '<%s>';
 
 c_snprintf($buffer, 64, $format->cstr(), [$text]);      // the address, as C wants
 c_snprintf($buffer, 64, $format->cstr(), [$text:$]);    // the same address, said explicitly
+echo 1;
+mem::free($buffer);
+mem::free($text);
 ```
 
 `variadic_args` is legal in exactly one place: the last parameter of an `extern` declaration, with at
@@ -602,6 +611,7 @@ one word, no environment.
 Echo's own callable, `function<R(P...)>`, is two words. C has no declaration for the second one.
 The type C can name is `extern function<R(P...)>`:
 
+<!-- verify: skip -->
 ```echo
 extern {
     function apply(extern function<int32(int32)> $fn, int32 $v) : int32;
@@ -621,9 +631,9 @@ A struct by value is refused, because that is where echoc's lowering and clang's
 come apart silently. Pass a `ptr<T>`.
 
 The marked unsafe one is the one-word reinterpret between `ptr<T>` and `extern function<R(P...)>`.
-That is what a loader does: `dlsym` hands back a `void*`, you store it typed per slot, and you call
-through it. Any signature is accepted, the way any `ptr` reinterpret is — the signature is your
-promise. Without that cast, only libraries whose symbols are known at link time are bindable.
+That is what a loader does: `std::dynlib::library::address` hands back a `ptr<uint8>`, you recast it,
+and you call through it. Any signature is accepted, the way any `ptr` reinterpret is. The signature
+is your promise. [Libraries and plugins](/projects/libraries) is the rest of that path.
 
 ```echo
 function stub() : int32
@@ -654,3 +664,5 @@ the address of a function it compiled.
 - [Linking](/projects/linking) for telling the linker where the library actually is.
 - [Conditional compilation](/projects/conditional-compilation) for a symbol that exists on one platform.
 - [Modules](/projects/modules) for how a binding module reaches its consumers.
+- [Libraries and plugins](/projects/libraries) for a native `#[target: lib]`.
+- [WebAssembly](/projects/webassembly) for a lib the browser can call.

@@ -5,7 +5,8 @@ Sometimes a library is already on disk next to your project. That's `#[depends:]
 
 Sometimes it isn't. You want libcurl, it lives in a git repo, and you'd rather not clone it by
 hand. That's `#[requires:]`. **epm** is the tool that puts the sources in `vendor/`. After
-`epm install` you run `echoc` the way you always did. epm never wraps the compiler. A released
+`epm install` you run `echoc` the way you always did. epm never wraps the compiler, and it never compiles
+anything: when it runs a dependency's tool, echoc does the building. A released
 `epm` arrives next to `echoc` from the [install one-liner](/guide/installation).
 
 <!-- verify: skip -->
@@ -16,7 +17,7 @@ hand. That's `#[requires:]`. **epm** is the tool that puts the sources in `vendo
 #[epm::description: "a thing that does a thing"]
 
 #[depends: "../scratch-lib"]
-#[requires: "echolang/libcurl" { version: "^0.1", source: git "https://github.com/echolang/libcurl" }]
+#[requires: "echolang/libcurl" { version: "^1", source: git "https://github.com/echolang/libcurl" }]
 
 #[sources: "src/*.eco"]
 ```
@@ -33,8 +34,8 @@ ever sees a directory.
 
 | file | says | owner | committed |
 |---|---|---|---|
-| `module.eco` | what I require: `libcurl`, `^0.1` | you, by hand | yes |
-| `epm.lock.json` | what that resolved to: 0.1.3, a git rev, a sha256 | epm | yes |
+| `module.eco` | what I require: `libcurl`, `^1` | you, by hand | yes |
+| `epm.lock.json` | what that resolved to: 1.0.0, a git rev, a sha256 | epm | yes |
 | `vendor/` | the fetched sources, flat siblings | epm | no |
 
 `vendor/` is a fixed relative location, so there is no resolution table to write or keep in sync.
@@ -97,6 +98,18 @@ field.
 ```
 
 `#[license: "MIT"]` with no namespace is an unknown manifest attribute. That's the point.
+
+## Running a package's tool
+
+Sometimes a package is also a program you run: a generator, a formatter. Mark the exe `public: true`
+and `epm run` is how you invoke it:
+
+```bash
+epm run restgen api/petstore.yaml src/api
+```
+
+`epm install` vendors what those tools need too, for the packages you require directly. A tool that runs
+before every build is a `#[hook:]`. [Tools and hooks](/projects/tools) is the chapter.
 
 ## A path dependency is unchanged
 

@@ -5,7 +5,7 @@ Here's the catch up front: **none of this needs a platform conditional in your c
 environment block arrives as the entry point's third argument rather than through `environ`.
 
 ```echo
-echo std::env::argc();                  // 1 when nothing was passed
+echo std::env::argc();               // 1
 echo std::env::arg(0)->empty();      // 0, argument zero is the program
 ```
 
@@ -210,7 +210,7 @@ and that is the whole reason both exist.
 ```echo
 echo 1;
 std::env::exit(0);
-echo 2;         // never runs, and the compiler knows it
+echo 2;
 ```
 
 Nothing after the call runs, which means **no destructor runs either**, and no `[memory]` report is printed

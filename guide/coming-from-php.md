@@ -82,9 +82,20 @@ Two things that follow:
 ## No new, and no `.` for members
 
 ```echo
-$p = Point(1.0, 2.0);       // calling the type constructs it
-echo $p->x;                 // properties
-echo $p->length();          // methods
+struct Point
+{
+    float64 $x;
+    float64 $y;
+
+    function length() : float64
+    {
+        return std::math::sqrt($this->x * $this->x + $this->y * $this->y);
+    }
+}
+
+Point $p = Point(1.0, 2.0);     // calling the type constructs it
+echo $p->x;                     // 1.000000
+echo $p->length();              // 2.236068
 ```
 
 `->` is used for every member access. Not `.`, not `::`. `::` is reserved for namespaces and nested types
@@ -98,8 +109,8 @@ free one. That is where `Point(1.0, 2.0)` comes from when you never wrote one.
 ## echo prints exactly one thing, and adds a newline
 
 ```echo
-echo 'Hello';       // prints Hello and a newline
-echo 42;            // prints 42 and a newline
+echo 'Hello';       // Hello
+echo 42;            // 42
 ```
 
 No comma-separated list and no `printf`. Interpolation is how you print more than one thing, and the quote
@@ -119,6 +130,7 @@ also [Input and Output](/stdlib/io/) when you want `print` without the newline, 
 
 `echo` cannot print a struct. Use `dprint` for that:
 
+<!-- verify: skip -->
 ```echo
 dprint($point);
 // [Point] {
@@ -137,11 +149,26 @@ class Account { /* ... */ }                 // a reference counted object
 ```
 
 ```echo
-$a = Point(1.0, 2.0);
-$b = $a;            // a copy. two independent Points
+struct Point { float64 $x; float64 $y; }
+class Account
+{
+    string $name;
+    int32 $balance;
 
-$x = Account("Mario", 100);
-$y = $x;            // the same object, now with two owners
+    constructor(string $name, int32 $balance)
+    {
+        $this->name = $name;
+        $this->balance = $balance;
+    }
+}
+
+Point $a = Point(1.0, 2.0);
+Point $b = $a;            // a copy. two independent Points
+
+Account $x = Account("Mario", 100);
+Account $y = $x;          // the same object, now with two owners
+echo $a->x;               // 1.000000
+echo $x->name;            // Mario
 ```
 
 A struct lives where you put it, costs nothing to create, and is copied on assignment. A class lives on the
@@ -178,7 +205,8 @@ function total(const array<int32>& $xs) : int32
     return $sum;
 }
 
-echo total($nums);          // 6, and $nums is still yours
+array<int32> $nums = [1, 2, 3];
+echo total($nums);          // 6
 ```
 
 If you have written Rust, this is that, with a friendlier default and slightly fewer rules. If you have not,
@@ -198,6 +226,7 @@ int32? $b = null;   // fine
 
 Which means `??` and `?->` are not just convenience, they are how you get at the value at all:
 
+<!-- verify: skip -->
 ```echo
 echo halve(8) ?? -1;
 echo $node?->next?->tag ?? -1;
@@ -206,6 +235,7 @@ echo $node?->next?->tag ?? -1;
 And `guard` is the one you'll reach for most, because it unwraps into a plain non-nullable value for the
 rest of the scope:
 
+<!-- verify: skip -->
 ```echo
 int32 $v = guard halve($n) else {
     return $fallback;
@@ -233,6 +263,7 @@ That is a smaller toolkit than PHP's and it is deliberate. There is no stack to 
 
 There is no `require`. A project is a directory with a `module.eco` manifest:
 
+<!-- verify: skip -->
 ```echo
 #[module: "greeter"]
 #[version: "0.1.0"]
@@ -246,6 +277,7 @@ file: `use geometry::Point;`, `use std::math;`. There is no `require` and no aut
 
 Depending on another module is one line:
 
+<!-- verify: skip -->
 ```echo
 #[depends: "../lib_geometry"]
 ```

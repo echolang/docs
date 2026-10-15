@@ -164,7 +164,7 @@ foreach (0 .. $n - 1 as $i) {
 
 ## Why the compiler's ignorance is the point
 
-There is no `#[core:]` binding on `range<T>` and there deliberately never will be. A core name exists so
+There is no `#[echoc::core:]` binding on `range<T>` and there deliberately never will be. A core name exists so
 the compiler can *say* a type it mints itself, and the compiler never mints a range.
 
 Which means the whole feature is this, in `stdlib/core/range.eco`:

@@ -155,7 +155,7 @@ function pair<K, V>(K $key, V $value) : K
     return $key;
 }
 
-echo pair(1, 2.5);      // prints 2.5 then 1
+echo pair(1, 2.5);      // 1
 ```
 
 ## Constraints
@@ -277,7 +277,7 @@ function make<T : class, A>(A $arg) : T
     return T($arg);
 }
 
-$c = make<rc<YetAnotherOne>>(3.14);
+$c = make<rc<YetAnotherOne>>(YetAnotherOne(3.14));
 echo $c->value->n;           // 3.140000
 ```
 
@@ -320,7 +320,7 @@ class Handle
 }
 
 Handle $h = Handle(7);
-erased $held = erased::from($h);
+erased $held = .from($h);
 
 unsafe {
     Handle $back = assume<Handle>($held);
@@ -360,7 +360,7 @@ class Container
         }
 
         T $fresh = T($arg);
-        $this->instances[$id] = erased::from($fresh);
+        $this->instances[$id] = .from($fresh);
         return $fresh;
     }
 }
@@ -557,26 +557,19 @@ echo $hold[1];      // 22
 `T` is inferred from the operands, exactly as it is for a call. This is how `array<T>` and `map<K, V>`
 declare their brackets.
 
-Here's a gap. Declaring a **generic** overload of a symbol that already has a
-built-in meaning is currently refused, even though the concrete version is fine:
+Here's a gap. A generic operator whose operands are still a bare `T` is refused when the symbol already
+has a built-in meaning, because inside the template those might be primitives:
 
 ```echo
-struct CargoBay<T>
+operator<T> (T $a) + (T $b) : T
 {
-    T $forward;
-    T $aft;
-}
-
-operator<T> (CargoBay<T> $a) + (CargoBay<T> $b) : CargoBay<T>
-{
-    return CargoBay<T>($a->forward + $b->forward, $a->aft + $b->aft);
+    return $a;
 }
 // error: operator '+' is built in for these operand types, so this declaration would never be used -
 //        where the language spells a meaning, the built-in one wins.
 ```
 
-Inside the template the operands are still `T`, and the compiler answers "that might be a primitive" rather
-than waiting to find out. Writing the operator for the concrete instantiation works:
+An operator over a named type, generic or not, is fine. So is writing it for one concrete instantiation:
 
 ```echo
 struct CargoBay<T>

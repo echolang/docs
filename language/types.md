@@ -47,7 +47,7 @@ You can ask for a size yourself, which is occasionally handy and is the same num
 
 ```echo
 echo mem::size<int32>();     // 4
-echo mem::size<usize>();     // 8 on a 64-bit machine
+echo mem::size<usize>();     // 8
 ```
 
 A sentinel count is a name on the type, not eighteen digits from memory. Integer primitives answer
@@ -100,6 +100,9 @@ $f = 3.14f;     // float32, and that is the f talking
 An untyped integer literal is an `int32`. An untyped float literal is a `float64`. Those two don't agree
 about width, and that's deliberate: an integer that needs more than 32 bits is unusual, and a float that
 wants less precision than a `float64` is a decision you should have to write down.
+
+An integer that doesn't fit an `int32` goes to `int64`, and past that to `uint64`. The sign counts, so
+`-3000000000` is an `int64` too. Bigger than every integer type is a compile error.
 
 A `0x` or `0b` literal is the exception. With nothing else to go on it takes an unsigned type sized to the
 number of digits you wrote, so `0xFF` is a `uint8` and `0x00FF` is a `uint16` despite being the same number.
@@ -284,7 +287,7 @@ declaration in `stdlib/core/range.eco`. Compile with `--no-stdlib` and the dots 
 program can use, because nothing declares them any more.
 
 A small number of these types are pointed at by name so the compiler can talk about them (that's what
-`#[core: array]` does), but the shape is still the library's. There is no privileged array type you can't
+`#[echoc::core: array]` does), but the shape is still the library's. There is no privileged array type you can't
 write yourself.
 
 ## Next

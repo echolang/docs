@@ -4,6 +4,8 @@
 `mutex<T>` sleeps, `once` runs a function once. There is no type named `future` and no function
 named `async`. A value comes back through a `mutex` or a `task<T>`.
 
+WASI preview 1 has no OS threads. `std::thread` is not part of a `--target-os wasi` build.
+
 ```echo
 use std::thread;
 

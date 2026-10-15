@@ -1,19 +1,21 @@
 # The echoc CLI
 
-`echoc` has five subcommands and no others. There is no `echoc new`, no `echoc fmt`, no `echoc publish`.
+`echoc` has six subcommands and no others. There is no `echoc new`, no `echoc fmt`, no `echoc publish`.
 What there is instead: **`run` and `build` are not the same build**, and most of the surprises live in the
 ways they differ.
 
 ```bash
-echoc run app.eco               # compile, link, execute (reuses the module cache)
+echoc run app.eco               # compile and run (reuses the module cache)
 echoc build -o app app.eco      # compile and link a native binary
+echoc install                   # build a project's programs and put them on your PATH
 echoc test                      # compile and run the test blocks, one process each
 echoc clean                     # remove what a build produced
 echoc lsp                       # language server over stdin and stdout
 ```
 
-That's it. Everything below is flags. `lsp` takes `--module`, `--no-stdlib` and `--package-dir`, and
-refuses the rest: it compiles nothing to an executable.
+That's it. Everything below is flags. `lsp` takes `--module`, `--no-stdlib`, `--package-dir`, and the
+three that decide what `#[if:]` sees (`--target-os`, `--target-arch`, `--define`), and refuses the rest:
+it compiles nothing to an executable.
 
 `test` is `run` with a different thing to run, and it gets a chapter of its own in
 [Testing](/projects/testing). Everything on this page about how a program is compiled applies to it
@@ -21,9 +23,9 @@ unchanged, because it is the same compile.
 
 ## `run` is the loop, `build` is the artifact
 
-`run` compiles, links, and execs a scratch binary. It uses the same per-module object cache `build`
-does, so a second `run` after you change one file only rebuilds that file's module. It defaults to
-`--debug`, so `assert` and the runtime checks stay in.
+`run` compiles the program and runs it through the JIT, writing no executable. It uses the same
+per-module object cache `build` does, so a second `run` after you change one file only rebuilds that
+file's module. It defaults to `--debug`, so `assert` and the runtime checks stay in.
 
 `build` produces a real executable, which needs `clang` for the link step. On macOS and Linux that is
 the one on your `PATH`. A Windows release already has clang, lld-link and a sysroot next to `echoc`.
@@ -36,6 +38,10 @@ The bit that surprises people: the defaults go opposite ways on purpose, and eit
 echoc run --release app.eco     # the release semantics, then exec
 echoc build --debug -o app app.eco
 ```
+
+`install` is `build` with somewhere to go. It builds every program a project's manifest declares, in
+release, and copies each into `~/.echo/bin`, so a CLI you wrote is a command you can type from anywhere.
+It's covered with targets in [Putting one on your PATH](/projects/modules#putting-one-on-your-path).
 
 ## What to compile
 
@@ -230,8 +236,8 @@ These are ordinary output, not debugging leftovers. The very first run of `time`
 standard library's source globs cost more than lexing all 1938 lines of it, which is not a thing anybody was
 going to guess.
 
-`prune` is `run` only, because only the JIT prunes. Written on a `build` it is a refusal that names `run`
-rather than a flag quietly doing nothing:
+`prune` is `run` and `test` only, because only the JIT prunes. Written on a `build` it is a refusal
+that names what `build` accepts rather than a flag quietly doing nothing:
 
 ```
 error: 'build --explain prune' is not something 'build' can answer. It accepts: cache|memory|time.

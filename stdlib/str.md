@@ -30,18 +30,18 @@ the sharing for yourself.
 
 <!-- verify: track-allocations -->
 ```echo
-string $literal = "Chulak";
-echo mem::refs<str::buf>($literal->owner);     // 0
-echo mem::live_allocations();                       // 0
+string $literal = "0123456789abcdef";
+echo mem::refs($literal->owner);     // 0
+echo mem::live_allocations();        // 0
 
 string $built = "";
-$built->append("Chulak");
-echo mem::refs<str::buf>($built->owner);       // 1
-echo mem::live_allocations();                       // 2
+$built->append("0123456789abcdef");
+echo mem::refs($built->owner);       // 1
+echo mem::live_allocations();        // 2
 
 string $shared = $built;
-echo mem::refs<str::buf>($built->owner);       // 2
-echo mem::live_allocations();                       // 2
+echo mem::refs($built->owner);       // 2
+echo mem::live_allocations();        // 2
 ```
 
 A literal is a window over bytes baked into your binary, with no buffer behind it at all, so its count reads

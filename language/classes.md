@@ -49,7 +49,7 @@ struct Point
     int32 $y;
 }
 
-rc<Point> $p = rc<Point>(1, 2);
+rc<Point> $p = rc<Point>(Point(1, 2));
 echo $p->value->x;         // 1
 ```
 

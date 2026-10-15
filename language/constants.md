@@ -120,6 +120,9 @@ echo $b->headroom();        // 3072
 
 Inside the type it's `self::CAPACITY`. A bare `CAPACITY` won't find it.
 
+After `use geometry::Buffer`, it is still `Buffer::CAPACITY`. The imported name is the type, so every
+role of that name comes with it, the constant included.
+
 What a constant **can't** do is live in a block. A constant has no storage, so there's no scope for it to
 belong to. If you want a name inside a function, that's a `const` variable:
 
@@ -159,8 +162,8 @@ doesn't arise: the expression is copied into the consumer's code and evaluated t
 That's how `std::math::PI` is declared. It's also why there are two spellings:
 
 ```echo
-echo std::math::PI;         // float64
-echo std::math::PI_F32;     // float32
+echo std::math::PI;         // 3.141593
+echo std::math::PI_F32;     // 3.141593
 ```
 
 An untyped constant would have taken its type from each use site, which for a mathematical constant is more

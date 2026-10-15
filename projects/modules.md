@@ -15,12 +15,12 @@ manifest is Echo**, read by the same lexer and the same parser your own code goe
 That's a complete project. Run `echoc run` in that directory and it finds the manifest, expands the pattern
 and compiles what it matched.
 
-## Nine attributes, and most days you write three
+## Ten attributes, and most days you write three
 
-A manifest has a closed list of nine names. Misspell one and you get the list back:
+A manifest has a closed list of ten names. Misspell one and you get the list back:
 
 ```
-module.eco:2: unknown manifest attribute 'source', expected one of: module, version, depends, sources, target, link, cc, build_dir, requires
+module.eco:2: unknown manifest attribute 'source', expected one of: module, version, depends, sources, target, link, cc, build_dir, requires, hook
 ```
 
 A name with a namespace the compiler doesn't own is not on that list and is not refused. `#[epm::license: "MIT"]` is carried so a tool can read it back. See [Packages](/projects/packages).
@@ -32,11 +32,13 @@ A name with a namespace the compiler doesn't own is not on that list and is not 
 | `#[sources: "src/*.eco"]` | the files this module is made of |
 | `#[depends: "../geometry"]` | another module, already on disk, by path |
 | `#[requires: "lib" { version:, source: git "..." }]` | a package, optionally `org/name`. epm puts it in `vendor/`; the compiler resolves the name. See [Packages](/projects/packages) |
-| `#[target: exe { ... }]` | a program this module produces. See [More than one program](#more-than-one-program) |
+| `#[target: exe { ... }]` | a program this module produces. See [More than one program](#more-than-one-program). `install: true` marks it for [`echoc install`](#putting-one-on-your-path), `public: true` offers it to the modules that depend on this one. See [Tools and hooks](/projects/tools) |
+| `#[target: lib { name: ... }]` | a program with no entry. A `.dylib` / `.so` / `.dll` on the host, a reactor on wasi. The surface is `#[export]`. See [Libraries and plugins](/projects/libraries) |
 | `#[target: test] { ... }` | and what belongs to that target alone. See [A target can have things of its own](#a-target-can-have-things-of-its-own) |
 | `#[link: lib "m"]` | a native library this module needs. See [Linking](/projects/linking) |
 | `#[cc: sources "c/*.c"]` | C sources that ship beside the Echo. See [C interop](/projects/c-interop) |
 | `#[build_dir: "target"]` | where artifacts go instead of `ecobuild` |
+| `#[hook: before_build { run: ... }]` | a dependency's tool to run before every build. See [Tools and hooks](/projects/tools) |
 
 `#[version:]` is optional and the standard library's own manifest omits it. Here's the honest bit: it
 does nothing. Nothing resolves against it, nothing compares two of them. It sits in the fingerprint of
@@ -177,6 +179,45 @@ target. Their `#[depends:]` libraries are cached and shared between them, the mo
 For two programs over one `src/` that's a rounding error. If it ever stops being one, the shared half wants to
 be its own module, which is the thing `#[depends:]` was for all along.
 
+### Putting one on your PATH
+
+That `-o /usr/local/bin/clock` works, and you'll be typing it every time you change something. `echoc install`
+is the same thing written down once:
+
+```bash
+echoc install                         # every program, into ~/.echo/bin
+echoc install --target clock          # just the one
+echoc install --dir /usr/local/bin    # somewhere else
+```
+
+It's an ordinary `echoc build` first: release unless you say `--debug`, the same build directory, the
+same cache. Then each binary is copied into `~/.echo/bin`, or `%LOCALAPPDATA%\echo\bin` on Windows,
+where the echoc installer already put echoc. `$ECHO_BIN_DIR` moves that default and `--dir` beats
+both. Installing again replaces what was there, even if the old one is running right now.
+
+Which programs? Every `exe` the manifest declares, unless some of them say `install: true`:
+
+<!-- verify: skip -->
+```echo
+#[target: exe { name: "clock", entry: "src/clock_main.eco", install: true }]
+#[target: exe { name: "bench", entry: "src/bench_main.eco" }]
+```
+
+Now `echoc install` takes `clock` and leaves the benchmark where it is. `--target bench` still installs it,
+because naming one is always the answer. A `lib` or a `test` target is never installed: there's nothing in
+either to run.
+
+If the directory isn't on your PATH yet, echoc says so, along with the line that fixes it:
+
+```
+installed clock -> /Users/you/.echo/bin/clock
+'/Users/you/.echo/bin' is not on your PATH. Add it to run this by name:
+  export PATH="/Users/you/.echo/bin:$PATH"
+```
+
+Not to be confused with `epm install`, which fetches the packages a project requires into `vendor/`. That one
+is about what your project needs. This one is about what your project *is*.
+
 ## A target can have things of its own
 
 Everything above belongs to the whole module. Sooner or later one target needs something the others have no
@@ -217,8 +258,8 @@ Four attributes may go in one:
 | `#[link:]` | a native library only this target links |
 | `#[cc:]` | C sources only this target ships |
 
-`#[module:]`, `#[version:]`, `#[build_dir:]` and `#[target:]` itself may not. Those describe the module, and
-a scope is one target speaking for itself:
+`#[module:]`, `#[version:]`, `#[build_dir:]`, `#[target:]` itself and `#[hook:]` may not. Those describe the
+module, and a scope is one target speaking for itself:
 
 ```
 module.eco:6: 'version' describes the module, not one of its targets - write it at file scope.
@@ -372,7 +413,8 @@ Caught at the manifest, rather than when a later `echoc clean` would have emptie
 ## The cache keys on your sources, never on your consumers
 
 `echoc build` stores each module's object and serves it back for as long as nothing it depends on changed.
-`--explain cache` says which:
+`echoc run` and `echoc test` read and fill the same store, so the second `run` of a project only compiles
+the program itself. `--explain cache` says which:
 
 ```bash
 echoc build -o plot --explain cache
@@ -396,21 +438,25 @@ Touch a file in `geometry` and it tells you which one:
 
 The program itself is never stored, because its unit is where the C `main` is created. Everything below it is.
 
+The *binary* is a different story. When nothing a program is built from has moved, `echoc build` and
+`echoc install` skip the front end, codegen and the link, and `--explain cache` says `up to date`.
+Delete the binary, edit a source, or ask for a `-p` dump, and it does the work. See
+[It isn't rebuilt every time](/projects/tools#it-isnt-rebuilt-every-time).
+
 **A module's object is a function of its own sources and its dependencies' keys, and never of who is using
 it.** A library built beside two different applications produces the same bytes both times. If that weren't
 true the cache would be unsound rather than merely unhelpful, and a stale object would be a wrong program
 instead of a slow build.
 
-Two things it doesn't do. `echoc run` has no object cache at all, so every run recompiles everything:
+One thing it doesn't do. `--optimize whole` and an IR dump bypass it, because after the merge there are
+no per-module objects left to store:
 
 ```
 [cache]
   bypassed: an optimized or dumped build is whole-program, so no module object is reusable
 ```
 
-And `--optimize whole` bypasses it for the same reason, because after the merge there are no per-module
-objects left to store. That's the trade in [the CLI page](/projects/cli): cross-module inlining, or a fast
-rebuild.
+That's the trade in [the CLI page](/projects/cli): cross-module inlining, or a fast rebuild.
 
 ## `echoc clean`, and `-n` first
 

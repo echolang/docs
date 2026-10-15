@@ -26,7 +26,7 @@ reads as a sentence.
 ```echo
 use std::time;
 
-time::duration $d = time::duration::millis(1500);
+time::duration $d = .millis(1500);
 echo $d->as_secs();          // 1
 echo $d->subsec_nanos();     // 500000000
 echo $d->as_millis();        // 1500
@@ -40,8 +40,8 @@ comparison are ordinary operators, operands by value (16 bytes, trivially copyab
 ```echo
 use std::time;
 
-time::duration $a = time::duration::secs(2);
-time::duration $b = time::duration::millis(500);
+time::duration $a = .secs(2);
+time::duration $b = .millis(500);
 
 echo ($a + $b)->as_millis();     // 2500
 echo ($a - $b)->as_millis();     // 1500
@@ -66,7 +66,7 @@ So the accessors that look like they just read a field are floor-correct for neg
 ```echo
 use std::time;
 
-time::duration $d = time::duration::millis(-1500);
+time::duration $d = .millis(-1500);
 echo $d->as_secs();              // -2, not -1
 echo $d->subsec_nanos();         // 500000000
 echo $d->as_millis();            // -1500
@@ -92,34 +92,34 @@ shape Go prints:
 ```echo
 use std::time;
 
-time::duration $z = time::duration::zero();
+time::duration $z = .zero();
 echo "{$z}";             // 0s
 
-time::duration $ns = time::duration::nanos(100);
+time::duration $ns = .nanos(100);
 echo "{$ns}";            // 100ns
 
-time::duration $us = time::duration::nanos(1500);
+time::duration $us = .nanos(1500);
 echo "{$us}";            // 1.5us
 
-time::duration $ms = time::duration::millis(250);
+time::duration $ms = .millis(250);
 echo "{$ms}";            // 250ms
 
-time::duration $s = time::duration::secs(1) + time::duration::millis(500);
+time::duration $s = .secs(1) + .millis(500);
 echo "{$s}";             // 1.5s
 
-time::duration $m = time::duration::mins(1) + time::duration::secs(30);
+time::duration $m = .mins(1) + .secs(30);
 echo "{$m}";             // 1m30s
 
-time::duration $h = time::duration::hours(1) + time::duration::mins(2) + time::duration::secs(3) + time::duration::millis(500);
+time::duration $h = .hours(1) + .mins(2) + .secs(3) + .millis(500);
 echo "{$h}";             // 1h2m3.5s
 
-time::duration $h0 = time::duration::hours(1) + time::duration::secs(3);
+time::duration $h0 = .hours(1) + .secs(3);
 echo "{$h0}";            // 1h0m3s
 
-time::duration $neg = time::duration::millis(-1500);
+time::duration $neg = .millis(-1500);
 echo "{$neg}";           // -1.5s
 
-time::duration $long = time::duration::hours(26);
+time::duration $long = .hours(26);
 echo "{$long}";          // 26h0m0s
 ```
 
@@ -161,11 +161,11 @@ back. `unix_secs` floors, so a time before 1970 rounds down.
 ```echo
 use std::time;
 
-time::timestamp $epoch = time::timestamp::from_unix_secs(0);
+time::timestamp $epoch = .from_unix_secs(0);
 echo $epoch->unix_secs();            // 0
 echo $epoch->unix_millis();          // 0
 
-time::timestamp $t = time::timestamp::from_unix_millis(1700000000500);
+time::timestamp $t = .from_unix_millis(1700000000500);
 echo $t->unix_secs();                // 1700000000
 echo $t->unix_millis();              // 1700000000500
 echo ($t + time::duration::secs(1)) - $t == time::duration::secs(1);    // 1

@@ -1,5 +1,5 @@
 ---
-description: 'Install the Echo compiler. Prebuilts for macOS Apple Silicon, Linux x86_64 and Windows x86_64. One command, two binaries, no runtime afterwards.'
+description: 'Install the Echo compiler. Prebuilts for macOS Apple Silicon, Linux x86_64, Linux ARM64 and Windows x86_64. One command, two binaries, no runtime afterwards.'
 ---
 
 # Installation
@@ -53,18 +53,19 @@ there if you want to unpack it yourself.
 
 ## Supported platforms
 
-Three prebuilt archives. macOS and Linux are `.tar.gz` holding `echoc` and `epm`. Windows is a `.zip`
+Four prebuilt archives. macOS and Linux are `.tar.gz` holding `echoc` and `epm`. Windows is a `.zip`
 with `bin`, `lib` and `sysroot`.
 
 | Platform | Asset |
 |---|---|
 | macOS on Apple Silicon | `echo-macos-arm64` |
 | Linux on x86_64 | `echo-linux-x86_64` |
+| Linux on ARM64 | `echo-linux-arm64` |
 | Windows on x86_64 | `echo-windows-x86_64` |
 
-That's the whole list. **No Intel Mac, no Linux on ARM, no Windows on ARM.** The install script
-doesn't guess. It tells you there is no build for your machine and stops. On those machines you
-build from source, which is a real option but not a five-second one.
+That's the whole list. **No Intel Mac, no Windows on ARM.** The install script doesn't guess. It
+tells you there is no build for your machine and stops. On those machines you build from source,
+which is a real option but not a five-second one.
 
 ## One extra thing for native builds
 
@@ -101,8 +102,11 @@ You will need:
 
 - CMake 3.20 or newer
 - a C++20 compiler
-- **LLVM 20** (Echo is built against 20.1.4 and uses opaque pointers, so older LLVM will not do)
+- **LLVM 20** with the WebAssembly target (built against 20.1.4, opaque pointers). Homebrew's llvm 20 includes it. A custom `LLVM_TARGETS_TO_BUILD` that omits WebAssembly will fail configure.
 - `libzstd` development headers
+
+A WASI SDK is needed only to *link* a wasi binary, not to configure echoc or to `echoc run`.
+[WebAssembly](/projects/webassembly) is that recipe.
 
 ```bash
 git clone https://github.com/echolang/echo.git
@@ -120,8 +124,9 @@ like the released one.
 ## Editor support
 
 `echoc lsp` is the language server: diagnostics, hover, go-to-definition, the outline, find-references,
-workspace symbols and signature help. Completion is not in v1. Point an LSP client at it, or install the [VS Code extension](https://github.com/echolang/echolang-vscode)
-and set `echo.echocPath` at a source build's `build/echoc` if `echoc` is not on your `PATH`.
+workspace symbols, signature help, completion, rename, highlights and inferred-type hints. Point an LSP
+client at it, or install the [VS Code extension](https://github.com/echolang/echolang-vscode) and set
+`echo.echocPath` at a source build's `build/echoc` if `echoc` is not on your `PATH`.
 
 Setting your editor to treat `.eco` as PHP still works if you only want colour. The official grammar is
 derived from the compiler's own token list, so `mv`, `guard` and `:$` colour as themselves.

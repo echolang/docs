@@ -372,8 +372,9 @@ build, because lexing happens first.
 In practice this means a test body is only checked when you run `echoc test`, which is the same deal an
 `#[if:]` region for another platform gives you. So run your tests.
 
-Two more limits, both on [the list](/reference/limitations): there is no timeout, so a test that hangs hangs
-the run, and running a suite needs `echoc`, because there is no standalone test binary yet.
+Two more limits, both on [the list](/reference/limitations): a test is not run under
+`--track-allocations` unless you ask, so a leak inside one does not fail it, and running a suite needs
+`echoc`, because there is no standalone test binary yet. A test that hangs is what `--timeout` is for.
 
 ## Next
 

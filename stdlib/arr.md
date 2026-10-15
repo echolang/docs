@@ -1,7 +1,7 @@
 # Arrays
 
 You already have `array<T>` on [the collections page](/collections/arrays). Methods live there:
-`push`, `pop`, `count`. `arr::` is the two operations that do not belong on one array, because they
+`push`, `pop`, `count`. `arr::` is the few operations that do not belong on one array, because they
 answer a question about arrays rather than about a single value.
 
 ```echo
@@ -52,12 +52,33 @@ time you're filling an array in a loop.
 `$a->room()` is a different question: how much of that capacity is still spare. [Arrays](/collections/arrays)
 is where `spare` / `commit` live.
 
+## `extend_from` takes a pointer and a count
+
+```echo
+array<int32> $dialed = [5, 8, 13, 21];
+array<int32> $log = [1, 2];
+
+arr::extend_from($log, $dialed->data(), 3);
+
+echo $log->count();     // 5
+echo $log->get(4);      // 13
+```
+
+It's `extend` for a pointer and a count: C hands you those, and a long integer array literal is filled
+this way in one copy rather than one append per element.
+
+The result matches appending one at a time, `capacity()` included. Bytes copy in one go; anything else
+copies element by element, so a `string` keeps its retain.
+
+The pointer is your promise: `$count` live elements, and not into the array you are growing.
+
 ## The whole surface
 
 | Signature | What it does |
 |---|---|
 | `arr::merge<T>(const array<T>& $a, const array<T>& $b) : array<T>` | a new array, `$a`'s elements then `$b`'s |
 | `arr::room<T>(usize $count) : array<T>` | an empty array with room for `$count` |
+| `arr::extend_from<T>(array<T>& $into, ptr<const T> $src, usize $count) : void` | appends `$count` elements read from `$src` |
 
 ## Next
 

@@ -39,7 +39,7 @@ own.
 ## How you build one
 
 ```echo
-status<string> $good = status<string>::ok;
+status<string> $good = .ok;
 status<string> $bad = .error('nope');
 
 echo $good->has_value();    // 1

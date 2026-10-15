@@ -46,7 +46,7 @@ can be copied into a variable and handed around like the number it is:
 std::io::stdout->write('straight to fd 1');
 std::io::stdout->writeline(' with a newline');
 
-stream $target = std::io::stdout;
+std::io::stream $target = std::io::stdout;
 $target->writeline('through a copy');
 ```
 

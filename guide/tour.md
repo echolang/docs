@@ -29,6 +29,7 @@ string $name = "Echo";
 The type is fixed at the declaration:
 
 ```echo
+$count = 3;
 $count = "three";   // error: cannot assign 'string' to 'int32'
 ```
 
@@ -283,6 +284,11 @@ describe($c);       // 3.141593
 Job two: a type a **class** value can have, dispatched at runtime.
 
 ```echo
+interface Shape
+{
+    function area() : float64;
+}
+
 class Square : Shape
 {
     float64 $side;
@@ -308,7 +314,13 @@ like `describe<T: Shape>` above. That is a deliberate split, not a hole to be fi
 `instanceof` asks the question at runtime:
 
 ```echo
-$sq = Square(1.0);
+class Square
+{
+    float64 $side;
+    constructor(float64 $side) { $this->side = $side; }
+}
+
+Square $sq = Square(1.0);
 echo $sq instanceof Square;     // 1
 ```
 
@@ -427,6 +439,7 @@ function fill(array<int32>& $out) : void
     $out->push(9);
 }
 
+array<int32> $nums = [1, 2, 3];
 fill($nums);
 echo $nums->count();        // 4
 ```
@@ -452,6 +465,14 @@ There are three ways to deal with the result, and you'll use all of them.
 `??` supplies a fallback:
 
 ```echo
+function halve(int32 $n) : int32?
+{
+    if ($n < 0) {
+        return null;
+    }
+    return $n / 2;
+}
+
 echo halve(8) ?? -1;        // 4
 echo halve(-4) ?? -1;       // -1
 ```
@@ -459,6 +480,18 @@ echo halve(-4) ?? -1;       // -1
 `?->` reaches through, and stops at the first null:
 
 ```echo
+class Node
+{
+    int32 $tag;
+    Node? $next;
+
+    constructor(int32 $tag)
+    {
+        $this->tag = $tag;
+        $this->next = null;
+    }
+}
+
 Node? $n = Node(7);
 echo $n?->tag ?? -1;
 echo $n?->next?->tag ?? -1;
@@ -469,6 +502,14 @@ an uncaught failure would. Write an `else` when you have somewhere to go; that a
 after the guard the compiler knows the value is there:
 
 ```echo
+function halve(int32 $n) : int32?
+{
+    if ($n < 0) {
+        return null;
+    }
+    return $n / 2;
+}
+
 function halveOr(int32 $n, int32 $fallback) : int32
 {
     int32 $v = guard halve($n) else {
@@ -477,6 +518,10 @@ function halveOr(int32 $n, int32 $fallback) : int32
 
     return $v + 100;    // $v is a plain int32 here
 }
+
+echo halveOr(8, 0);     // 104
+echo halveOr(-4, 0);    // 0
+```
 ```
 
 [Nullability](/memory/nullability).
@@ -535,9 +580,9 @@ struct Point { float64 $x; float64 $y; }
 or by a `use` that binds a shorter name for the rest of this file:
 
 ```echo
-use geometry::Point;
+use std::math;
 
-Point $p = Point(1.0, 2.0);
+echo math::sqrt(9.0);     // 3.000000
 ```
 
 `use std::math;` lets you write `math::sqrt`. `use std::math::sqrt;` lets you write `sqrt`. The
@@ -548,9 +593,14 @@ standard library is organised this way: `std::math::sqrt`, `std::env::args`, `me
 ## Failing loudly
 
 ```echo
+int32 $count = 1;
 assert($count > 0);
 assert($count > 0, "count must be positive");
+echo $count;        // 1
+```
 
+<!-- verify: dies -->
+```echo
 die("something went wrong");
 ```
 
