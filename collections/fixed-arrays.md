@@ -12,7 +12,7 @@ $quad[0] = 9;
 echo $quad[0];          // 9
 ```
 
-`array<T>` is the one you want by default. Reach for this when the length is a fact about the type - a matrix, a colour, a stack buffer you do not want on the heap.
+`array<T>` is the one you want by default. Reach for this when the length is a fact about the type: a matrix, a colour, a stack buffer you do not want on the heap. A [`stable_array<T>`](/collections/stable-arrays) grows without moving live slots.
 
 ## `N` is a value, not a type
 

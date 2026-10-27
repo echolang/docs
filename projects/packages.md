@@ -41,6 +41,10 @@ ever sees a directory.
 `vendor/` is a fixed relative location, so there is no resolution table to write or keep in sync.
 `echoc build` works after `epm install`.
 
+The sha256 covers the files exactly as they were committed. epm checks a package out with every git
+conversion switched off, so line-ending settings like Windows' `core.autocrlf`, a package's own
+`.gitattributes` and git-lfs never change a byte, and a lock written on one machine installs on all of them.
+
 Drop a directory into `vendor/` yourself and the compiler is happy. That's the whole of manual
 vendoring, and it works before epm exists.
 

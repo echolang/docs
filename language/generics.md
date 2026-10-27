@@ -36,6 +36,26 @@ echo identity(42);      // 42, T is int32
 echo identity(1.5);     // 1.500000, T is float64
 ```
 
+Two arguments that name the same parameter have to agree. A later typed argument does not
+quietly replace what an earlier one bound, and it does not silently narrow:
+
+<!-- verify: skip -->
+```echo
+function pick<T>(T $a, T $b) : T
+{
+    return $a;
+}
+
+int32 $small = 1;
+int64 $big = 2;
+echo pick($small, $big);
+// error: Type parameter 'T' of 'pick' is bound to 'int32' but argument 2 has type 'int64'
+```
+
+A literal next to a typed argument still defers: `pick(0, $n)` over a `usize $n` takes `usize`.
+The receiver of a method is the other exception, and it always wins: `$wide->push(5)` over an
+`array<int64>` widens the `5`.
+
 When there is nothing to infer from, say it yourself in angle brackets:
 
 ```echo

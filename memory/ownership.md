@@ -282,6 +282,57 @@ Here `$hold` is still yours on the next line, so the call needs a value of its o
 how to make one. `mv $hold` is the answer if you meant to hand it over. In the `return` above you didn't
 have to write it, because there was nothing left for it to be.
 
+## A chain on a temporary moves too
+
+A method that returns `$this` is handing you the value you already have. When that value is a temporary
+that dies at the semicolon, binding it is a move:
+
+```echo
+struct Probe
+{
+    array<int64> $xs = array<int64>();
+
+    constructor() {}
+
+    constructor(const Probe& $other)
+    {
+        echo 'copy';
+        $this->xs = $other->xs;
+    }
+
+    function add(int64 $x) : Probe&
+    {
+        $this->xs[] = $x;
+        return $this;
+    }
+}
+
+$p = Probe()->add(1)->add(2);
+echo $p->xs->count();     // 2
+
+Probe $live = Probe();
+Probe $q = $live->add(9);
+echo $q->xs->count();     // 1
+```
+
+No `copy` on the first binding. The constructor ran, `add` mutated that one value, and `$p` took it.
+The same chain on a live local still copies, because the local is still yours on the next line: the
+copy constructor prints `copy`, then the echo prints `1`.
+
+`unwrap()` is the same shape. Bind a temporary result by value and the payload moves:
+
+```echo
+int32 $n = result<int32, string>::ok(41)->unwrap();
+echo $n;    // 41
+```
+
+`guard` over a call does the same. Keep the result in a local and the binding is a copy, because that
+local is still there after the statement.
+
+A named borrow of a temporary is still refused. `Probe& $r = Probe()->add(1)` would dangle at the
+semicolon. Bind the value. And if the method hands back one field of a struct that still owns
+something else, that is a copy: moving the field would skip the rest of the destructor.
+
 ## mv is not a performance hint
 
 `mv` does not exist to make a call cheaper, and reaching for it because a value looks expensive is the wrong
@@ -445,6 +496,10 @@ echo mem::refs($sgc);      // 2
 So there is nothing to move. A class handle is copied freely, the destructor runs when the last holder goes
 away rather than at a brace you can point at, and `mv` has no work to do. The rules on this page start
 mattering again the moment a *struct* owns something.
+
+A unique heap `T` with no header is [`box<T>`](/language/classes#a-unique-heap-cell). Copying it is refused.
+Dropping it destroys `T` and frees the allocation. [`rc<T>`](/language/classes#putting-a-struct-on-the-heap)
+is the shared twin.
 
 ## Cycles leak, and weak references are the fix
 

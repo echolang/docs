@@ -60,6 +60,22 @@ bytes from the file's own window, and the two would disagree about where you are
 
 These two are for streams you don't own: stdin, stdout, stderr, or a descriptor someone else handed you.
 
+## Pipes own their end
+
+`pipe_reader` and `pipe_writer` are the two ends of a pipe a [child process](/stdlib/process) was
+started with. Same windows, same `result<..., ioerror>`, but they *do* own their end, like a `file`,
+and the last handle closes it. Nothing in `std::io` makes one; `std::process` hands them out when a
+stream is `.piped`.
+
+`close()` on the writer is how the other side sees the end of its input. `writeline` ends a line with
+`\n` on every platform: a pipe carries bytes rather than a console's idea of a line. Neither end
+seeks. A pipe has no position, which is why these are their own types rather than a `file` whose
+`seek` always fails.
+
+A write into a pipe whose reader is gone fails with `EPIPE` as an ordinary `ioerror`. Stdout is the
+other case: that ends the program, see
+[Input and Output](/stdlib/io/#a-closed-stdout-ends-the-program).
+
 ## The whole surface
 
 | | |
@@ -72,6 +88,10 @@ These two are for streams you don't own: stdin, stdout, stderr, or a descriptor 
 | `writer::write` | `result<usize, ioerror>`, into the window |
 | `writer::writeline` | the same, then a newline |
 | `writer::flush` | drain the window. the last handle does this |
+| `pipe_reader::read` / `readline` / `readall` | like `reader`'s, over a pipe end it owns |
+| `pipe_reader::close` | close the end. buffered bytes are dropped |
+| `pipe_writer::write` / `writeline` / `flush` | like `writer`'s, over a pipe end it owns |
+| `pipe_writer::close` | flush, then close: end of input for the other side |
 
 `ioerror` is the same type [files](/stdlib/io/files) use. `"{$e}"` is `message()`.
 
@@ -79,4 +99,5 @@ These two are for streams you don't own: stdin, stdout, stderr, or a descriptor 
 
 - [Input and Output](/stdlib/io/) for `print`, streams, and the unbuffered stdin line.
 - [Files](/stdlib/io/files) for a descriptor you opened.
+- [Processes](/stdlib/process) for the child that hands these ends out.
 - [Results](/stdlib/result) for `guard ... else ($e)`.

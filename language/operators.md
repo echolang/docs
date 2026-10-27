@@ -270,6 +270,27 @@ operator<T> (array<T>& $a)[] : T&
 
 That's what makes `$numbers[] = 4` work. It is distinguished from the others by arity, nothing else.
 
+There is also a write-shaped append, `[] = (V)`, when handing back a place would be a lie. A bag
+that only grows by pushing a value declares that, and a literal `[a, b, c]` fills it through the
+call. A type may declare that beside a keyed `[K] = (V)`: `[a, b]` uses the append, `[k => v]` uses
+the keyed write. Arity is still what tells the two contracts apart.
+
+```echo
+struct Params
+{
+    array<int32> $pos = array<int32>();
+    map<string, int32> $named = map<string, int32>();
+}
+
+operator (Params& $p)[] = (int32 $v) : void { $p->pos[] = $v; }
+operator (Params& $p)[const string& $name] = (int32 $v) : void { $p->named[$name] = $v; }
+
+Params $row = [1, 2, 3];
+Params $named = ['stock' => 12];
+echo $row->pos->count();        // 3
+echo $named->named->count();    // 1
+```
+
 ## Generic operators
 
 Type parameters go directly after the keyword:

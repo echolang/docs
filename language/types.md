@@ -37,7 +37,8 @@ them.
 
 An inline array is a type constructor, like `ptr<T>`: `int32[4]` is four `int32`s in a row. It is
 storage. The collection with methods, iteration and a destination-typed literal is
-[`fixed_array<T, N>`](/collections/fixed-arrays).
+[`fixed_array<T, N>`](/collections/fixed-arrays). The growable cousins are
+[`array<T>`](/collections/arrays) and [`stable_array<T>`](/collections/stable-arrays).
 
 A vector is a different constructor: [`simd<T, N>`](/language/simd) is N packed lanes, not N slots
 you index. A lane is an integer, a float or a `bool`. N is a power of two. The whole thing is at
@@ -206,8 +207,8 @@ if ($count > 0) {       // fine, the comparison produces a bool
 }
 ```
 
-Writing `if ($count)` with an integer is not valid Echo, and right now it fails as a compiler crash rather
-than a polite diagnostic. That's on [the list](/reference/limitations).
+Writing `if ($count)` with an integer is not valid Echo: an `if` condition has to be a `bool`. Compare
+it against something rather than branching on the value itself.
 
 A **variable** still converts either way, as [Primitive types](/reference/primitive-types) sets out. An
 `int32` into a `bool` is compared against zero at runtime. It's only a written literal other than `0` or
@@ -273,7 +274,7 @@ one in the language.
 
 ## Everything else is the standard library
 
-`string`, `array<T>`, `map<K, V>`, `slice<T>`, `range<T>`: none of these are compiler types. They are
+`string`, `array<T>`, `map<K, V>`, `slice<T>`, `range<T>`, `box<T>`: none of these are compiler types. They are
 structs written in Echo, in `stdlib/core/`, using the same features your code has:
 
 ```echo

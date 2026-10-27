@@ -443,7 +443,10 @@ hands back an address rather than writing through the old one, and every borrow 
 afterwards.
 
 The rule is simple enough to follow: take the address after you are done growing, or take an index instead of
-an address. An index survives a reallocation and a pointer does not.
+an address. An index survives a reallocation and a pointer does not. A
+[`stable_array<T>`](/collections/stable-arrays) is the container that opts out: growth takes another
+block, and a `ptr<T>` into a live slot stays valid until that slot is truncated or the array itself
+dies.
 
 ## Next
 

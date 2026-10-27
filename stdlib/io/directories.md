@@ -84,9 +84,11 @@ bool $rs = guard std::io::rmdir($sub);
 bool $rd = guard std::io::rmdir('chulak-dir');
 ```
 
-`is_file()` and `is_directory()` read what the listing already knew. They do not `stat`. A symlink
-is `other`. A network filesystem that declines to say is `unknown`: both predicates are false, and
-`kind()` is how you tell those two apart. Order is the filesystem's. Do not golden-test the sequence.
+`is_file()` and `is_directory()` read what the listing already knew. They do not `stat`. `kind()` is a
+`std::io::filekind`, the same enum [`info`](/stdlib/io/files#what-a-path-is) answers with. A symlink is
+`.symlink`, the link itself and not what it points at. `std::io::info($ent->path())` follows it. A network
+filesystem that declines to say is `.unknown`: both predicates are false, and `kind()` is how you tell that
+from a socket or a device, which are `.other`. Order is the filesystem's. Do not golden-test the sequence.
 
 A second `foreach` over the same `dir` sees whatever the first one did not consume. A finished loop
 leaves nothing. `iterate()` does not rewind.
@@ -147,7 +149,7 @@ the directory you thought you had.
 | `std::io::dir::error` | `ioerror?`. null unless a `readdir` failed |
 | `std::io::dir::close` | void. safe twice |
 | `dirent::name` / `path` | basename, and the joined path |
-| `dirent::kind` | `unknown` / `file` / `directory` / `other`, from the listing |
+| `dirent::kind` | a `filekind`: `unknown` / `file` / `directory` / `symlink` / `other`, from the listing |
 | `dirent::is_file` / `is_directory` | from the listing, not from `stat` |
 | `ioerror::not_a_directory` | `ENOTDIR`. opening a file with `opendir` |
 

@@ -194,7 +194,7 @@ echo status(0)->or(-1);    // -1
 ```
 
 That works on a temporary, because a copy doesn't need the result to outlive the statement. `unwrap()`
-is different, and that's the next section.
+is a borrow, and that's the next section.
 
 ### match, when both arms do work
 
@@ -286,21 +286,29 @@ Two things that look like they should work, and don't.
 A call is not an assignment destination, so `$r->unwrap() = 99;` does not parse. Read through the borrow
 or call through it. To replace the whole payload, build a new result.
 
-And a borrow out of a temporary is refused, because the result would be gone at the semicolon:
+A named borrow out of a temporary is refused, because the result would be gone at the semicolon:
 
+<!-- verify: skip -->
 ```echo
-echo result<int32, string>::ok(5)->unwrap();
+int32& $x = result<int32, string>::ok(5)->unwrap();
 // error: 'result<int32,string>' has no storage of its own, so the pointer in it
 //        would be an address into a value destroyed at the end of this statement.
 //        Bind it to a variable first.
 ```
 
-Name it first. That's the same rule `map<K, V>::at()` and `slice<T>::at()` live under, and Echo does not
-check the rest: a borrow you stash past the result is yours to keep straight. See
-[Pointers and references](/memory/pointers).
+Bind the payload by value and the temporary moves:
 
-`or` is the copy, and that's why it's the one that works on a `const` result and on a temporary.
-`unwrap()` cannot be `const`. Handing a writable borrow out of a read-only value would be a lie.
+```echo
+int32 $n = result<int32, string>::ok(5)->unwrap();
+echo $n;    // 5
+```
+
+That's the same split a fluent chain lives under. A `T&` you stash past the result is yours to keep
+straight. See [Pointers and references](/memory/pointers) and
+[Ownership and moving](/memory/ownership#a-chain-on-a-temporary-moves-too).
+
+`or` is the copy, and that's why it's the one that works on a `const` result. `unwrap()` cannot be
+`const`. Handing a writable borrow out of a read-only value would be a lie.
 
 ## E can be an enum
 

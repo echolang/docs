@@ -1,6 +1,6 @@
 # CLI reference
 
-`echoc` has six subcommands and thirty-six options. That's the whole surface, and it's one list: what you
+`echoc` has seven subcommands and the options `--help` prints. That's the whole surface, and it's one list: what you
 type, what `--help` prints, and what a refusal names all come from the same place. There is no second table
 that can drift.
 
@@ -11,6 +11,7 @@ echoc install
 echoc test --filter group:parsing
 echoc clean -n
 echoc lsp
+echoc profile app.ecoprof
 ```
 
 [The echoc CLI](/projects/cli) is the chapter with the reasoning. This page is the table.
@@ -18,12 +19,13 @@ echoc lsp
 ## Usage
 
 ```bash
-echoc run   [options] <sources...> [-- <program arguments>]
-echoc build [options] -o <file> <sources...>
+echoc run     [options] <sources...> [-- <program arguments>]
+echoc build   [options] -o <file> <sources...>
 echoc install [options]
-echoc test  [options] <sources...>
-echoc clean [options]
-echoc lsp   [options]
+echoc test    [options] <sources...>
+echoc clean   [options]
+echoc lsp     [options]
+echoc profile [options] <file>
 ```
 
 | Command | Does | Defaults to |
@@ -34,6 +36,7 @@ echoc lsp   [options]
 | `test` | compile and run the `test` blocks, one process each, through the JIT | `--debug` |
 | `clean` | remove what a build produced. Parses no source and runs no pass | n/a |
 | `lsp` | speak the Language Server Protocol over stdin and stdout | `--debug` |
+| `profile` | read an `.ecoprof` file and print the same summary `run --profile` printed | n/a |
 
 `run` is the only one that takes `--`. `clean` and `lsp` take no source files: the workspace arrives from
 the client's `initialize` request, or from `--module`. `install` takes none either, because an installed
@@ -82,7 +85,12 @@ nothing and builds nothing.
 | `--optimize <mode>` | | compiling | `none\|module\|whole` | `module` | how hard, and over how much at once |
 | `--debug-symbols` | `-g` | compiling | flag | off | emit DWARF. Implies `--optimize none` unless you stated one |
 | `--no-tbaa` | | compiling | flag | off | emit no type-based alias metadata |
+| `--fixed-hash-seed` | | compiling | flag | off | hash map keys with a constant 0 seed. See [Hashing](/stdlib/hash) |
 | `--track-allocations` | | compiling | flag | off | count outstanding allocations. What `mem::live_allocations()` needs |
+| `--alloc-cache` | | compiling | flag | off | per-thread page heap for allocations that fit in one 16 KiB page. Native only |
+| `--profile` | | `run`, `build` | flag | off | sample time and count allocations. Writes an `.ecoprof` and prints a short summary. See [Profiling](/projects/profiling) |
+| `--profile-calls` | | `run`, `build` | flag | off | instrument every call for exact counts. Implies `--profile` |
+| `--profile-stdlib` | | `run`, `build` | flag | off | with `--profile-calls`, instrument the standard library too. Implies `--profile` |
 | `--check-refcounts` | | compiling | flag | off | trap on releasing an already-dead object. Keeps every class box, poisoned |
 | `--no-stdlib` | | compiling, lsp | flag | off | compile without the standard library |
 | `--emit-stdlib-header` | | compiling | flag | off | regenerate the embedded stdlib header |
@@ -159,6 +167,8 @@ pipe records.
 | `--stdio` | | lsp | name the stdio transport. It is the only one, so this flag and omitting it are the same thing |
 | `--help` | `-h` | all | the page, or one option in full |
 | `--version` | `-v` | all | print the version |
+| `--text` | | `profile` | print the fuller human-readable dump of the file |
+| `--folded <what>` | | `profile` | write collapsed stacks: `time\|self\|allocs\|alloc-bytes\|live-bytes\|copies\|copy-bytes\|calls` |
 
 Both short-circuit every other rule, so `echoc build --help` prints the page instead of complaining about
 the missing `-o`.
@@ -231,7 +241,7 @@ only thing that goes to stdout.
 | You wrote | You get |
 |---|---|
 | `echoc` | `No command given.` |
-| `echoc frobnicate` | `'frobnicate' is not an echoc command. Write 'run', 'build', 'install', 'test', 'clean' or 'lsp'.` |
+| `echoc frobnicate` | `'frobnicate' is not an echoc command. Write 'run', 'build', 'install', 'test', 'clean', 'lsp' or 'profile'.` |
 | `echoc run --nonsense` | `Unknown option '--nonsense'.` |
 | `echoc run --optimize hard` | `Unknown '--optimize' value 'hard'. Expected one of: none\|module\|whole.` |
 | `echoc build x.eco` | `'build' needs '-o, --output <file>' - nothing here names the binary.` Reported once the manifest is known, since a project declaring targets names its own |

@@ -172,7 +172,8 @@ Debug prints `1`. Release prints `0`. The call was never made, because the whole
 before codegen.
 
 So: an assert condition must be a pure question. If a line does work your program needs, it doesn't belong
-inside an `assert`.
+inside an `assert`. A condition that *moves* (`assert(consume(mv $box))`) is a located error: release would
+skip the destructor and leak the value.
 
 ## The compiler's own runtime checks
 

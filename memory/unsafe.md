@@ -284,3 +284,4 @@ live, which is a smaller set of programs than it feels like from inside a system
 - [Pointers and references](/memory/pointers) for `ptr<T>`, `:$` and the address forms.
 - [Ownership and moving](/memory/ownership) for `mv`, and why `mem::take` refuses a variable.
 - [Arrays](/collections/arrays) for the container you probably want instead.
+- [Errors and panics](/language/errors-and-panics) for what a debug build checks and a release build drops.

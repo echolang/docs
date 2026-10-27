@@ -128,6 +128,8 @@ everywhere else:
 - `map`, inside an enum body, or at file scope as `map dhd : int32 for Glyph { ... }`. It names a
   second encoding of the cases. `map<K, V>` is still the stdlib type. [Enums](/language/enums) is
   the chapter.
+- `indirect`, immediately before `case` in an enum body. That case's payload is a heap cell; sibling
+  cases stay in the parent. [Enums](/language/enums) is the chapter.
 - `self`, in `self::NAME`, reaching a constant on the enclosing type.
 - `left` and `right`, inside an `operator(45, left)` precedence clause.
 - `numeric`, `integer`, `signed`, `unsigned` and `floating`, as generic constraint aliases.

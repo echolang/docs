@@ -1,6 +1,6 @@
 # Iteration
 
-`foreach` walks arrays, maps, strings, slices, ranges, files, and directories, and it does that without
+`foreach` walks arrays, stable arrays, maps, strings, slices, ranges, files, and directories, and it does that without
 a single line in the compiler that knows what any of them are. **It knows three interfaces and nothing
 else**, so a type of yours loops exactly as well as the standard library's. A
 [`std::io::file`](/stdlib/io/files) yields lines. A [`std::io::dir`](/stdlib/io/directories) yields
@@ -112,6 +112,30 @@ foreach ($numbers as $writer) {  // written, so a real copy
 
 For an `int32` that saves nothing worth measuring. For a struct with a destructor it is the difference
 between one copy constructor and one destructor per iteration and none at all.
+
+A `const T&` parameter is a read, same as a field. You do not have to write `const &$item` to get that:
+
+```echo
+struct Item
+{
+    int32 $n;
+}
+
+function look(const Item& $item) : int32
+{
+    return $item->n;
+}
+
+array<Item> $items = [Item(1), Item(2)];
+
+foreach ($items as $item) {
+    echo look($item);       // 1, then 2
+}
+```
+
+A function taking `Item&`, or a method that is not `const`, is a write: `$item` is a real copy, and the
+collection is left alone. `as &$item` is the spelling when a write should reach the element. `as const &$item`
+is the same borrow the elision would have given you, said out loud.
 
 The elision is only sound because of a rule you are expected to keep: **do not mutate a collection while
 you are iterating it.** Nothing checks it. Growing a container during a loop re-seats its storage, and the

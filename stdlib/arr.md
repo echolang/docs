@@ -2,7 +2,8 @@
 
 You already have `array<T>` on [the collections page](/collections/arrays). Methods live there:
 `push`, `pop`, `count`. `arr::` is the few operations that do not belong on one array, because they
-answer a question about arrays rather than about a single value.
+answer a question about arrays rather than about a single value. [`stable_array<T>`](/collections/stable-arrays)
+is a different type and is not in this namespace.
 
 ```echo
 array<int32> $inbound = [1, 2];

@@ -371,7 +371,9 @@ echo $frames[0];           // 1.000000
 prefix, for C that already has a length. Growing the buffer after `spare()` invalidates the pointer.
 
 A [`fixed_array<T, N>`](/collections/fixed-arrays) is already a C buffer: every slot is live, so there
-is no spare. `$quad->data()` is the first element and `N` is the count.
+is no spare. `$quad->data()` is the first element and `N` is the count. A
+[`stable_array<T>`](/collections/stable-arrays) is the wrong type for this: its slots never move
+because they do not share one region, so there is no `data()` to hand over.
 
 This only works for a `T` that is bytes. C cannot construct an Echo `string`, and `commit` on an
 `array<string>` dies rather than invent a constructor.

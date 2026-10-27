@@ -308,6 +308,20 @@ Labels are part of that identity. Parameter names are not. `f(int32 $a)` and `f(
 `f(from: int32 $a)` and `f(to: int32 $a)` do not. [Labels](#labels-are-part-of-the-signature) is the
 section.
 
+A present value prefers `T` over `T?`. `'a'` picks `g(string)` over `g(string?)`:
+
+```echo
+function g(string $s) : int32 { return 1; }
+function g(string? $s) : int32 { return 2; }
+
+echo g('a');                // 1
+
+string? $opt = 'b';
+echo g($opt);               // 2
+```
+
+Same reason `'a'` picks `from(string)` beside `from(string?)`. A `string?` still picks `from(string?)`.
+
 ## Generic functions
 
 A function can take type parameters:

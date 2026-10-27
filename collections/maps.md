@@ -5,18 +5,20 @@ order is **unspecified**; `ordered_map<K, V>` has the same surface plus one guar
 entries back in the order they first arrived.
 
 ```echo
-map<string, int32> $ages = map<string, int32>();
-
-$ages['mario'] = 34;
-$ages['ray'] = 29;
+map<string, int32> $ages = [
+    'mario' => 34,
+    'ray' => 29,
+];
 
 echo $ages->count();        // 2
 echo $ages['mario'];        // 34
 echo $ages->has('tarek');   // 0
 ```
 
-There is no map literal yet, so you construct one and fill it. Pick `map` unless you need the order, and
-read the cost section before you pick `ordered_map`.
+A literal takes its type from where it is going, the same rule as `[1, 2, 3]`. Leave the type out and the
+first entry decides: `$ages = ['mario' => 34]` is a `map<string, int32>`. Write the type to fill an
+`ordered_map` (`ordered_map<string, int32> $m = ['a' => 1]`) or an empty one (`map<string, int32> $m = []`).
+Pick `map` unless you need the order, and read the cost section before you pick `ordered_map`.
 
 ## What a key type owes
 
@@ -89,7 +91,8 @@ echo $m['a'];       // 9
 echo $m->count();   // 2
 ```
 
-Reading a key that is *not* there asserts, so use `has` or `get` when you are not sure. The method forms
+Reading a key that is *not* there stops the program, in every build: ask `has` first when you are not sure.
+`get` and `take` stop the same way, since they are the same lookup. The method forms
 are the same operators written as calls: `$m->set($k, $v)` **is** `$m[$k] = $v`, and `$m->at($k)` **is**
 `&$m[$k]`. One implementation, two spellings.
 
@@ -324,10 +327,6 @@ make()['a'] = 1;
 Bind it to a variable first, and the write has somewhere to land.
 
 ## What is not there yet
-
-Two, stated here because you will look for them.
-
-**No map literal.** Construct and fill.
 
 **No optional lookup.** There is no `$m->find($k)` returning a `V?`, so `has` then `get` is two probes for
 one question.

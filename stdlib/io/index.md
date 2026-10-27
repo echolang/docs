@@ -142,6 +142,20 @@ four
 Without the flush that prints `two`, `four`, `1`, `3` the moment output is a pipe rather than a terminal,
 which is exactly where nobody is looking.
 
+## A closed stdout ends the program
+
+`./your-program | head -1` reads one line and closes the pipe. Your program is still writing. What now?
+
+On Darwin and Linux a command ignores SIGPIPE, so a write into a closed pipe fails instead of killing the
+process. For stdout and stderr that failure ends the program right there, quietly, with status 141, which
+is what a shell reports for a process SIGPIPE killed. `echo`, `print` and a `writer` over stdout all go the
+same way, so `| head` behaves exactly the way it always has. Nothing after that write runs, the same deal
+`std::env::exit` makes.
+
+Why ignore the signal at all, then? Because a pipe to a [child process](/stdlib/process) is the other case:
+there a closed reader is something your program wants to hear about and handle, as an `EPIPE` `ioerror`.
+Windows has no SIGPIPE, and a write to a closed stdout there just fails, like it always did.
+
 ## echo is not sugar for println
 
 For a one-liner they look interchangeable. They are not, and I kept them apart on purpose.
@@ -167,7 +181,7 @@ you can pass around.
 
 ## Next
 
-- [Files](/stdlib/io/files) for opening a path, `readfile` / `writefile`, and `foreach` over lines.
+- [Files](/stdlib/io/files) for opening a path, `readfile` / `writefile`, `foreach` over lines, and `info` / `copy` / `realpath`.
 - [Directories](/stdlib/io/directories) for `opendir`, `mkdir`, `rmdir`, and listing children.
 - [Readers and writers](/stdlib/io/buffering) for a window over a stream you do not own.
 - [String functions](/stdlib/str) for `str::from`, `split`, `join`, `trim` and the number parsers.

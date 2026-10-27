@@ -28,7 +28,8 @@ operator returning [`ordering`](/stdlib/sort), the same trick [`..`](/language/o
 Compile without the library and it is not a symbol. [Sorting](/collections/sorting) is what
 you actually call.
 
-`**` is exponentiation and is right associative, so `2 ** 3 ** 2` is `2 ** 9`:
+`**` is integer exponentiation, right associative, so `2 ** 3 ** 2` is `2 ** 9`. A debug build
+stops if the result does not fit; a release build wraps. Floats use [`std::math::pow`](/stdlib/math).
 
 ```echo
 echo 2 ** 3 ** 2;   // 512
@@ -83,10 +84,10 @@ Lower number binds tighter. This is C's table with one deliberate repair.
 | 70 | `&` | left |
 | 80 | `^` | left |
 | 90 | `\|` | left |
+| 97 | `??` | right |
 | 100 | `<` `>` `<=` `>=` `==` `!=` | left |
 | 110 | `&&` | left |
 | 120 | `\|\|` | left |
-| 125 | `??` | right |
 | 130 | `=` | right |
 
 The repair is the bitwise trio. In C, `a & b == c` parses as `a & (b == c)`, which is nobody's intent and
@@ -96,8 +97,9 @@ has been quietly costing people afternoons since 1972. Here `&` binds tighter th
 echo 12 & 10 == 8;      // 1, because (12 & 10) is 8
 ```
 
-`??` is right associative so a chain of fallbacks reads left to right, each tried in turn:
-`$a ?? $b ?? $c` is `$a ?? ($b ?? $c)`. See [Nullability](/memory/nullability).
+`??` binds tighter than `==`, so `$a ?? 0 == 7` is `($a ?? 0) == 7`. It is right associative so a
+chain of fallbacks reads left to right, each tried in turn: `$a ?? $b ?? $c` is `$a ?? ($b ?? $c)`.
+See [Nullability](/memory/nullability).
 
 You can declare your own operators, with your own precedence, on the same table.
 [Operators](/language/operators) covers that.

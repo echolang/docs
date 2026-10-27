@@ -183,20 +183,25 @@ that just came out of `mem::alloc` that means running a destructor over whatever
 back. `mem::init<T>` is the write that does not:
 
 ```echo
-mem::buffer<string> $slots = mem::buffer<string>();
-$slots->resize(2);
+ptr<string> $slots = mem::alloc<string>(2);
 
 string $name = "";
 $name->append("Abydos");
 
-mem::init<string>($slots->at(0), $name);        // the slot held nothing, so nothing is ended
+mem::init<string>($slots:$[0], $name);          // the slot held nothing, so nothing is ended
 
-string& $peek = $slots->at(0);
-echo $peek;                                     // Abydos
+echo $slots:$[0];                               // Abydos
 
-string $out = mem::take<string>($slots->at(0));  // the slot stops being an owner
-echo $out;                                       // Abydos
+string $out = mem::take<string>($slots:$[0]);   // the slot stops being an owner
+echo $out;                                      // Abydos
+
+mem::free($slots);
 ```
+
+Both reach the slot **through the pointer**, and that is the rule rather than a style: `take` and `init` only
+accept storage nothing is accounting for. A borrow a method handed back, like `$buffer->at(0)`, is a slot
+its owner still counts and will tear down, so `mem::take<string>($buffer->at(0))` is refused. A container
+that owns its slots offers the operation itself, as `mem::buffer<T>` does with `put` and `take`.
 
 `mem::take<T>` is the mirror. It hands the value over and leaves the storage holding bytes that own nothing,
 which is what makes the slot safe to free or reuse. An ordinary read would *copy*, leaving a second owner in
@@ -327,7 +332,7 @@ a second value already holds it. `mem::buffer<T>` says both:
     $store->resize(4);
     echo $store->capacity();            // 4
 
-    mem::init<int32>($store->at(0), 42);
+    $store->put(0, 42);
 
     slice<int32> $window = $store->sub(0, 1);
     echo $window->get(0);               // 42
@@ -392,6 +397,7 @@ which is why `atomic<T>` keeps the slot private. [Atomics](/memory/atomics) is t
 | `is_integer<T>() : bool` | true for the integer primitives, including `usize` and `isize` |
 | `fill_bytes(ptr<uint8>, uint8, usize) : void` | fills `$bytes` with `$byte`. the byte-width twin of `zero` |
 | `compare_bytes(ptr<const uint8>, ptr<const uint8>, usize) : int32` | lexicographic `memcmp`. sign is the answer, not `-1`/`0`/`1` |
+| `find_byte(ptr<const uint8>, uint8, usize) : usize` | offset of that byte, or `$bytes` when it is not there. libc `memchr` |
 | `take<T>(T& $place) : T` | hands the value over and empties the place |
 | `init<T>(T& $place, T $value) : void` | stores into a place that holds nothing |
 | `bit_cast<To, From>(From $value) : To` | the bits, read as another type of the same size |

@@ -2,7 +2,8 @@
 
 **An `array<T>` is a growable, contiguous buffer of exactly one type.** It is not a hash map and it is not
 heterogeneous. The brackets are just how you write one. When the length is part of the type instead,
-that is a [`fixed_array<T, N>`](/collections/fixed-arrays).
+that is a [`fixed_array<T, N>`](/collections/fixed-arrays). When it must grow without moving live slots,
+that is a [`stable_array<T>`](/collections/stable-arrays).
 
 ```echo
 array<int32> $numbers = [1, 2, 3];
@@ -82,6 +83,20 @@ echo $names[2];         // Ronon
 echo $numbers->count(); // 3
 ```
 
+The destination also types each element, so a leading-dot constructor works the same way it does at
+any other destination:
+
+```echo
+enum Slot
+{
+    case empty;
+    case filled(int32 $n);
+}
+
+array<Slot> $row = [.empty, .filled(3)];
+echo $row->count();         // 2
+```
+
 An empty literal has nothing to go on, so it needs a destination that says:
 
 ```echo
@@ -122,7 +137,7 @@ echo $numbers[];
 
 ## The methods and the brackets are the same code
 
-`push` is `$this[] = $value` and `at` is `&$this[$index]`. That's not a coincidence to remember, it is
+`push` is `$this[] = mv $value` and `at` is `&$this[$index]`. That's not a coincidence to remember, it is
 literally how they are written, so the two spellings can never drift apart:
 
 ```echo
@@ -227,6 +242,8 @@ $first = 1;         // the borrow may now point at freed memory
 
 Reserve up front and the problem goes away, because there is no reallocation left to trip over.
 [Pointers and references](/memory/pointers) covers what a borrow is and how long it is good for.
+A [`stable_array<T>`](/collections/stable-arrays) is the other way out: growth takes another block
+and leaves the seats you already have alone.
 
 ## slot appends without building a value first
 
@@ -479,4 +496,5 @@ pass it in.
 - [Sorting](/collections/sorting) for `sort`, `sort_unstable`, `by:` and `key:`.
 - [Iteration](/collections/iteration) for `foreach`, and for the copy it does not make you pay for.
 - [`arr::merge` and `arr::room`](/stdlib/arr), which do not belong on the type.
+- [Stable arrays](/collections/stable-arrays) when you need to grow without moving live slots.
 - [Ownership and moving](/memory/ownership) for what happens when `T` owns something.

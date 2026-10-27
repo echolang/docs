@@ -108,8 +108,8 @@ That's not minimalism for its own sake. Echo has no exceptions and nothing in it
 process boundary is the only thing that can survive any of those. See
 [Errors and panics](/language/errors-and-panics) for the wider picture.
 
-Which is exactly what you get: **each test runs in a process of its own.** `echoc test` forks before every
-one, so a test that aborts, exits or crashes takes nothing with it and the run carries on:
+Which is exactly what you get: **each test runs in a process of its own.** `echoc test` starts a fresh
+process for every one, so a test that aborts, exits or crashes takes nothing with it and the run carries on:
 
 <!-- verify: test -->
 <!-- verify: dies -->

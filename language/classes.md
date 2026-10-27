@@ -60,6 +60,45 @@ retain; the `Point` inside is copied once, at construction.
 `rc<int32>(7)` seats a value that is already an `int32`. `rc<Point>(1, 2)` forwards into
 `Point(1, 2)`. [Generics](/language/generics) is the factory that uses this.
 
+## A unique heap cell
+
+`rc<T>` shares. If you want the allocation without the sharing, wrap it in `box<T>`:
+
+```echo
+struct Point
+{
+    int32 $x;
+    int32 $y;
+}
+
+box<Point> $p = box<Point>(Point(1, 2));
+echo $p->get()->x;         // 1
+```
+
+One allocation, no header. Copying the box is a compile error. `mv` hands it over. Dropping it destroys the
+`Point` and frees the block. `$p->get()` is a `Point&` into that slot. `box<Point>(1, 2)` is not a
+constructor of `box`. Build the payload first, same as `rc`.
+
+It is not a class. A `T : class` factory will not take it, `instanceof` has nothing to ask, and
+`erased::from` will refuse it. `rc<T>` is still the wrapper for those.
+
+The other reason this exists is a unique tree:
+
+```echo
+struct Node
+{
+    int32 $n;
+    box<Node>? $left;
+}
+
+Node $leaf = Node(1, null);
+Node $root = Node(0, box<Node>(mv $leaf));
+echo $root->left?->get()->n ?? -1;     // 1
+```
+
+`Node $left` would be a Node inside a Node, which has no size. A class field would work and pay the header.
+This field is one pointer.
+
 ## Which one should you reach for
 
 Reach for a `struct` by default. It's cheaper, it has no allocation, and a value you can't accidentally
@@ -70,6 +109,9 @@ Reach for a `class` when:
 - two parts of your program genuinely need to see the same mutations
 - the thing has identity rather than just contents (a connection, a window, a node in a graph)
 - you need to store it behind an interface, which a struct cannot do
+
+Reach for `box<T>` when the payload has to live on the heap, exactly one name should own it, and you do not
+want the class header.
 
 ## What it costs
 

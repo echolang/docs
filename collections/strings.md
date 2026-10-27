@@ -1,10 +1,12 @@
 # Strings
 
-Text is three types, and the split between them is the whole design: `string` **owns** its bytes,
-`string::view` **borrows** them, and `str::buf` is the reference-counted buffer underneath that you almost
-never name. A unique value of at most `string::INLINE` bytes (15 today) lives *in the string* and never touches that buffer.
-Longer text, or text more than one `string` names, is a reference-counted window over `str::buf`:
-**copying one of those is a retain, not a memcpy.**
+Text you hold is a `string`. It **owns** its bytes. `string::view` **borrows** them. `str::buf` is the
+reference-counted buffer underneath that you almost never name. When you are only ever appending,
+`str::text` is the unique builder: `take()` plants a `string` once.
+
+A unique value of at most `string::INLINE` bytes (15 today) lives *in the string* and never touches
+that buffer. Longer text, or text more than one `string` names, is a reference-counted window over
+`str::buf`: **copying one of those is a retain, not a memcpy.**
 
 ```echo
 $greeting = 'hello';
@@ -31,6 +33,10 @@ echo $name->byte(0);     // 114
 A null owner owns nothing, which is exactly why the first write to a literal has to clone rather than
 scribble on the program's own image. A short unique result of that clone stays in the string; a longer
 one is the next section.
+
+A file can sit in the binary the same way. `std::embed::text("help.txt")` is that lowering for a path,
+and `std::embed::bytes` is the spelling that does not ask for UTF-8. See
+[Embedding files](/stdlib/embed).
 
 ## `string::INLINE` bytes, no allocation
 
@@ -177,7 +183,16 @@ whatever owns the bytes is, and growing that buffer invalidates it.
 
 ## Building a string
 
-`append`, `push` and `concat`, and `reserve` when you know roughly how much is coming:
+`string` is the type you store, pass, and return. `append` on it is the right tool for a handful of
+pieces. Every write opens with the gate from the last section: if this value is not the sole owner
+of the whole buffer, clone first. That is the right question for a value that might be shared. It is
+the wrong one for a loop that only ever writes: the uniqueness load sits on every piece.
+
+`str::text` is the other shape. `#[unique]` refuses the copy, so that question has nothing to ask.
+`append` is a length check plus a memcpy. `take()` hands you a `string` once and leaves the builder
+empty.
+
+A few pieces, on the string:
 
 ```echo
 $s = '';
@@ -195,6 +210,35 @@ echo $s->size();            // 13
 `reserve` is also how you say "I am about to write to this": it pays the copy-on-write clone once, at a
 size you chose, so the appends after it do not reallocate.
 
+A loop, on `str::text`:
+
+```echo
+str::text $buf = str::text();
+$buf->reserve(64);
+
+$buf->append('hello');
+$buf->append(', ');
+$buf->append('world');
+
+string $s = $buf->take();
+echo $s;                    // hello, world
+```
+
+<!-- verify: skip -->
+```echo
+str::text $a = str::text();
+$a->append('hello');
+str::text $b = $a;
+// error: 'str::text' is unique: exactly one value may name its storage, so it is moved and never copied.
+```
+
+`mv` hands the builder over. A `str::text&` is a borrow while you fill it. Neither is a second owner.
+
+A result of at most `string::INLINE` bytes stays in the value, the same inline store `string` uses,
+and `take()` seats it there. A heap block `text` already grew becomes the `string`'s buffer, so a
+long build is still one freeze rather than a second copy. Interpolation already does this:
+`"user{$i}"` allocates nothing.
+
 `concat` leaves both operands alone and returns a third string:
 
 ```echo
@@ -205,7 +249,9 @@ echo $left->concat($right);     // foobar
 echo $left;                     // foo
 ```
 
-`clear()` keeps the allocation, so the string is immediately reusable:
+`clear()` keeps the allocation when this string uniquely owns its buffer, so it is immediately
+reusable. A shared copy or a literal has no private buffer to keep, so `clear` detaches instead of
+cloning the text it is about to throw away:
 
 ```echo
 $s = '';
@@ -229,7 +275,7 @@ $self->append($self);
 echo $self;     // abab
 ```
 
-`data()` is the bytes with no terminator required. `cstr()` is that plus the assert that C can walk off
+`data()` is the bytes with no terminator required. `cstr()` is that plus the check that C cannot walk off
 the end of a substring. A window that stops early is still a valid pointer and length:
 
 ```echo
@@ -381,7 +427,8 @@ echo c_strlen($owned->cstr());     // 11
 ```
 
 The catch is a substring that stops early. It is a window into the middle of a buffer, so the byte after it
-is not a `0`, and `cstr()` asserts rather than running past the end:
+is not a `0`, and `cstr()` stops the program rather than running past the end, in every build, release
+included, since C would otherwise read on into the rest of the parent:
 
 ```echo
 $owned = 'hello world';

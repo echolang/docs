@@ -219,7 +219,7 @@ bool $ok = guard std::io::remove('gate.txt') else ($e) {
 ```
 
 `seek($offset, $from)` counts from `.start`, `.current` or `.end`. `position()` is where the next read or
-write will land. `size()` is seek-to-end then seek back, so it is not free.
+write will land. `size()` is [`info()`](#what-a-path-is)'s size, asked of the open descriptor.
 
 Don't `readall` on a `create()` handle. `.write` is write-only, and the kernel answers with a bad file
 descriptor rather than with the bytes you just wrote.
@@ -269,6 +269,126 @@ bool $ok = guard std::io::remove('chulak.txt') else ($e) {
 
 `remove` and `rename` answer `result<bool, ioerror>`. `ok(true)` is success.
 
+## What a path is
+
+`exists` says yes or no. `info` says what is there: how big, what kind, who may touch it, and when it
+last changed.
+
+```echo
+usize $n = guard std::io::writefile('gate.txt', 'chevron seven') else ($e) {
+    std::io::eprintln($e->message());
+    return 1;
+}
+
+std::io::fileinfo $i = guard std::io::info('gate.txt') else ($e) {
+    std::io::eprintln($e->message());
+    return 1;
+}
+
+echo $i->size;                                  // 13
+echo $i->kind == std::io::filekind::file;       // 1
+
+bool $ok = guard std::io::remove('gate.txt') else ($e) {
+    std::io::eprintln($e->message());
+    return 1;
+}
+```
+
+A `fileinfo` is facts, not a handle. They are true as of the call. `$kind` is `.file`, `.directory`,
+`.symlink`, or `.other`. `$size` is bytes, as an `int64`. `$perms` is below. `$modified` and
+`$accessed` are timestamps. `$created` is a `timestamp?`, and `null` where nobody kept one.
+
+`$accessed` is whatever the filesystem bothered to write down. Don't build anything on it.
+
+`info` follows a symlink, so the answer is about the file the link points at. `linkinfo` does not,
+and it is the only way to see `.symlink`. On macOS `/tmp` is a link to `/private/tmp`, so
+`linkinfo('/tmp')->kind` is `.symlink` there and `.directory` on most Linux boxes.
+
+An open `std::io::file` has `$f->info()` too. It asks the descriptor, so a rename since the open
+does not matter, and it flushes the write window first.
+
+## Permissions
+
+`fileperms` is the mode bits. Every question you ask it is a bit test. There is no octal literal, so
+`0644` is `0x1a4`:
+
+```echo
+usize $n = guard std::io::writefile('gate.txt', 'chevron seven') else ($e) {
+    std::io::eprintln($e->message());
+    return 1;
+}
+
+bool $set = guard std::io::chmod('gate.txt', std::io::fileperms(0x1a4)) else ($e) {
+    std::io::eprintln($e->message());
+    return 1;
+}
+
+std::io::fileinfo $i = guard std::io::info('gate.txt') else ($e) {
+    std::io::eprintln($e->message());
+    return 1;
+}
+
+echo $i->perms->owner_writable();       // 1
+echo $i->perms->group_writable();       // 0
+echo $i->perms->is_readonly();          // 0
+
+bool $ok = guard std::io::remove('gate.txt') else ($e) {
+    std::io::eprintln($e->message());
+    return 1;
+}
+```
+
+`owner_`, `group_` and `other_` each come with `readable()`, `writable()` and `executable()`.
+`is_readonly()` is "nobody may write it".
+
+Windows has one permission, read-only. `chmod` there only reads whether the owner may write.
+
+## copy and realpath
+
+`copy` replaces whatever was at the destination and gives it the source's permission bits. Times
+are not copied. Regular files only: a directory is `EISDIR`, and copying a tree is `opendir` and a
+loop. A symlink is followed. Copying a file onto itself is refused, because truncating the
+destination first would leave you with nothing.
+
+`realpath` asks the filesystem. The path has to exist, every symlink, `.` and `..` gets resolved,
+and the answer is absolute.
+
+```echo
+usize $n = guard std::io::writefile('gate.txt', 'chevron seven') else ($e) {
+    std::io::eprintln($e->message());
+    return 1;
+}
+
+bool $copied = guard std::io::copy('gate.txt', 'backup.txt') else ($e) {
+    std::io::eprintln($e->message());
+    return 1;
+}
+
+string $text = guard std::io::readfile('backup.txt') else ($e) {
+    std::io::eprintln($e->message());
+    return 1;
+}
+
+echo $text;     // chevron seven
+
+string $full = guard std::io::realpath('backup.txt') else ($e) {
+    std::io::eprintln($e->message());
+    return 1;
+}
+
+echo $full->starts(std::env::DS);       // 1, on POSIX
+
+bool $a = guard std::io::remove('gate.txt') else ($e) {
+    std::io::eprintln($e->message());
+    return 1;
+}
+
+bool $b = guard std::io::remove('backup.txt') else ($e) {
+    std::io::eprintln($e->message());
+    return 1;
+}
+```
+
 ## The window
 
 Every `std::io::file` has an 8 KiB read window and an 8 KiB write window. That's why `readline` on a file is not
@@ -290,6 +410,13 @@ in a [`reader` or a `writer`](/stdlib/io/buffering). A `std::io::file` already h
 | `readfile` / `writefile` | the whole contents |
 | `exists` | `result<bool, ioerror>`. missing is `ok(false)` |
 | `remove` / `rename` | `result<bool, ioerror>`, `ok(true)` on success |
+| `info` / `linkinfo` | `result<fileinfo, ioerror>`. `info` follows a symlink, `linkinfo` does not |
+| `chmod` | `result<bool, ioerror>`, sets a `fileperms` |
+| `copy` | `result<bool, ioerror>`. replaces the destination, carries the permissions, files only |
+| `realpath` | `result<string, ioerror>`. absolute, every link resolved, the path must exist |
+| `fileinfo` | `$kind`, `$size`, `$perms`, `$modified`, `$accessed`, `$created` (nullable) |
+| `fileperms` | `mode()`, `owner_`/`group_`/`other_` × `readable`/`writable`/`executable`, `is_readonly()` |
+| `std::io::file::info` | `result<fileinfo, ioerror>`, of the descriptor, after a flush |
 | `std::io::file::write` | `result<usize, ioerror>`, bytes transferred |
 | `std::io::file::read` | into a pointer and a count. `0` is EOF |
 | `std::io::file::readall` | the rest of the file, as a `string` |
@@ -309,4 +436,5 @@ in a [`reader` or a `writer`](/stdlib/io/buffering). A `std::io::file` already h
 - [Readers and writers](/stdlib/io/buffering) for a window over a stream you do not own.
 - [Results](/stdlib/result) for `guard ... else ($e)` and what a `result` is.
 - [Environment](/stdlib/env) for `tmp()`, `cwd()`, `join`, and `pid()`.
+- [Time](/stdlib/time) for the `timestamp` a `fileinfo` carries.
 - [What is missing](/reference/limitations) for the path type, recursive walk, and `mkdir_p`.

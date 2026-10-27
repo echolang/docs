@@ -36,8 +36,6 @@ Return a copy instead.
 **A call is not an assignment destination.** `$r->unwrap() = 99;` does not parse, even though `unwrap()`
 returns a `T&`. Reading through the borrow and calling a method through it both work.
 
-**Map literals.** `["LHR" => "Heathrow"]` does not parse. Construct the map and fill it.
-
 **SIMD is 16 bytes, and a lane is not a place.** `simd<T, N>` exists: integer, float and bool
 lanes, N a power of two, width at most 16 bytes. There is no `$v[i]`, no implicit splat, and a
 vector by value is refused on `extern`. A comparison answers `simd<bool, N>`, so
@@ -75,14 +73,10 @@ int32 $small = $big;
 echo $small;            // 705032704
 ```
 
-**An uninitialised class declaration escapes the null rule.** `Node $n;` compiles and hands you a null handle
-through a non-nullable type.
-
 ## Things that crash the compiler
 
-A crash is at least loud. This is the one I know about:
-
-- A typo'd namespaced generic call in a constructor argument.
+A crash is at least loud. Open an issue if you hit one; the old list (untyped parameters, duplicate
+constants, generic statics, huge literals, a bare `null`) is located errors now.
 
 ## Correct code that is rejected
 
@@ -124,15 +118,16 @@ debugging, which prints the type and every property, or declare `str::from` for 
 alignment, width, precision and a type letter. No thousands separators, no locale, no `%n$` positional
 arguments, and no runtime format string, since a spec is written inside a literal and read at compile time.
 
-**Building one string out of many is O(n^2).** Interpolation lowers to a fold of `str::concat`, so every hole
-is another allocation. Fine for a sentence, wrong for a loop, and nothing warns you which one you wrote.
-`string::append` into one buffer is the tool until there is a proper builder.
+**Building one string out of many by hand with `str::concat` is still O(n^2).** Interpolation itself
+appends into one buffer. A loop of `str::concat($acc, $piece)` still copies the prefix every time;
+`$acc->append($piece)` is the tool there.
 
 **No path type, no recursive walk, no `mkdir_p`.** [Files](/stdlib/io/files) opens, reads and writes
 files. [Directories](/stdlib/io/directories) lists one directory, and `mkdir` / `rmdir` make and
 remove one. Paths are `string`s. `std::env::DS` is the separator; `std::env::join` puts two
-components together with it; `std::env::file_url` turns a native path into a `file://` URL. There is
-no `stat`, no `mkdir_p`, and nothing that walks a tree.
+components together with it; `std::env::file_url` turns a native path into a `file://` URL.
+`std::io::info`, `copy` and `realpath` answer about one path at a time. There is no `mkdir_p`, no
+recursive `copy`, and nothing that walks a tree.
 
 **`std::io::readline()` on stdin is still unbuffered.** One `read` per byte, so it cannot steal input from
 anything else on fd 0. Wrap stdin in a [`reader`](/stdlib/io/buffering) when you want the window, stdout in a

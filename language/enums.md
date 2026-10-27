@@ -356,6 +356,44 @@ all of its cases.
 
 Reading a payload back needs `match`. That's the next section, and it's what holds the rest of this together.
 
+## A case can live on the heap
+
+An enum's size is the tag plus the widest case. That is the right default until a case contains the enum
+itself, or until a fat case is making every slot in an array as wide as the rare payload.
+
+Write `indirect` on that case. The payload is one heap cell, no class header. Sibling cases stay in the
+parent. Call sites and `match` do not change.
+
+```echo
+enum Node
+{
+    case leaf(int32 $n);
+    indirect case binary(Node $left, Node $right);
+}
+
+function eval(const Node& $n) : int32
+{
+    return match ($n) {
+        Node::leaf($v) => $v,
+        Node::binary($l, $r) => eval($l) + eval($r),
+    };
+}
+
+echo eval(.binary(.leaf(1), .leaf(2)));     // 3
+```
+
+`indirect` is recognised only in front of `case`. It is an ordinary name everywhere else.
+
+A copy of a `Node` that holds `binary` allocates a new cell and copies the fields. `mv` hands the pointer
+over. Two values do not share a cell, so a write through a match binding of the copy leaves the original
+alone.
+
+`mem::size<Node>()` is the tag plus the max of the inline payloads and a pointer. Mark the fat cases
+`indirect` and an array of them stays that wide. Leave them inline and the array is still widest-case
+times length; `mem::size` shows it.
+
+A cycle through an inline case will not compile. `indirect` is the spelling that breaks the cycle.
+
 ## match reads which case you are holding
 
 `match` is an expression, so its arms produce a value:

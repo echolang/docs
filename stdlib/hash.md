@@ -209,6 +209,11 @@ Not cryptographic, not stable across architectures, and not a serialization form
 bucket index and nothing else. Don't write one to a file and expect the next build to agree with it, and
 don't use one where an attacker chooses the keys.
 
+Every `of` also folds in a process-wide seed, drawn once at startup. Two runs of the same program hash the
+same key to different buckets. That is the point: an attacker who chooses keys cannot pick the collisions.
+`ECHO_HASH_SEED=<decimal>` pins the seed. `--fixed-hash-seed` makes it the constant `0`, which pins map
+iteration order too.
+
 ## The whole surface
 
 | Signature | What it does |

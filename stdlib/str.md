@@ -26,6 +26,15 @@ The type is public. The mutators are private. Don't construct one. See
 You'll meet the name in two places: in a debugger, and in `mem::refs<str::buf>` if you want to see
 the sharing for yourself.
 
+## `str::text` is the unique buffer you build into
+
+`string` is the value you pass around. Every `append` on it first asks whether this value uniquely
+owns the buffer. That is the right question for a shared window, and the wrong one for a loop that
+only ever writes.
+
+`str::text` skips the question: copying is refused, growth doubles, `take()` plants a `string` once.
+[Building a string](/collections/strings#building-a-string) is the choice.
+
 ## A literal allocates nothing, which is why the count starts at zero
 
 <!-- verify: track-allocations -->
@@ -155,6 +164,48 @@ Note the extra variable on that last line. A hole opens on `{$` and nothing else
 `ltrim` and `rtrim` do one side each. All three answer a **window** rather than a copy, so trimming
 is free. Call `->clone()` on the result if you want the parent's buffer released.
 
+## lines, and a split that stops
+
+`foreach` over a file yields one string per line, newline gone. `str::lines` is that cut over a
+string you already have:
+
+```echo
+str::parts $lines = str::lines("Abydos\r\nChulak\nDakara\n");
+echo $lines->count();                       // 3
+echo str::join($lines, ', ');               // Abydos, Chulak, Dakara
+```
+
+A `\r` in front of the `\n` is taken along. A newline ends the line before it rather than starting
+an empty one after, so `"a\nb\n"` is two lines and an empty text is none. `split($t, "\n")` answers
+three and one. That is the whole difference.
+
+A third argument to `split` is a limit: at most that many parts, and the last one is the rest of
+the text, separators and all:
+
+```echo
+str::parts $kv = str::split('gate=address=chevron', '=', 2);
+echo $kv->at(0);                            // gate
+echo $kv->at(1);                            // address=chevron
+```
+
+`0` reads as `1`. A split always answers at least one part. Both are windows, same `str::parts` as
+a plain `split`, one retain.
+
+## replace
+
+```echo
+echo str::replace('SG-1, SG-9, SG-11', 'SG-', 'Team ');     // Team 1, Team 9, Team 11
+echo str::replace_first('one, two, one', 'one', '1');      // 1, two, one
+echo str::replace('aaa', 'aa', 'b');                        // ba
+```
+
+Left to right, and a match never overlaps the one before it, which is why `'aaa'` is one
+replacement and an `a`. The replacement is not searched again.
+
+An empty search string answers the text unchanged. Text with nothing to replace is the same
+string, sharing its buffer. When something does change, the result is sized before a byte is
+written: one allocation, however many matches.
+
 ## int, uint, and float
 
 ```echo
@@ -246,8 +297,12 @@ and no reference count, which is what a scan over thirty headers needs.
 | `string::spare()` / `room()` / `commit($n)` | let C write into the buffer |
 | `string::append(ptr<const uint8>, usize)` | `append` for a pointer and a length |
 | `string::capacity()` | text bytes the buffer can hold without growing |
-| `str::concat(const string& $a, const string& $b) : string` | the two joined. what interpolation lowers to |
+| `str::concat(const string& $a, const string& $b) : string` | the two joined. interpolation appends into one buffer instead |
 | `str::split(const string& $t, const string& $sep) : str::parts` | `n` separators give `n + 1` windows into `$t` |
+| `str::split(const string& $t, const string& $sep, usize $limit) : str::parts` | at most `$limit` parts, the last is the rest |
+| `str::lines(const string& $t) : str::parts` | cut at `\n`, a `\r` before it dropped, no empty last line |
+| `str::replace(const string& $t, const string& $from, const string& $to) : string` | every `$from`, left to right, non-overlapping |
+| `str::replace_first(const string& $t, const string& $from, const string& $to) : string` | the first `$from` only |
 | `str::parts::owned() : array<string>` | the same parts as owning strings. short ones stay inline; longer ones retain the parent |
 | `str::join(const str::parts& $p, const string& $sep) : string` | the inverse of `split`, in one allocation |
 | `str::join(const array<string>& $parts, const string& $sep) : string` | the same, over a list you built |

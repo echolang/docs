@@ -50,7 +50,9 @@ GateAddress $abydos = GateAddress(27, 1);
 echo duplicate($abydos)->destination;   // 27
 ```
 
-Returning a *local* is not a copy, it is a move. See [Ownership and moving](/memory/ownership).
+Returning a *local* is not a copy, it is a move. A fluent chain on a constructor, or `unwrap()` of a
+temporary result, is also a move when you bind the value. See
+[Ownership and moving](/memory/ownership#a-chain-on-a-temporary-moves-too).
 
 ## The free copy is field by field
 

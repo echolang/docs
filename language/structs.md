@@ -643,6 +643,9 @@ there are exactly three places that can say what that is:
 - a **declared variable's type**, `Response $r = .accepted();`
 - a **parameter** of a call, `send(.failed(404));`
 
+It can start a `->` chain. The destination names the owner of the first call, and the rest is an
+ordinary member chain on whatever that returned: `send(.accepted()->with_body($html));`.
+
 It nests, which is where it earns its keep:
 
 ```echo

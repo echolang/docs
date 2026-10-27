@@ -204,16 +204,15 @@ An array is an object, so the operations live on it: `count`, `push`, `pop`, `re
 ## Maps need a hashable key
 
 ```echo
-map<string, int32> $ages = map<string, int32>();
-$ages['mario'] = 34;
-$ages->set('ray', 29);
+map<string, int32> $ages = [
+    'mario' => 34,
+    'ray' => 29,
+];
 
 echo $ages->count();        // 2
 echo $ages['mario'];        // 34
 echo $ages->has('ray');     // 1
 ```
-
-There is no map literal yet, so you construct it and fill it.
 
 `map<K, V>` is unordered. If you need insertion order preserved, `ordered_map<K, V>` has the same surface and
 that extra promise.

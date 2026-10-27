@@ -76,7 +76,8 @@ insertion order.
 
 Two things that follow:
 
-- There is **no map literal**. `["LHR" => "Heathrow"]` does not parse. You construct the map and fill it.
+- A map literal is `[k => v]`, same brackets as an array. Mixed `[1, "a" => 2]` does not parse: Echo maps
+  and arrays are different types. `$ages = ['mario' => 34]` infers `map<string, int32>`.
 - `$arr[] = $v` still appends, and still reads the way you expect.
 
 ## No new, and no `.` for members
@@ -176,7 +177,8 @@ heap, is reference counted, and is shared on assignment. Coming from PHP, `class
 way you already expect.
 
 Pick per type, at the declaration. `rc<Point>` is the way to put a struct you already have behind a
-class handle, when a factory asks for `T : class`. [Classes](/language/classes) is that wrapper.
+class handle, when a factory asks for `T : class`. `box<Point>` is the unique heap cell: one owner, no
+header. [Classes](/language/classes) is both wrappers.
 
 ## Ownership will be the new idea
 

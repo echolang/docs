@@ -253,6 +253,9 @@ many stops with the type's name, instead of corrupting the heap and dying later 
 leak, which is why `--debug` does not switch it on. The cheap `<= 0` compare ahead of a decrement
 is the debug default. The poison is this flag.
 
+`--alloc-cache` is off unless you write it. Native programs then take allocations that fit in one
+16 KiB page from a per-thread page heap instead of handing every block to libc. Wasm refuses the flag.
+
 ## Diagnostics, and how they are drawn
 
 Diagnostics go to stderr in every form, so `2>` is how you capture them.
