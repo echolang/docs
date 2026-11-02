@@ -64,6 +64,20 @@ echo $first->symbol;        // 7
 That constructor is an ordinary function. `$name:`, defaults, and labels all work on it. [Functions](/language/functions)
 is the call-site chapter.
 
+A `const` array field is still a parameter of that constructor. You cannot write into it later,
+so the literal has to land at the call. It fills, then the field takes the value and stays
+frozen:
+
+```echo
+struct Palette
+{
+    public const array<string> $colors;
+}
+
+Palette $p = Palette($colors: ['red', 'blue']);
+echo $p->colors[0];         // red
+```
+
 ### Property defaults
 
 A property may carry a default. That default is a parameter default on the same constructor, so mixed

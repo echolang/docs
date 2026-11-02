@@ -561,8 +561,12 @@ arm is still caught on your machine.
 All of them are prefixed with `line N:` and reported under an `[error] Conditional Compilation Failed`
 header, because the filter runs before there is a parsed file to point into.
 
+Collecting those tags into a table is [Attribute discovery](/language/attributes-discovery).
+echoc still does not read the name; the query does.
+
 ## Next
 
+- [Attribute discovery](/language/attributes-discovery) for collecting tagged functions and types at compile time.
 - [Modules](/projects/modules) for what a manifest is and how a dependency resolves.
 - [Tools and hooks](/projects/tools) for `#[hook:]` and `public: true`.
 - [Linking](/projects/linking) for `#[link:]` and `#[cc:]` in use against a real native library.

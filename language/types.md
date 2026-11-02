@@ -71,7 +71,7 @@ not `result<bool, E>`.
 
 See [Functions](/language/functions).
 
-## Three aliases, and only three
+## Three built-in spellings, and only three
 
 ```echo
 int $a = 1;         // int32
@@ -79,7 +79,7 @@ uint $b = 2;        // uint32
 float $c = 3.0f;    // float32
 ```
 
-That's the whole alias list. `int` is **not** the machine word. It's `int32` on every platform, the same way
+That's the whole list. `int` is **not** the machine word. It's `int32` on every platform, the same way
 `long` should have been. If you want a pointer-width integer, `usize` and `isize` exist for exactly that.
 
 There is no `double`. `float64` is spelled `float64`.
@@ -290,6 +290,79 @@ program can use, because nothing declares them any more.
 A small number of these types are pointed at by name so the compiler can talk about them (that's what
 `#[echoc::core: array]` does), but the shape is still the library's. There is no privileged array type you can't
 write yourself.
+
+## Naming a type
+
+Some types are long, and you write them over and over. `type` gives one a second name:
+
+```echo
+class Query<K, M>
+{
+    public K $key;
+    public M $model;
+
+    static function of(K $key, M $model) : Query<K, M> { return Query<K, M>($key, $model); }
+}
+
+class Comment
+{
+    public string $body = 'first!';
+}
+
+public type CommentQuery = Query<int64, Comment>;
+
+CommentQuery $q = CommentQuery(5, Comment());
+CommentQuery $r = CommentQuery::of(7, Comment());
+echo $q->key + $r->key;    // 12
+```
+
+An alias **is** its target. `CommentQuery` and `Query<int64, Comment>` are one type, not two that
+convert. A value of either goes anywhere the other does.
+
+That's also why it works in every place a type name does: a declaration, a parameter, a return,
+`CommentQuery(...)`, `CommentQuery::of(...)`, `as`, `instanceof`, and the `.of(...)` shorthand.
+
+### Generic aliases
+
+An alias can take its own type parameters:
+
+```echo
+type Page<T> = map<string, T>;
+type Ledger = Page<int64>;
+
+Ledger $l = Page<int64>();
+$l['naquadah'] = 5;
+echo $l['naquadah'];       // 5
+```
+
+A generic alias always needs its arguments, the same way a generic type does. Inside a generic
+function it can use that function's own parameter: `function total<T>(Page<T> $p)`.
+
+### Function types
+
+This is the case it pays off most. The alternative is writing the whole signature at every use:
+
+```echo
+type Transform = function<int32(int32)>;
+
+function apply(Transform $f, int32 $x) : int32 { return $f($x); }
+
+echo apply(function(int32 $x) : int32 { return $x * 2; }, 21);    // 42
+```
+
+### Where it lives, and what it refuses
+
+An alias is declared at file or namespace scope. Inside a struct or a function body it is
+refused. It takes `public`, `internal`, or `private` like any other declaration. Without one it
+belongs to its module.
+
+It can name a type declared further down, or another alias, in any file. A chain that comes
+back to where it started is refused.
+
+It names one complete type. `type Crate = Box;` for a generic `Box` is refused: write `Box<T>`
+and give the alias a `<T>` of its own.
+
+It cannot share a name with a type, a constant, or a function in its namespace.
 
 ## Next
 

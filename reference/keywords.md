@@ -124,7 +124,9 @@ and `mem::init` is still a function. [Structs](/language/structs) is the chapter
 A few more words are contextual in the same way, recognised only in one position and ordinary identifiers
 everywhere else:
 
-- `type`, inside an interface body, declaring an associated type.
+- `type`, inside an interface body declaring an associated type, and at file or namespace scope
+  declaring a type alias (`type Name = ...;`). [Types](/language/types#naming-a-type) is the
+  chapter.
 - `map`, inside an enum body, or at file scope as `map dhd : int32 for Glyph { ... }`. It names a
   second encoding of the cases. `map<K, V>` is still the stdlib type. [Enums](/language/enums) is
   the chapter.
@@ -135,6 +137,9 @@ everywhere else:
 - `numeric`, `integer`, `signed`, `unsigned` and `floating`, as generic constraint aliases.
 - `where`, after a function's return type, constraining a type parameter already in scope
   (`function sort() : void where T : contract::comparable<T>`). A function may still be named `where`.
+- `construct`, on the last parameter of a function: `construct M $value` gathers constructor
+  arguments at the call. A type named `construct` is still a type.
+  [Functions](/language/functions#construct-in-place) is the chapter.
 
 ## Primitive type names are not keywords either
 

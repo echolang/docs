@@ -79,7 +79,9 @@ On macOS that means the Xcode command line tools:
 xcode-select --install
 ```
 
-On Linux, install `clang` from your package manager.
+On Linux, install `clang` from your package manager. A released Linux archive also carries a
+musl sysroot, used when you want a portable static command:
+`echoc build --target-libc musl`. [Linking](/projects/linking) is that flag.
 
 On Windows, skip this. A release already has clang sitting next to `echoc`. A source build is the
 case that still needs LLVM on the machine, and that is the next section.

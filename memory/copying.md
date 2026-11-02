@@ -50,9 +50,14 @@ GateAddress $abydos = GateAddress(27, 1);
 echo duplicate($abydos)->destination;   // 27
 ```
 
-Returning a *local* is not a copy, it is a move. A fluent chain on a constructor, or `unwrap()` of a
-temporary result, is also a move when you bind the value. See
-[Ownership and moving](/memory/ownership#a-chain-on-a-temporary-moves-too).
+Returning a *local* is not a copy, it is a move. Returning one field of a destructor-free local
+is the same transfer.
+
+A method getter that `return $this->item` still copies, because `$this` is a borrow. Write
+`return mv $this->item` to consume that field at the call.
+
+A fluent chain on a constructor, or `unwrap()` of a temporary result, is also a move when you
+bind the value. See [Ownership and moving](/memory/ownership#a-chain-on-a-temporary-moves-too).
 
 ## The free copy is field by field
 

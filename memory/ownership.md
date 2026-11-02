@@ -405,12 +405,19 @@ echo 4;
 `1`, `2`, `3`, `4`. Built, borrowed, destroyed, and only then does the next statement run. Not destroyed
 before the callee saw it, and not left lying around until the end of the scope.
 
-## mv moves a whole variable, nothing smaller
+## mv can take a field of a local
 
-You can't move a field out of a struct or an element out of an array:
+Sometimes you want one field, not the whole struct. A by-value local (or a by-value parameter)
+can hand a field over. The rest stays. Scope-end drops skip the hole:
 
 ```echo
-struct Wormhole { int32 $id; destructor() { echo $this->id; } }
+struct Wormhole
+{
+    int32 $id;
+
+    constructor(int32 $id) { $this->id = $id; }
+    destructor() { echo $this->id; }
+}
 
 struct Gate
 {
@@ -420,13 +427,97 @@ struct Gate
 
 Gate $sgc = Gate(Wormhole(1), 7);
 Wormhole $stolen = mv $sgc->active;
+echo $sgc->chevrons;            // 7
+echo $stolen->id;               // 1
+```
+
+`1` prints twice: once from the echo, once when `$stolen` is destroyed. `Gate` has no
+destructor of its own, so the compiler can skip `$active` and leave `$chevrons` alone.
+
+That is the line. A type that declares `destructor()` cannot be left with a hole, because the
+destructor would run over storage that is no longer there:
+
+<!-- verify: skip -->
+```echo
+struct Wormhole
+{
+    int32 $id;
+    constructor(int32 $id) { $this->id = $id; }
+    destructor() { echo $this->id; }
+}
+
+struct Gate
+{
+    Wormhole $active;
+    destructor() { }
+}
+
+Gate $sgc = Gate(Wormhole(1));
+Wormhole $stolen = mv $sgc->active;
+// error: 'mv' cannot move a field out of 'Gate', which declares a destructor
+```
+
+`return $h->item` of a destructor-free holder is the same transfer as `mv $h->item`. So is
+`return tag_of($h->item)` when that is the last mention of the field.
+
+### A getter on `$this` still copies
+
+`$this` is a borrow, and the caller still holds the rest of the value. Write
+`return mv $this->item` to consume that field at the call:
+
+```echo
+struct Item
+{
+    int32 $n;
+    constructor(int32 $n) { $this->n = $n; }
+    destructor() { echo $this->n; }
+}
+
+struct Holder
+{
+    Item $item;
+    int32 $tag;
+
+    function take_item() : Item
+    {
+        return mv $this->item;
+    }
+}
+
+Holder $h = Holder(Item(1), 7);
+Item $x = $h->take_item();
+echo $h->tag;                   // 7
+```
+
+`$h->item` is unset after that call. `$h->tag` is fine. Filling the hole is `$h->item = mv $x`.
+
+To eat the whole receiver, write `function take(mv $this)` and call `$h->take()`. `$h` is then
+unset.
+
+### An element is not a field
+
+An array index is runtime. A foreach `&$s` looks like a variable; it is a borrow of a slot.
+`mv $s` is refused the same way `mv $items[0]` is:
+
+<!-- verify: skip -->
+```echo
+struct Wormhole { int32 $id; destructor() { echo $this->id; } }
+
+array<Wormhole> $open = [Wormhole(1), Wormhole(2)];
+array<Wormhole> $handed = [];
+
+foreach ($open as &$w) {
+    $handed[] = mv $w;
+}
 // error: 'mv' can only move a whole variable
 ```
 
-The struct would be left with a hole in it and nothing in the type says which fields are still there. Moving
-the whole `Gate` works. Moving a piece of it is on [the list](/reference/limitations).
+Copy it, or drain the array with [`take_from`](/collections/arrays#take_from-moves).
+I reach for the drain: the source is emptied, the dest grows, and nested owners move with the
+element.
 
-Writing a piece of it is a different question, and that one works.
+One element into an array is still `$handed[] = mv $gate`, and that still needs a whole
+variable. Writing a piece of a value is a different question, and that one works.
 
 ## Writing an owning value into a field
 

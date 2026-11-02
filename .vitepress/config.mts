@@ -38,6 +38,7 @@ const sidebar = [
       { text: 'Namespaces', link: '/language/namespaces' },
       { text: 'Visibility', link: '/language/visibility' },
       { text: 'Constants', link: '/language/constants' },
+      { text: 'Attribute discovery', link: '/language/attributes-discovery' },
       { text: 'Errors and panics', link: '/language/errors-and-panics' },
     ],
   },

@@ -260,6 +260,28 @@ The inner block unlocks when `$g` drops. Unlock is the destructor. `locked<T>` i
 [`#[unique]`](/memory/copying#unique-for-a-type-only-one-value-may-ever-name) so it cannot be
 copied: that would unlock twice.
 
+Why would `lock()` be `const`? Because the mutex is how you write `T`. The object you called it
+on stays const. `try_lock()` is the same. A const method can keep a cache:
+
+```echo
+use std::thread;
+
+class Hits
+{
+    private thread::mutex<int32> $n = thread::mutex<int32>(0);
+
+    public const function bump() : int32
+    {
+        thread::locked<int32> $g = $this->n->lock();
+        $g->value = $g->value + 1;
+        return $g->value;
+    }
+}
+
+Hits $h = Hits();
+echo $h->bump();            // 1
+```
+
 Copying the address out of `$held->value` and reading it after the guard dies is the same class of
 rule as a slice outliving its array. The type will not stop you. The lock will not be held.
 

@@ -52,6 +52,9 @@ echo $c[0];                 // 1
 echo $typed[0];             // 1
 ```
 
+A `const array<T>` field on a struct is the same fill: write the literal at the call.
+[Structs](/language/structs#the-constructor-you-get-for-free) is that shape.
+
 Or `arr::room`, when you already know how many elements are coming:
 
 ```echo
@@ -145,6 +148,9 @@ array<int32> $numbers = array<int32>();
 
 $numbers->push(1);              // same as $numbers[] = 1
 
+int32 $n = 4;
+$numbers[] = mv $n;             // hands the local over, no copy
+
 int32& $slot = $numbers[0];     // a T& destination takes the address, same as at(0) or &$numbers[0]
 $slot = 5;
 
@@ -173,6 +179,7 @@ function push(T $value) : void
 function slot() : T&
 function extend(const array<T>& $other) : void
 function extend(usize $start, usize $count) : void
+function take_from(inout array<T>& $other) : void
 
 function pop() : T
 function remove(usize $index) : T
@@ -269,7 +276,9 @@ echo $points[0]->x;         // 1
 echo $points[1]->y;         // 2
 ```
 
-Neither form *reads* the slot, which is why both are legal where `echo $a[]` is not.
+Neither form *reads* the slot, which is why both are legal where `echo $a[]` is not. They are
+for a `T` that is just bytes. An owning element is `$a[] = $v` or `push`: that seats a value
+into a fresh slot. Writing through `&$a[]` would run a destructor over leftover storage.
 
 ## An array owns its elements
 
@@ -392,6 +401,31 @@ echo $a->count();           // 3
 
 `merge` reserves the total up front, so the whole result is one allocation, and both inputs are `const`
 borrows so neither is consumed.
+
+## take_from moves
+
+`extend` copies every element. When the source is a batch you are done with, you want the
+elements, not a second copy of them. `take_from` moves them across and leaves the source empty:
+
+```echo
+array<int32> $all = [1, 2];
+array<int32> $got = [3, 4, 5];
+
+$all->take_from($got);
+
+echo $all->count();     // 5
+echo $got->count();     // 0
+echo $all[4];           // 5
+```
+
+A `T` that cannot be copied still travels, because nothing is duplicated. Nested owners move
+with the element: an `array<string>` field is the same handle, not a second buffer.
+
+One element is still `$a[] = mv $x` or `push(mv $x)`. `$a[] = mv $s` on a foreach `&$s` is
+refused: `$s` is a borrow of a slot. [Ownership](/memory/ownership#an-element-is-not-a-field)
+is that catch. Drain the array instead.
+
+`$a->take_from($a)` is the same conflict `extend` names, with both sides `inout`.
 
 ## An element is a destination like any other
 

@@ -325,16 +325,16 @@ describe<int32>();          // plain data
 describe<array<int32>>();   // owns something
 ```
 
-Not everything is answerable this early. Layout queries in particular are not, because the compiler only
-knows a type's size once it is emitting code:
+Layout queries fold the same way, so a small-buffer choice is a `const if`:
 
 ```echo
 const if (mem::size<int32>() == 4) {
     echo "four";
 }
-// error: 'size_of' is answered from the target's layout, which the compiler only knows once it is
-//        emitting code - so it cannot decide a 'const' expression.
 ```
+
+The arm that loses is still discarded before type checking. That is the whole reason this is a
+`const if` and not a normal `if`.
 
 If you want a compile-time branch on the **platform** rather than on a type, that's a different feature
 with a different spelling: `#[if: os == darwin]`. See

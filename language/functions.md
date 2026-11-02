@@ -158,12 +158,118 @@ echo print(1, 'hi');
 echo print(fromDecimal: 100, currency: 'EUR');
 ```
 
-`print(100, 'EUR')` is the first overload. The second required its labels. That is the whole reason labels
-exist: they let you have two call shapes that would otherwise be the same types in the same order.
+`print(100, 'EUR')` is the first overload. The second required its labels.
+
+That is the whole reason labels exist: they let you have two call shapes that would otherwise
+be the same types in the same order.
 
 There is no `print` statement in Echo, so declaring one is fine. Unlabelled parameters stay positional, with
 `$name:` as optional sugar. Constructors are functions too, so the same three spellings work on
 `Point(...)`. [Structs](/language/structs) is that chapter.
+
+## Construct in place
+
+Sometimes the function just wants an `M`, and you have the arguments that build one. Writing
+`M(...)` at every call is noise.
+
+Mark the last parameter `construct`. Write the constructor arguments at the call:
+
+```echo
+struct RouteMeta
+{
+    public string $path;
+}
+
+function plant(construct RouteMeta $m) : string
+{
+    return $m->path;
+}
+
+echo plant('/hello');           // /hello
+echo plant(RouteMeta('/x'));    // /x
+```
+
+The body still sees one `RouteMeta`. `plant('/hello')` is `plant(RouteMeta('/hello'))`. One
+remaining argument that is already `M` is used as-is, which is why `plant(RouteMeta('/x'))`
+works.
+
+Zero extra arguments do not construct. That is how a getter `meta<M>()` can sit beside a
+`meta<M>(construct M)` setter without the setter eating a no-arg call. Plant a default with
+`meta<RouteMeta>(RouteMeta())`.
+
+### Named arguments bind to the constructor
+
+Not to `$m`. Leading-dot too:
+
+```echo
+enum Method { case get; case post; }
+
+struct Route
+{
+    public Method $method;
+    public string $path;
+}
+
+function meta<M>(construct M $value) : M
+{
+    return $value;
+}
+
+Route $r = meta<Route>($method: .get, $path: '/hello');
+echo $r->path;                  // /hello
+```
+
+### A prefix is ordinary parameters
+
+Remaining args build `M`:
+
+```echo
+struct Pair
+{
+    int32 $a;
+    int32 $b;
+}
+
+function put<M>(string $key, construct M $value) : string
+{
+    return $key;
+}
+
+echo put<Pair>('home', 1, 2);               // home
+echo put<Pair>($key: 'home', $a: 1, $b: 2); // home
+```
+
+A label on the construct parameter opens the constructor arguments. It does not fill a single
+slot:
+
+```echo
+struct Pair
+{
+    int32 $a;
+    int32 $b;
+}
+
+function bind<T>(once: construct T $value) : T
+{
+    return $value;
+}
+
+Pair $q = bind<Pair>(once: 8, 9);
+echo $q->a;                     // 8
+echo $q->b;                     // 9
+```
+
+### The catch
+
+`construct` is last, by value. The body cannot re-forward the raw arguments into another call.
+Not a borrow, not an optional, not an enum, not with `mv`. A type named `construct` is still a
+type.
+
+If `init` derives a field, that field is not a constructor argument. `construct` uses the same
+list.
+
+Write the type argument on a generic. It cannot be inferred from constructor extras of an
+unknown `T`. [Generics](/language/generics) has `make<T>`.
 
 ## Arguments are copies
 
@@ -268,6 +374,9 @@ The short answer, in the order I'd try them:
 | Read and write the caller's value | `T& $x` | nothing |
 | Your own copy to scribble on | `T $x` | a copy |
 | Keep the value for good | `mv T $x` | nothing, but the caller loses it |
+| Build `M` from the remaining arguments | `construct M $x` | a construction |
+
+`construct` is still by value. The keyword is about the call site, not a fifth access mode.
 
 For small primitives (`int32`, `bool`, a pointer) just take them by value. A borrow of an `int32` costs more
 than the `int32` did.
@@ -387,6 +496,8 @@ A couple of things you might reach for that aren't there. Both are on [the list]
 This is just so you don't spend twenty minutes on the syntax.
 
 **Variadics.** There is no `...`, which is why there is no `printf` and no string formatting.
+Constructing a typed last parameter from the rest of the call is
+[`construct M $value`](#construct-in-place): the function still takes one `M`.
 
 One more, and this one is a real hole rather than a missing feature: **a function that falls off the end
 without returning is not diagnosed.** It compiles and hands back whatever was in the register.

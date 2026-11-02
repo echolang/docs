@@ -70,12 +70,15 @@ echo zero<int32>();     // 0
 `T` appears only in the return type there, and a return type is not something the compiler can read
 backwards from the call. Write it out.
 
-A prefix is enough when some parameters are named and the rest sit in the arguments:
+A prefix is enough when some parameters are named and the rest sit in the arguments. For
+"construct `T` from whatever the call wrote", that is a
+[`construct`](/language/functions#construct-in-place) parameter, not a type parameter per
+constructor argument:
 
 ```echo
-function make<T, A>(A $arg) : T
+function make<T>(construct T $value) : T
 {
-    return T($arg);
+    return $value;
 }
 
 class Handle
@@ -88,11 +91,12 @@ class Handle
     }
 }
 
-echo make<Handle>(7)->n;     // 7, A is int32
+echo make<Handle>(7)->n;     // 7
 ```
 
-`make<Handle>(7)` names `T`. `A` comes from `7`. Writing a second type argument is still allowed;
-writing a third, when there are only two, is not.
+`make<Handle>(7)` names `T`. The `7` constructs `Handle`. Two constructor arguments are still
+one function: `make<Pair>(2, 3)`. Write the type argument; it cannot be inferred from constructor
+arguments of an unknown `T`.
 
 ## Generic types
 
@@ -545,10 +549,8 @@ This is how `array<T>` is written. Its copy, its destructor and its `clear()` al
 questions, which is why an owning element type works correctly with **no arm anywhere in the compiler that
 knows what a container is**.
 
-One catch: `mem::size` and `mem::align` can't decide a `const if`. They are
-answered from the target's layout, which the compiler only knows once it is emitting code, and the branch
-has to be picked earlier than that. The two AST questions above can. See
-[Control flow](/language/control-flow).
+`mem::size` and `mem::align` fold too, so a `const if` can pick an arm on the target's stride.
+See [Control flow](/language/control-flow).
 
 ## Generic operators and methods
 

@@ -19,11 +19,14 @@ individual compiler bugs. It is the set of holes big enough to change what you w
 resolution matches arity exactly, and that is what lets a call with one surviving candidate resolve without
 consulting types at all.
 
-The two things you would reach for it are covered elsewhere. String formatting is
-[interpolation](/collections/strings#interpolation), where every hole is a *one-argument* call. A C variadic
-function is reachable through [`variadic_args`](/projects/c-interop#calling-a-c-variadic-function), which
-spells the tail as the last parameter's type and takes a written list at the call site, so the call still
-has exactly the declared arity.
+The three things you would reach for it are covered elsewhere. String formatting is
+[interpolation](/collections/strings#interpolation), where every hole is a *one-argument* call.
+A C variadic function is reachable through
+[`variadic_args`](/projects/c-interop#calling-a-c-variadic-function), which spells the tail as
+the last parameter's type and takes a written list at the call site, so the call still has
+exactly the declared arity. Constructing a value at a typed parameter is
+[`construct M $value`](/language/functions#construct-in-place): the function still takes one
+`M`, the call site writes the constructor arguments.
 
 **Multiple return values.** Not implemented. Return a struct.
 
@@ -80,11 +83,11 @@ constants, generic statics, huge literals, a bare `null`) is located errors now.
 
 ## Correct code that is rejected
 
-**`mem::size` and `mem::align` in a `const if`.** Layout queries cannot decide a compile-time branch, which is
-what blocks small-buffer optimisation.
-
-**`mv` on a field or element.** `$x = mv $doc->body;` is refused. `mv` moves a whole variable only. Writing
-one *into* a field is fine. It is only moving one out that has no spelling.
+**`mv` on an element, or on a borrow that is not `$this`.** `$x = mv $items[0]` is refused: the
+index is runtime. So is `mv $s` when `$s` is a foreach `&$s`, a match binding, or a borrow
+parameter. A field of a local is fine when the holder has no user destructor.
+`return mv $this->item` consumes that field at the call. Copy a borrow, or drain the array.
+[Ownership](/memory/ownership#mv-can-take-a-field-of-a-local) is the chapter.
 
 **A borrow-returning call kept past its statement.** `$r->header('a: 1')->header('b: 2');` chains fine:
 the statement throws its value away, so nothing can dangle. But `Request& $held = $r->header('a: 1');` is
@@ -193,6 +196,10 @@ is a `#[if:]` fact, and there is no Android sysroot.
 
 The Windows archive is a toolchain. clang, lld-link and a sysroot sit next to `echoc`, and
 `echoc build` links with them. CI runs the suite there.
+
+A default Linux binary uses this machine's libc. `echoc build --target-libc musl` is a static
+command that runs on Linux 3.2 and newer. `echoc` itself is built on Ubuntu 22.04.
+[Linking](/projects/linking#a-linux-binary-and-this-machines-libc) is the chapter.
 
 Related, on linking: there is still no pkg-config. A library whose flags come out of
 `pkg-config --libs` is written by hand. Static versus dynamic is

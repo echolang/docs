@@ -201,6 +201,26 @@ ld: symbol(s) not found for architecture arm64
 Either way echoc lists every requirement that went into the link and says who asked for each one, which is
 the question you actually have in that moment.
 
+## A Linux binary and this machine's libc
+
+A default `echoc build` on Linux links against the libc on this machine. That binary expects
+the same glibc, or a newer one, wherever it runs.
+
+If you want a command that runs on an older Linux, or on a box that is not this one:
+
+```bash
+echoc build --target-libc musl -o app
+```
+
+That is a static command. It runs on Linux 3.2 and newer. It cannot load a glibc `.so`.
+
+A released Linux `echoc` ships the musl sysroot. Otherwise set `MUSL_SYSROOT` to a prefix that
+holds `lib/libc.a`. Off Linux, or for a lib target, the flag is refused. A `MUSL_SYSROOT` that
+is not a sysroot is refused rather than ignored.
+
+The stdlib still tries newer file, copy, hash, and process calls once and keeps the old path if
+the kernel does not have them. That is independent of which libc you linked.
+
 ## What is not here yet
 
 There is no pkg-config integration, so a library whose flags come out of `pkg-config --libs` has to be

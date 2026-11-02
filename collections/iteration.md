@@ -69,6 +69,9 @@ foreach ($numbers as $y) {
 }
 ```
 
+`$x` looks like a variable. It is a borrow of a slot. `mv $x` is refused the same way
+`mv $doc->body` is. Copy it (`$all[] = $x`), or bind by value and move that local.
+
 `const &$x` is the same borrow, read-only and said out loud. A `const` method is fair game; a write
 through `$x` is not:
 

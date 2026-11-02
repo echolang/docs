@@ -106,6 +106,7 @@ halves of either pair is a refusal, not a last-one-wins.
 | `--target-os <name>` | | all but install | name | the host | evaluate `#[if:]` as if targeting this OS. `echoc build --target-os wasi` is a real cross to `wasm32-unknown-wasip1`; Darwin `build --target-os ios` is the other. `wasi` is refused on `run` and `test` |
 | `--target-arch <name>` | | all but install | name | the host | the same for the architecture |
 | `--ios-device` | | build | flag | off | with `--target-os ios`, emit for a physical iPhone |
+| `--target-libc <name>` | | build | `host` or `musl` | host | `musl` links a static linux command. Needs a musl sysroot (shipped with a Linux echoc, or `MUSL_SYSROOT`). Refused off Linux, with a non-linux `--target-os`, and for a lib target |
 | `--define <name>` | | all | bare name, repeatable | | declare a flag `#[if: NAME]` can test |
 | `--target-cpu <name>` | | compiling | name | a per-platform baseline | which CPU to select instructions for |
 | `--target-features <list>` | | compiling | comma list of `+f` / `-f` | empty | features to enable or disable |
@@ -128,6 +129,10 @@ only picks `#[if:]` arms and JITs for this machine. Other names (`linux`, `windo
 stay facts-only on every subcommand: there is no Linux sysroot on a Mac.
 
 `--target-os ios` also selects `family == darwin`. There is no `--target-family`.
+
+`--target-libc musl` is the other real cross on Linux `build`: a static command against a musl
+sysroot, targeting `x86_64-unknown-linux-musl` or `aarch64-unknown-linux-musl`. `run` and `test`
+refuse it. [Linking](/projects/linking) is the portable-linux chapter.
 
 ### What echoc tells you
 

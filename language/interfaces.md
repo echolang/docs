@@ -33,7 +33,8 @@ than an accident waiting to be tidied up.
 
 ## What an interface may contain
 
-Function signatures ending in a semicolon, operator requirements, and associated types. That's all:
+Function signatures, operator requirements, and associated types. A signature ends in a
+semicolon, or in a body that is its [default](#default-bodies). That's all:
 
 ```echo
 interface Vessel
@@ -54,8 +55,8 @@ interface Vessel
 //        only - a `function` or `operator` signature ending in ';'.
 ```
 
-No bodies, no constructor, no destructor, no nested types. An interface describes a capability. It has no
-storage and no behaviour of its own, which is what keeps conformance from being inheritance.
+No constructor, no destructor, no nested types. An interface describes a capability. It has
+no storage of its own, which is what keeps conformance from being inheritance.
 
 ## Declaring conformance
 
@@ -100,8 +101,192 @@ Note that `const` is part of the requirement. A `const function draw()` in the i
 a `const function draw()`, because const-ness of the receiver is part of the signature rather than a flag on
 the side.
 
-This is not inheritance. There is no base type, nothing is shared, and an interface can't extend another
+This is not inheritance. There is no base type, no state is shared, and an interface can't extend another
 interface.
+
+## Default bodies
+
+Sometimes a lot of conformers would write the same method. Put the body on the interface. A
+conformer that declares the method answers the requirement as usual. One that doesn't gets the
+default.
+
+```echo
+interface Gate
+{
+    const function address() : string;
+
+    const function dial() : void
+    {
+        echo "dialling {$this->address()}";
+    }
+}
+
+class Abydos : Gate
+{
+    const function address() : string { return '27-07-15-32-12-30'; }
+}
+
+Abydos()->dial();       // dialling 27-07-15-32-12-30
+```
+
+`Abydos` wrote one method and has two. That's the point.
+
+Inside a default, `$this` is the conformer itself, not the interface. The body is instantiated
+once per conforming type, the same way a constrained generic is, so `$this->address()` above is
+a direct call to `Abydos::address`. No dispatch in between.
+
+And since an interface has no properties, a default can only combine what the conformer already
+provides. It never touches state.
+
+### Writing the method yourself wins
+
+Matched by name, every time:
+
+```echo
+interface Gate
+{
+    const function address() : string;
+
+    const function dial() : void
+    {
+        echo "dialling {$this->address()}";
+    }
+}
+
+class Chulak : Gate
+{
+    const function address() : string { return '09-02-23-15-37-20'; }
+
+    const function dial() : void
+    {
+        echo 'jaffa, kree!';
+    }
+}
+
+Chulak()->dial();       // jaffa, kree!
+```
+
+The catch: a method of that name with the wrong shape is a mistake, not something the default
+quietly covers for.
+
+<!-- verify: skip -->
+```echo
+interface Gate
+{
+    const function address() : string;
+    const function dial() : void { echo $this->address(); }
+}
+
+class Chulak : Gate
+{
+    const function address() : string { return '09-02-23-15-37-20'; }
+    const function dial(int32 $chevrons) : void { echo $chevrons; }
+}
+// error: 'Chulak' says it conforms to 'Gate' but does not satisfy 'const dial() : void' - the closest it
+//        declares is 'const Chulak::dial(int32)'.
+```
+
+### Defaults can call each other
+
+A call from a default to another requirement goes to the conformer's version. Its own, if it
+wrote one:
+
+```echo
+interface Sized
+{
+    const function count() : usize;
+
+    const function empty() : bool { return $this->count() == 0; }
+    const function any() : bool { return !$this->empty(); }
+}
+
+class Fleet : Sized
+{
+    public array<string> $ships = [];
+
+    const function count() : usize { return $this->ships->count(); }
+    const function empty() : bool { echo 'checked'; return $this->ships->empty(); }
+}
+
+echo Fleet()->any();    // checked, then 0
+```
+
+`any()` is the default. It called `Fleet`'s own `empty()`.
+
+A generic interface takes its parameters from the conformance. Nothing at the call has to
+mention `T`:
+
+```echo
+interface Stack<T>
+{
+    function items() : array<T>&;
+
+    function push(T $value) : void { $this->items()->push($value); }
+}
+
+class Cargo : Stack<string>
+{
+    public array<string> $hold = [];
+
+    function items() : array<string>& { return $this->hold; }
+}
+
+Cargo $c = Cargo();
+$c->push('naquadah');      // T is string, because Cargo says Stack<string>
+echo $c->hold->count();    // 1
+```
+
+All three ways of calling reach the same body: a direct call, a constrained generic, and a
+stored interface value. For a class that wrote nothing, the stored value's slot holds the
+default.
+
+### What a default can't do
+
+It cannot reach anything the interface does not require. There is no telling what a conformer
+will have. Today that's caught per conformer, when the default is instantiated for it:
+
+<!-- verify: skip -->
+```echo
+interface Gate
+{
+    const function address() : string;
+    const function log() : void { echo $this->name(); }
+}
+
+class Abydos : Gate
+{
+    const function address() : string { return '27-07-15-32-12-30'; }
+}
+// error: The type 'const Abydos' has no member named 'name'
+//   note: this is a default body of 'Gate', checked against each conformer it is instantiated for - a
+//         default can rely only on what 'Gate' requires
+```
+
+And if two of a type's interfaces both offer a default of the same name, the type has to pick:
+
+<!-- verify: skip -->
+```echo
+interface Dialer
+{
+    const function address() : string;
+    const function engage() : void { echo "dialling {$this->address()}"; }
+}
+
+interface Cloaking
+{
+    const function engage() : void { echo 'cloaked'; }
+}
+
+class Alkesh : Dialer, Cloaking
+{
+    const function address() : string { return '16-28-03-09-31-11'; }
+}
+// error: 'Alkesh' gets a default 'engage' from both 'Dialer' and 'Cloaking'. Declare 'engage' on 'Alkesh'
+//        to say which one it means.
+```
+
+A static requirement cannot have a default. Neither can an `extern interface`: those bodies are
+the calls the compiler writes through a plugin's table.
 
 ## Job one: constraining a type parameter
 
@@ -448,6 +633,54 @@ echo total(GateAddress());      // 6
 `GateAddress` never writes `type Iter = symbol_cursor`. The compiler infers it from the return type of
 `iterate()` and then checks that `symbol_cursor` really does conform to `Stepper<int32>`.
 
+### Associated types can constrain each other
+
+A constraint can name the associated type itself, or another one the same interface declares.
+The order they are written in does not matter: they are checked once every associated type is
+bound.
+
+```echo
+interface Index<K>
+{
+    function width() : int32;
+}
+
+interface Ledger
+{
+    type Table : Index<Key>;
+    type Key : contract::comparable<Key>;
+
+    function table() : Table;
+    function first() : Key;
+
+    function later(Key $a, Key $b) : Key
+    {
+        if ($a < $b) {
+            return $b;
+        }
+
+        return $a;
+    }
+}
+
+struct Wide : Index<int64>
+{
+    function width() : int32 { return 8; }
+}
+
+class Chevrons : Ledger
+{
+    function table() : Wide { return Wide(); }
+    function first() : int64 { return 1; }
+}
+
+echo Chevrons()->later(7, 3);   // 7
+```
+
+`Key` is `int64`, so `contract::comparable<Key>` is asked as `contract::comparable<int64>`, and
+`Table` has to be an `Index<int64>`. A default like `later` can use an associated type in its
+signature and its body. Each conformer's instance gets its own.
+
 An interface with an associated type can't be a stored type either, for the same reason as the operator
 case: the size and shape are not known until the concrete type is.
 
@@ -459,7 +692,8 @@ as `array<T>` does because there is no arm anywhere that knows what an array is.
 ## There is no Self
 
 Some languages let a requirement name the implementing type. Echo doesn't have `Self`. Where you need it,
-make the interface generic and pass the type in, as `Comparable<Naquadah>` does above.
+make the interface generic and pass the type in, as `Comparable<Naquadah>` does above. A default can't
+name it either, even though it's instantiated per conformer: `$this` is the only handle it has.
 
 ## Next
 
