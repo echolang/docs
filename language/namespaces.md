@@ -22,7 +22,7 @@ geometry::Point $p = geometry::make(3, 4);
 echo $p->x;     // 3
 ```
 
-## namespace is a statement, not a block
+## A statement
 
 There are no braces. A `namespace` statement says "everything after this line is in that namespace", until
 another one says otherwise:
@@ -249,7 +249,7 @@ program, including inside a namespace and including in a library you depend on, 
 
 There is no namespacing for them and no way to scope one. See [Operators](/language/operators).
 
-## How the standard library is laid out
+## The standard library
 
 A name's spelling tells you what tier it is in:
 

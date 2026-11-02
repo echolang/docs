@@ -16,7 +16,7 @@ In a single-file program none of this costs you anything: your module and your p
 so nothing is ever refused and `public` buys you nothing. Once there is a second file, and once the same
 word sits inside a type, the three rungs start to matter.
 
-## Three rungs, and you are standing on the middle one
+## Three rungs
 
 A top-level `struct`, `class`, `interface`, `function` or `const` sits on one of three rungs. So does an
 `extern` block, which takes the same modifier the declarations inside it would.
@@ -57,7 +57,7 @@ echo address();     // 9
 because "I checked, and there is no modifier" is a lousy way to find out that something is deliberately not part
 of a library's surface. Write it where that answer matters and skip it where it doesn't.
 
-## The default points inward, and that costs you something
+## The default
 
 Most languages default to public and hand you a word for hiding. Echo goes the other way, and I will put the
 bill on the table first: the standard library writes `public` 209 times across 25 files. Every one of those is
@@ -70,7 +70,7 @@ the first place. Defaulting to the module makes your surface something you chose
 cost is paid once per name you actually meant to export. The other one is paid by everybody who depends on you,
 forever.
 
-## On a top-level declaration, private means the file
+## private, top-level
 
 This is the one that catches people, because most languages have no file rung at all. A `private` declaration
 is reachable from the file it was written in, and a second file of the *same module* is already outside:
@@ -98,7 +98,7 @@ Chevron $c = lock(1);       // error: 'Chevron' is private to 'gate.eco', so it 
 Note: `private` narrows who may *name* a declaration, not whether the name is taken. Two files still can't each
 declare their own `Chevron`. That is an ordinary redeclaration, and visibility has nothing to say about it.
 
-## Inside a type, private means the type
+## private, in a type
 
 Same word, different question. On a property or a method, `private` means the type that declared it, and only
 that type's own bodies get through:
@@ -192,7 +192,7 @@ One consequence people trip over: a `private` property is omitted from the impli
 a field initializer, or the type must declare a constructor that assigns it. An `internal` property stays
 an implicit parameter. [Structs](/language/structs) has the private case in full.
 
-## public const is the read-only field you actually wanted
+## public const
 
 Put `const` on a property and you get the field everybody asks for. Readable from anywhere, written once while
 the object is being built, refused everywhere else, and that includes inside the type:
@@ -293,7 +293,7 @@ Keep these two apart: this is not the hiding that [Namespaces](/language/namespa
 outer overload set genuinely never joins the candidates. Here the candidate is right there, wins, and is then
 turned down.
 
-## A generic body sees straight past the module rung
+## Generics
 
 One deliberate exception. A generic body is written in one module and compiled into whichever module uses it,
 so "which module is asking" has no single answer, and the answer that looks obvious is the one that breaks

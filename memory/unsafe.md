@@ -23,7 +23,7 @@ accept inside it.
 
 Useful in the right hands and very dangerous in the wrong ones. You know the drill.
 
-## Everything you expected to be behind it is not
+## What unsafe is not
 
 None of this needs the word, and that's the design rather than an oversight:
 
@@ -165,7 +165,7 @@ is where `erased` and `type_id` sit in a container.
 An `unsafe` block is **not** inherited by a function declared inside it. The promise is about a region of
 source you are looking at, and a body written somewhere else is not one.
 
-## Raw storage, and why mem::init exists
+## Raw storage
 
 There is a second thing the compiler does not account for, and it is not gated by the word.
 

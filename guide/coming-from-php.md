@@ -33,7 +33,7 @@ you expected" rather than by topic.
 | `ucfirst` / `mb_ucfirst` | `str::ucfirst`. first **codepoint**, not first byte |
 | `sort` / `usort` / `asort` | `$a->sort()` is stable, `$a->sort_unstable()` is not. A user comparator is `sort(by: ...)`. PHP's `usort` means "user"; here `unstable` is the algorithm. [Sorting](/collections/sorting) |
 
-## Types are not optional
+## Types
 
 This is the whole point, so it comes first.
 
@@ -58,7 +58,7 @@ Numbers are specific about width too. There is no single `int`. There is `int8` 
 versions of each, `usize`, `isize`, `float32` and `float64`. `int` is an alias for `int32` if you want the
 short spelling.
 
-## Arrays are not hash maps
+## Arrays
 
 In PHP an array is a hash map that will hold anything. In Echo those are two different types and you pick
 one.
@@ -80,7 +80,7 @@ Two things that follow:
   and arrays are different types. `$ages = ['mario' => 34]` infers `map<string, int32>`.
 - `$arr[] = $v` still appends, and still reads the way you expect.
 
-## No new, and no `.` for members
+## `new` and `.`
 
 ```echo
 struct Point
@@ -107,7 +107,7 @@ A field default is a parameter default on that constructor. A `private` property
 that field a default, write a constructor, or assign it in `init`. Writing any `constructor` deletes the
 free one. That is where `Point(1.0, 2.0)` comes from when you never wrote one.
 
-## echo prints exactly one thing, and adds a newline
+## echo
 
 ```echo
 echo 'Hello';       // Hello
@@ -140,7 +140,7 @@ dprint($point);
 // }
 ```
 
-## struct or class, decided once
+## struct or class
 
 PHP has one kind of object. Echo has two, and the difference is who owns the thing.
 
@@ -180,7 +180,7 @@ Pick per type, at the declaration. `rc<Point>` is the way to put a struct you al
 class handle, when a factory asks for `T : class`. `box<Point>` is the unique heap cell: one owner, no
 header. [Classes](/language/classes) is both wrappers.
 
-## Ownership will be the new idea
+## Ownership
 
 Everything above is a syntax difference you absorb in an afternoon. This one is a concept.
 
@@ -217,7 +217,7 @@ If you have written Rust, this is that, with a friendlier default and slightly f
 The upside is that there is no garbage collector, no pause, and no surprise about when a destructor runs. It
 runs when the owner goes out of scope, in reverse order of declaration, every time.
 
-## Null is opt-in
+## Null
 
 In PHP anything can be `null`. In Echo a type is non-nullable unless it ends in `?`.
 
@@ -288,7 +288,7 @@ A path on disk is `#[depends:]`. A library that is not sitting next to you yet i
 is what fetches it. There is no Composer and no published index in v1, so every requirement still writes
 `source: git "..."`. [Packages](/projects/packages) is the chapter.
 
-## Things that are exactly the same
+## What is the same
 
 It's worth saying what you get to keep, because it's most of the surface:
 

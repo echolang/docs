@@ -20,7 +20,7 @@ For two `int32`s that copy is the bytes and there is nothing to discuss. **The i
 one of the fields owns something**, because then a copy is a real operation and somebody has to say what it
 means.
 
-## A copy happens in three places
+## Three places
 
 There is no `copy` keyword. One just appears, in three situations, without you writing anything:
 
@@ -57,9 +57,9 @@ A method getter that `return $this->item` still copies, because `$this` is a bor
 `return mv $this->item` to consume that field at the call.
 
 A fluent chain on a constructor, or `unwrap()` of a temporary result, is also a move when you
-bind the value. See [Ownership and moving](/memory/ownership#a-chain-on-a-temporary-moves-too).
+bind the value. See [Ownership and moving](/memory/ownership#temporary-chains).
 
-## The free copy is field by field
+## Field by field
 
 If you write nothing, the compiler folds an answer out of your properties, one property at a time, all the
 way down through nested structs. A field that copies as bytes copies as bytes. A field that is a class handle
@@ -97,7 +97,7 @@ echo $spare->right->serial;     // 2
 `Bay` has no copy constructor and doesn't need one. It printed `cloning a ZPM` twice, once per field, and
 that composition is the whole rule: a struct is copyable exactly when every part of it is.
 
-## Two things stop the compiler writing one
+## When it cannot
 
 **A property with no rule of its own.** A raw `ptr<uint8>` is an address, and duplicating an address gives
 you two values that both think they own the allocation:
@@ -149,7 +149,7 @@ That one looks harsh at first. A `Wormhole` handle copies fine on its own, so wh
 you wrote a destructor, which means the value does something on the way out, and duplicating it would run that
 body twice over a thing you never said could be duplicated. If it can, say so.
 
-## A copy constructor is a constructor that takes its own type
+## Copy constructors
 
 There is no separate syntax. A constructor whose only parameter is a borrow of the type it belongs to **is**
 the copy constructor, and the compiler uses it for every copy of that type:
@@ -193,7 +193,7 @@ The same declaration is reached whether you write `$backup = $primary` or spell 
 `const GateLog&` is an error rather than an overload set.
 
 Field defaults do not run on this path. A copy constructor fills from `$other`, and running the defaults
-first would fire them on every copy. [Structs](/language/structs#field-defaults-still-run-in-a-handwritten-body)
+first would fire them on every copy. [Structs](/language/structs#field-defaults)
 is the catch.
 
 ## Prefer const on the source
@@ -232,7 +232,7 @@ out of a `const` borrow of itself, so an element type with a mutable copy constr
 array at all, and the error you get points at a line inside the standard library rather than at your
 declaration. That's the "much later, somewhere else" I mean.
 
-## A class is retained, not copied
+## Classes
 
 A [class](/language/classes) is a reference-counted object, so assigning one is one more name for the same
 object and never a duplicate:
@@ -327,7 +327,7 @@ echo $address;      // abydos
 echo $label;        // abydos!
 ```
 
-## unique, for a type only one value may ever name
+## unique
 
 `#[unique]` on a struct says exactly one value may name this type's storage. Copying is not refused because
 nobody said how, it is refused because there is no such thing:

@@ -15,7 +15,7 @@ manifest is Echo**, read by the same lexer and the same parser your own code goe
 That's a complete project. Run `echoc run` in that directory and it finds the manifest, expands the pattern
 and compiles what it matched.
 
-## Ten attributes, and most days you write three
+## Ten attributes
 
 A manifest has a closed list of ten names. Misspell one and you get the list back:
 
@@ -32,9 +32,9 @@ A name with a namespace the compiler doesn't own is not on that list and is not 
 | `#[sources: "src/*.eco"]` | the files this module is made of |
 | `#[depends: "../geometry"]` | another module, already on disk, by path |
 | `#[requires: "lib" { version:, source: git "..." }]` | a package, optionally `org/name`. epm puts it in `vendor/`; the compiler resolves the name. See [Packages](/projects/packages) |
-| `#[target: exe { ... }]` | a program this module produces. See [More than one program](#more-than-one-program). `install: true` marks it for [`echoc install`](#putting-one-on-your-path), `public: true` offers it to the modules that depend on this one. See [Tools and hooks](/projects/tools) |
+| `#[target: exe { ... }]` | a program this module produces. See [More than one program](#several-programs). `install: true` marks it for [`echoc install`](#on-your-path), `public: true` offers it to the modules that depend on this one. See [Tools and hooks](/projects/tools) |
 | `#[target: lib { name: ... }]` | a program with no entry. A `.dylib` / `.so` / `.dll` on the host, a reactor on wasi. The surface is `#[export]`. See [Libraries and plugins](/projects/libraries) |
-| `#[target: test] { ... }` | and what belongs to that target alone. See [A target can have things of its own](#a-target-can-have-things-of-its-own) |
+| `#[target: test] { ... }` | and what belongs to that target alone. See [A target can have things of its own](#target-scopes) |
 | `#[link: lib "m"]` | a native library this module needs. See [Linking](/projects/linking) |
 | `#[cc: sources "c/*.c"]` | C sources that ship beside the Echo. See [C interop](/projects/c-interop) |
 | `#[build_dir: "target"]` | where artifacts go instead of `ecobuild` |
@@ -44,7 +44,7 @@ A name with a namespace the compiler doesn't own is not on that list and is not 
 does nothing. Nothing resolves against it, nothing compares two of them. It sits in the fingerprint of
 a build, and that's the job. See [the list](/reference/limitations).
 
-## The manifest is Echo, which is why `#[if:]` works in it
+## The manifest is Echo
 
 There is no separate manifest grammar. That's not a flourish, it's why a manifest can gate its own
 source list with no new syntax at all:
@@ -63,7 +63,7 @@ source list with no new syntax at all:
 Conditions here see what `--target-os` said, not what the machine underneath you is.
 [Conditional compilation](/projects/conditional-compilation) is the whole story.
 
-## A source pattern is relative to the manifest, and has to match something
+## Source patterns
 
 Patterns resolve against the directory the `module.eco` is in, never against your working directory. That's
 what lets a library be depended on from anywhere.
@@ -92,7 +92,7 @@ module.eco: the sources pattern 'lib/*.eco' matched no files.
 The point of a pattern is that adding `src/circle.eco` needs no edit here. Adding a *directory* does, which is
 the right way round: a new directory is a decision and a new file usually is not.
 
-## More than one program
+## Several programs
 
 A module is one program by default: run `echoc run` in it and the top level of every file it is made of runs,
 in filename order. That's fine right up until you want two of them, and then it isn't fine at all. The tool
@@ -133,7 +133,7 @@ beside it:
 module.eco:6: 'elsewhere.eco' is target 'tool's entry but is not one of this module's sources - a target's entry has to be a file the module is made of.
 ```
 
-### Shared files hold declarations, not code
+### Shared files
 
 Once a module declares targets, top-level code in a file that is *no* target's entry has nowhere to run. So
 it is refused rather than quietly dropped:
@@ -179,7 +179,7 @@ target. Their `#[depends:]` libraries are cached and shared between them, the mo
 For two programs over one `src/` that's a rounding error. If it ever stops being one, the shared half wants to
 be its own module, which is the thing `#[depends:]` was for all along.
 
-### Putting one on your PATH
+### On your PATH
 
 That `-o /usr/local/bin/clock` works, and you'll be typing it every time you change something. `echoc install`
 is the same thing written down once:
@@ -218,7 +218,7 @@ installed clock -> /Users/you/.echo/bin/clock
 Not to be confused with `epm install`, which fetches the packages a project requires into `vendor/`. That one
 is about what your project needs. This one is about what your project *is*.
 
-## A target can have things of its own
+## Target scopes
 
 Everything above belongs to the whole module. Sooner or later one target needs something the others have no
 use for: a directory of test files, a mocking library, a native library exactly one program links.
@@ -268,7 +268,7 @@ module.eco:6: 'version' describes the module, not one of its targets - write it 
 Scopes don't nest, and one scope belongs to one target. If you wrote `#[target: [ ... ]]` with several
 targets inside, give each of them its own line instead.
 
-### It changes what gets cached, and that is on purpose
+### It changes the cache
 
 Two targets of one module normally compile the identical file list, so they share every cached object
 between them. A scope breaks that tie for the module that declares one: its two targets are now made of
@@ -276,7 +276,7 @@ different files, so they get different objects. Which is exactly right, and is w
 opt into rather than the default. Every other module in the build, your dependencies and the standard
 library included, is untouched and still shared.
 
-## A dependency is a directory on disk
+## Dependencies
 
 <!-- verify: skip -->
 ```echo
@@ -311,7 +311,7 @@ module.eco:3: git dependencies are not resolved yet - write '#[requires: "name" 
 A path you already have on disk stays `#[depends:]`. A package epm should put in `vendor/` is
 `#[requires:]`. [Packages](/projects/packages) is the chapter.
 
-## A consumer writes one line and inherits the rest
+## The consumer inherits
 
 `plotter` depends on `geometry`. If `geometry` in turn depends on `mathkit`, `plotter` gets that too, in the
 order that works, without naming it. The same is true of link requirements: a module that declares
@@ -321,7 +321,7 @@ That's the property the whole design is built around. A consumer writes `#[depen
 A path module's `#[requires:]` come along too. The compiler looks them up in the program's `vendor/`.
 `epm install` at the program is what fills it. You do not run epm inside the library.
 
-## Order is decided for you, and a cycle cannot be satisfied
+## Order and cycles
 
 Modules are parsed one at a time, each one completely before the next starts. So a module may name symbols
 from any module parsed before it, and none from the ones after.
@@ -341,7 +341,7 @@ the module dependencies form a cycle: c1 -> c2 -> c1. A module is parsed complet
 There is no clever ordering that makes that work. If two modules need each other, they are one module, or the
 shared part is a third one below both.
 
-## The standard library is already a dependency
+## The standard library
 
 `echoc` adds `stdlib` as the first root of every build, so it is always parsed before anything of yours. This
 means writing `#[depends: "stdlib"]` is wrong rather than redundant: it would name a path that is not there.
@@ -349,7 +349,7 @@ means writing `#[depends: "stdlib"]` is wrong rather than redundant: it would na
 `--no-stdlib` takes it away, which is legitimate and occasionally useful, and leaves you a language with no
 `string` and no `array<T>`.
 
-## Artifacts go in `ecobuild`, beside the manifest
+## Artifacts
 
 Build once and each module grows a directory next to its own `module.eco`:
 
@@ -385,7 +385,7 @@ echoc build -o plot --build-dir /tmp/echo-artifacts
 A manifest describes the project's layout, an invocation describes this machine, and when they disagree the
 machine wins.
 
-## `echoc` will not write where you keep your sources
+## Where it will not write
 
 `echoc clean` empties build directories, so "which directory is a build directory" has to be a question with a
 trustworthy answer. Two rules give it one.
@@ -410,7 +410,7 @@ module.eco:3: 'build_dir' names '/home/you/plotter', which holds this module's o
 
 Caught at the manifest, rather than when a later `echoc clean` would have emptied your `src/`.
 
-## The cache keys on your sources, never on your consumers
+## Cache keys
 
 `echoc build` stores each module's object and serves it back for as long as nothing it depends on changed.
 `echoc run` and `echoc test` read and fill the same store, so the second `run` of a project only compiles
@@ -441,7 +441,7 @@ The program itself is never stored, because its unit is where the C `main` is cr
 The *binary* is a different story. When nothing a program is built from has moved, `echoc build` and
 `echoc install` skip the front end, codegen and the link, and `--explain cache` says `up to date`.
 Delete the binary, edit a source, or ask for a `-p` dump, and it does the work. See
-[It isn't rebuilt every time](/projects/tools#it-isnt-rebuilt-every-time).
+[It isn't rebuilt every time](/projects/tools#rebuilds).
 
 **A module's object is a function of its own sources and its dependencies' keys, and never of who is using
 it.** A library built beside two different applications produces the same bytes both times. If that weren't

@@ -2,7 +2,7 @@
 
 `dprint` dumps a value with its shape. `-g` puts your `.eco` in the object. Start with the print.
 
-## `dprint` dumps the value, no `-g`
+## `dprint`
 
 `dprint` is a builtin that prints any value with its structure and its types, recursively:
 
@@ -59,9 +59,9 @@ dprint($nums);
 ```
 
 For a container, `foreach` and `echo` will tell you more. The debugger's answer to the same problem is
-[the formatters](#containers-need-the-formatters), further down.
+[the formatters](#formatters), further down.
 
-## `-g` steps through `.eco`
+## `-g`
 
 `echoc build -g` puts real DWARF in the object, which means **a debugger steps through your `.eco` file**, one
 line at a time, with your own variable names. Not the IR, not the generated assembly. The file you wrote.
@@ -74,7 +74,7 @@ lldb ./plot
 On macOS echoc runs `dsymutil` for you afterwards, because the linker leaves the DWARF behind in the objects
 and lldb would otherwise find nothing. That's why a `-g` build leaves a `plot.dSYM` beside the binary.
 
-## A session, start to finish
+## A session
 
 Take a small program:
 
@@ -132,7 +132,7 @@ Everything you'd want is there: the breakpoint resolved to a real address, the b
 function and its caller with your line numbers, a parameter and a local read their actual values, and members
 are reachable through the borrow.
 
-## `-g` is not `--debug`
+## `-g` vs `--debug`
 
 These get confused constantly and they are genuinely orthogonal.
 
@@ -150,7 +150,7 @@ The first one looks odd and is the one you want more often than you'd guess. A c
 with assertions compiled out is exactly the crash you need a debugger for, and turning them back on can make
 it go away.
 
-## `-g` turns the optimizer off, unless you say otherwise
+## `-g` and optimize
 
 `-g` sets `--optimize none` unless you passed `--optimize` yourself. A line table over optimized output
 describes a program nobody wrote, where locals live nowhere, statements execute in an order you didn't put
@@ -162,7 +162,7 @@ If you genuinely need to debug an optimized build, ask for it and accept what yo
 echoc build -g --optimize module -o plot plot.eco
 ```
 
-## Containers need the formatters
+## Formatters
 
 Out of the box, an `array<T>` reads as its internals:
 
@@ -234,7 +234,7 @@ In VS Code, use CodeLLDB rather than the C/C++ extension and import the script i
 extension drives lldb through `lldb-mi`, where `command script import` is not a command, so stepping works
 and the containers stay raw.
 
-## What you will not see yet
+## Missing
 
 Three honest gaps, all on [the list](/reference/limitations).
 
@@ -255,7 +255,7 @@ concrete type:
 **A `mem::buffer<T>` shows a capacity and no elements**, which is arguably correct (a buffer does not know how
 many of its slots are live) and still unhelpful when you are the one who knows.
 
-## `run` cannot honour `-g`
+## `run` and `-g`
 
 ```bash
 echoc run -g plot.eco

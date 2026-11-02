@@ -36,7 +36,7 @@ what the rest of the rules are for. The examples below drop the buffer and keep 
 destructor is all it takes: a struct that has one **owns** something as far as the compiler is concerned,
 and every rule on this page follows from that.
 
-## The last one declared is the first destroyed
+## Destruction order
 
 ```echo
 struct Wormhole
@@ -60,7 +60,7 @@ echo 0;
 reference to one declared earlier, so it has to be gone before its target is. A struct's own properties
 follow the same rule, last property first.
 
-## Leaving early destroys everything on the way out
+## Leaving early
 
 A `return` from inside a nested block leaves every scope it passes through, innermost first:
 
@@ -86,7 +86,7 @@ echo dial(false);
 `2`, `1`, `10`, then `1`, `20`. `break` and `continue` do the same for the scopes they leave, stopping at the
 loop.
 
-## mv hands ownership over
+## mv
 
 A move is written `mv`, and it transfers the obligation to destroy along with the value:
 
@@ -102,7 +102,7 @@ echo "one wormhole, one teardown";
 One destructor line, not two. `$handed` owns it now and `$open` owes nothing, so the scope end only tears
 down what is still owned.
 
-## Reading a moved-from variable is a compile error
+## Use after move
 
 This is the guarantee the whole design is for:
 
@@ -132,7 +132,7 @@ echo 0;
 `0`, then `1`, then `2`. Two wormholes were built and two were destroyed, in the reverse order of the
 variables that ended up holding them.
 
-### Moving on one path only
+### One path
 
 The move is tracked per path, so moving inside an `if` with no matching move on the other side is refused
 rather than guessed at:
@@ -157,7 +157,7 @@ A loop gets the same treatment with its own sentence, which is the same reason r
 iteration would move something that left on the first. `'$open' is moved out of inside a loop, so the next
 iteration would move a value that is no longer there.` Declare the value inside the loop, or move it after.
 
-## A function asks for ownership with mv, and the call site has to agree
+## mv at the call
 
 ```echo
 struct Wormhole { int32 $id; destructor() { echo $this->id; } }
@@ -221,7 +221,7 @@ function open(int32 $id) : int32
 $w = mv open(7);    // error: 'mv' needs an expression with storage to move out of
 ```
 
-## Returning a value moves it out
+## Returning
 
 A local handed back by `return` is moved, not copied. No destructor at the end of the callee, no duplicate:
 
@@ -282,7 +282,7 @@ Here `$hold` is still yours on the next line, so the call needs a value of its o
 how to make one. `mv $hold` is the answer if you meant to hand it over. In the `return` above you didn't
 have to write it, because there was nothing left for it to be.
 
-## A chain on a temporary moves too
+## Temporary chains
 
 A method that returns `$this` is handing you the value you already have. When that value is a temporary
 that dies at the semicolon, binding it is a move:
@@ -333,7 +333,7 @@ A named borrow of a temporary is still refused. `Probe& $r = Probe()->add(1)` wo
 semicolon. Bind the value. And if the method hands back one field of a struct that still owns
 something else, that is a copy: moving the field would skip the rest of the destructor.
 
-## mv is not a performance hint
+## Not a hint
 
 `mv` does not exist to make a call cheaper, and reaching for it because a value looks expensive is the wrong
 instinct.
@@ -345,7 +345,7 @@ If you want a call to avoid work, the answer is a borrow. If you want the callee
 answer is `mv`. Those are two different questions, and answering the second to solve the first is how you end
 up with a function that owns things it never needed.
 
-## Borrowing is what you want most of the time
+## Borrowing
 
 A borrow gives a function access to your value and takes nothing:
 
@@ -371,7 +371,7 @@ takes the address for you.
 as a pointer, and neither owns anything. [Pointers and references](/memory/pointers) is the chapter for what
 you can do with them.
 
-## A temporary lives until the call returns
+## Temporaries
 
 Hand a freshly built value straight to a borrow parameter and it stays alive for exactly as long as the call:
 
@@ -405,7 +405,7 @@ echo 4;
 `1`, `2`, `3`, `4`. Built, borrowed, destroyed, and only then does the next statement run. Not destroyed
 before the callee saw it, and not left lying around until the end of the scope.
 
-## mv can take a field of a local
+## Moving a field
 
 Sometimes you want one field, not the whole struct. A by-value local (or a by-value parameter)
 can hand a field over. The rest stays. Scope-end drops skip the hole:
@@ -460,10 +460,8 @@ Wormhole $stolen = mv $sgc->active;
 `return $h->item` of a destructor-free holder is the same transfer as `mv $h->item`. So is
 `return tag_of($h->item)` when that is the last mention of the field.
 
-### A getter on `$this` still copies
-
-`$this` is a borrow, and the caller still holds the rest of the value. Write
-`return mv $this->item` to consume that field at the call:
+A getter on `$this` still copies. `$this` is a borrow, and the caller still holds the rest of
+the value. Write `return mv $this->item` to consume that field at the call:
 
 ```echo
 struct Item
@@ -494,9 +492,7 @@ echo $h->tag;                   // 7
 To eat the whole receiver, write `function take(mv $this)` and call `$h->take()`. `$h` is then
 unset.
 
-### An element is not a field
-
-An array index is runtime. A foreach `&$s` looks like a variable; it is a borrow of a slot.
+An element is not a field. An array index is runtime. A foreach `&$s` looks like a variable; it is a borrow of a slot.
 `mv $s` is refused the same way `mv $items[0]` is:
 
 <!-- verify: skip -->
@@ -512,14 +508,14 @@ foreach ($open as &$w) {
 // error: 'mv' can only move a whole variable
 ```
 
-Copy it, or drain the array with [`take_from`](/collections/arrays#take_from-moves).
+Copy it, or drain the array with [`take_from`](/collections/arrays#take-from).
 I reach for the drain: the source is emptied, the dest grows, and nested owners move with the
 element.
 
 One element into an array is still `$handed[] = mv $gate`, and that still needs a whole
 variable. Writing a piece of a value is a different question, and that one works.
 
-## Writing an owning value into a field
+## Field writes
 
 Assigning over a field that owns something destroys what was there and stores the new value, exactly as
 assigning over a whole variable does:
@@ -566,7 +562,7 @@ and there is no assignment left to tear anything down.
 A raw pointer element is still refused. `$p:$[0] = $s` is storage nothing is accounting for, so there is
 no old value there to destroy. `mem::take` ends what is in the slot, `mem::init` seats the new one.
 
-## A class answers all of this with a count
+## Classes
 
 Everything above is about values. A [class](/language/classes) is not a value: it is a reference-counted
 object on the heap, and assigning one hands out another name for it rather than another copy of it.
@@ -589,10 +585,10 @@ away rather than at a brace you can point at, and `mv` has no work to do. The ru
 mattering again the moment a *struct* owns something.
 
 A unique heap `T` with no header is [`box<T>`](/language/classes#a-unique-heap-cell). Copying it is refused.
-Dropping it destroys `T` and frees the allocation. [`rc<T>`](/language/classes#putting-a-struct-on-the-heap)
+Dropping it destroys `T` and frees the allocation. [`rc<T>`](/language/classes#on-the-heap)
 is the shared twin.
 
-## Cycles leak, and weak references are the fix
+## Cycles
 
 Reference counting has one failure mode and Echo does not pretend otherwise. Two objects holding each other
 never reach zero, and there is no cycle collector coming.

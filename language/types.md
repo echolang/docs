@@ -71,7 +71,7 @@ not `result<bool, E>`.
 
 See [Functions](/language/functions).
 
-## Three built-in spellings, and only three
+## Three spellings
 
 ```echo
 int $a = 1;         // int32
@@ -84,7 +84,7 @@ That's the whole list. `int` is **not** the machine word. It's `int32` on every 
 
 There is no `double`. `float64` is spelled `float64`.
 
-## What an untyped literal decides
+## Untyped literals
 
 Leave the type off and the literal picks:
 
@@ -139,7 +139,7 @@ float32 $pi = 3.14;     // warning: results in a loss of precision
 Write `3.14f` and the warning goes away. [Variables](/language/variables) has the rest of the narrowing
 rules.
 
-## usize is where counts live
+## usize
 
 `usize` is a pointer-width unsigned integer, and it is not an alias for `uint64`. It's its own type with
 its own identity.
@@ -158,7 +158,7 @@ of those signatures. As its own type, the signature stays `usize` and the width 
 The practical consequence: **a count is unsigned, so subtracting past zero wraps rather than going
 negative.** `$numbers->count() - 5` is a very large number, not `-2`.
 
-## bool is not a small integer
+## bool
 
 This is the one that will genuinely hurt you if you treat `bool` as a small integer.
 
@@ -272,7 +272,7 @@ Same declaration syntax, opposite semantics, one keyword apart. [Structs](/langu
 [Classes](/language/classes) each get a chapter, because the choice between them is the most consequential
 one in the language.
 
-## Everything else is the standard library
+## The standard library
 
 `string`, `array<T>`, `map<K, V>`, `slice<T>`, `range<T>`, `box<T>`: none of these are compiler types. They are
 structs written in Echo, in `stdlib/core/`, using the same features your code has:
@@ -291,7 +291,7 @@ A small number of these types are pointed at by name so the compiler can talk ab
 `#[echoc::core: array]` does), but the shape is still the library's. There is no privileged array type you can't
 write yourself.
 
-## Naming a type
+## Aliases
 
 Some types are long, and you write them over and over. `type` gives one a second name:
 
@@ -340,7 +340,8 @@ function it can use that function's own parameter: `function total<T>(Page<T> $p
 
 ### Function types
 
-This is the case it pays off most. The alternative is writing the whole signature at every use:
+A function type is the case it pays off most. The alternative is writing the whole signature
+at every use:
 
 ```echo
 type Transform = function<int32(int32)>;
@@ -350,7 +351,7 @@ function apply(Transform $f, int32 $x) : int32 { return $f($x); }
 echo apply(function(int32 $x) : int32 { return $x * 2; }, 21);    // 42
 ```
 
-### Where it lives, and what it refuses
+### Rules
 
 An alias is declared at file or namespace scope. Inside a struct or a function body it is
 refused. It takes `public`, `internal`, or `private` like any other declaration. Without one it

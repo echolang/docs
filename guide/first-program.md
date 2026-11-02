@@ -146,7 +146,7 @@ Hello, Ronon!
 `hello` is a native binary. Copy it to another machine of the same platform and it runs, with no Echo
 installed there.
 
-### run and build are not the same build
+### run vs build
 
 This one trips people up. The two commands have different defaults:
 

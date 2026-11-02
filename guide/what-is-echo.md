@@ -22,7 +22,7 @@ runs. No dynamic typing. No union types. No `mixed`.
 Put those together and you get the pitch: my highly opinionated and far from production-ready version of PHP
 that goes brrrr.
 
-## It will not run your PHP
+## Not PHP
 
 To be completely clear, because this is the first question everybody asks: **Echo does not run PHP code, and
 it never will.**
@@ -67,7 +67,7 @@ starts more or less instantly. It defaults to a debug build, so `assert` and the
 `build` is the real thing. It produces an executable you can copy to another machine. It defaults to a
 release build, so the checks are dropped and the optimizer runs.
 
-## Let's be honest for a moment
+## Honestly
 
 Echo is a hobby. It is not production ready and I am not pretending otherwise.
 

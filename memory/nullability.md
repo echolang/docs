@@ -19,7 +19,7 @@ echo $active == null;       // 0
 If you never write a `?`, null never enters your program. Absence is a real state, and the type says it
 out loud.
 
-## null needs permission
+## Permission
 
 Writing `null` at a type that didn't ask for it is a compile error, not a runtime surprise:
 
@@ -41,7 +41,7 @@ int32& $locked = null;
 
 `T&` is the type that promises there is something there. If you need "maybe an address", that's `ptr<T>`.
 
-## What the question mark costs
+## Cost
 
 It depends on what it is sitting on, and the split is the thing to have in your head before you put a `?`
 on a hot struct.
@@ -68,7 +68,7 @@ echo $locked == null;       // 1
 Neither one is expensive. It is just not free, which occasionally matters and is easy to forget because the
 syntax is one character.
 
-## You cannot read through it
+## Reading
 
 This is the rule that makes the whole thing worth having. A `T?` does not have the members of a `T`:
 
@@ -83,7 +83,7 @@ echo $active->id;
 
 That message names the three ways through. Pick by what you want to happen when the value is absent.
 
-## ?? supplies a replacement
+## Fallback
 
 `A ?? B` is `A` when it is there and `B` when it is not:
 
@@ -132,7 +132,7 @@ echo $primary ?? $secondary ?? 42;      // 5
 If the right side is itself nullable, the answer still may be absent and the type says so. That's what makes
 the chain above legal rather than a type error in the middle.
 
-## ?-> reaches through, or stops
+## Optional chain
 
 `?->` reads a member when the base is there and answers null when it is not:
 
@@ -180,7 +180,7 @@ Wormhole? $gone = null;
 $gone?->close();            // nothing
 ```
 
-## guard binds it once
+## guard
 
 `??` and `?->` handle a value at one use site. When you want to check once and then read the thing plainly
 for the rest of the function, that's `guard`:
@@ -241,7 +241,7 @@ Wormhole $open = guard dial();
 echo $open->id;     // 7
 ```
 
-### Success with nothing to bind
+### No binding
 
 Sometimes the value is not the point. The call either worked or it did not, and there is nothing you
 wanted to name:
@@ -278,7 +278,7 @@ and a missing value still stops the program.
 A written `else` still has to leave. That is what `guard` means, with or without a name: the rest of
 this scope has no meaning if this failed. Handle-and-continue is `match` or `if`.
 
-### A written else arm has to leave
+### else must leave
 
 ```echo
 class Wormhole { int32 $id; }
@@ -297,7 +297,7 @@ Which is the only thing that could work. If the else arm could fall through, the
 read a binding for a value that turned out not to be there. `return`, `break`, `continue`, `die`, or an `if`
 whose branches all do one of those: any of them satisfies it.
 
-## Your own types can be guarded too
+## Your own types
 
 `guard` is not a feature of `T?`. Anything that means "maybe a value" can be guarded, and a type says that
 it means it by declaring `contract::unwrappable<V>`:
@@ -358,7 +358,7 @@ Note that `has_value()` is `const` and `unwrap()` is not. Reading *whether* a va
 about the storage, while taking it out hands back a borrow somebody may write through. So a `const` subject
 is refused, and the message says why.
 
-### A reason, not just an absence
+### A reason
 
 A `T?` records that a value is missing and nothing about why. When the why matters, declare
 `contract::failable<E>` beside it. The else arm can then bind the reason:
@@ -460,7 +460,7 @@ echo $port;    // 8080
 Use `T?` when there is nothing to say about why the value is missing, and `result<T, E>` when there is. That's
 the whole of the choice.
 
-## Asking whether it is there
+## Presence
 
 `== null` and `!= null` work on anything nullable:
 
@@ -506,7 +506,7 @@ echo $open == null;
 Note that `== null` is the only comparison a nullable answers. `$a == $b` over two `int32?` is not a thing:
 narrow it first, with any of the three forms above.
 
-## A pointer is already nullable, and there is a trap
+## Pointers
 
 `ptr<T>` carries the flag on the pointer level, so it is nullable without a `?`. The trap is that reading a
 pointer auto-dereferences it, so `$p == null` asks about the *pointee*:
@@ -524,13 +524,13 @@ ptr<int32> $p = null;
 echo $p:$ == null;      // 1
 ```
 
-A pointer to an [incomplete type](/projects/c-interop#incomplete-types-a-name-no-layout) skips that trap.
+A pointer to an [incomplete type](/projects/c-interop#incomplete-types) skips that trap.
 There is no pointee, so `$h == null` on a `ptr<Handle>` is already the address. Same spelling as a class
 handle.
 
 [Pointers and references](/memory/pointers) has the rest of what `:$` does.
 
-## weak references answer the same way
+## weak
 
 A `weak<T>` does not keep its object alive, so reading one is always a question about whether it is still
 there. `strong()` asks it and gives you a `T?`:
@@ -567,7 +567,7 @@ purpose, since the whole point is that the binding lives on.
 What you can't do is read a weak reference directly. `$watcher->lockedChevrons` is refused, and the message
 tells you to upgrade it first. [Classes](/language/classes) covers why weak references exist at all.
 
-## Where a written null gets its type
+## Typing null
 
 `null` has no type of its own. It takes the type of wherever it is going, and there are four places that can
 tell it: a declaration, a return, a comparison, and a call argument.

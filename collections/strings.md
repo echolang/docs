@@ -17,7 +17,7 @@ echo $greeting->size();     // 5
 
 That's a whole program, and it allocates nothing at all. Here is why.
 
-## A literal is a string, and it costs nothing
+## Literals
 
 `'hello'` is not a separate type that converts to a `string`. It *is* a `string`, lowered to static bytes
 in the binary, a byte count, and a null owner. No allocation, no reference count touched:
@@ -38,7 +38,7 @@ A file can sit in the binary the same way. `std::embed::text("help.txt")` is tha
 and `std::embed::bytes` is the spelling that does not ask for UTF-8. See
 [Embedding files](/stdlib/embed).
 
-## `string::INLINE` bytes, no allocation
+## Inline storage
 
 A unique `string` of at most `string::INLINE` bytes is stored in the value. Appending `'hello'` to an empty string
 allocates nothing. Copying one is a memcpy of those bytes, and mutating the copy leaves the original
@@ -63,7 +63,7 @@ reference-counted buffer, and the rule below applies.
 Ask `$s->view()` for a window over the live bytes. The stored `$window` of an inline string is a tag,
 not an address: a return in Echo is a move, and a pointer into the callee's frame would dangle.
 
-## Copy-on-write, and the one rule behind it
+## Copy-on-write
 
 Every mutating method opens with the same gate: **if this string is not the sole owner of the whole
 buffer, clone first.** Three ways it can fail that test, and they collapse into one rule.
@@ -125,7 +125,7 @@ echo $solo;                         // 0123456789abcdefg
 echo mem::refs($solo->owner);  // 1
 ```
 
-## A substring shares its parent's bytes
+## Substrings
 
 `sub()` narrows the window and keeps the owner, so it is one more reference rather than one more
 allocation:
@@ -144,7 +144,7 @@ echo mem::refs($own->owner);   // 2
 
 Taking a substring of a substring narrows again, still sharing. No bytes move at any point.
 
-## string::view is the borrowed half
+## string::view
 
 A `string::view` is two words, an address and a byte count, owning nothing. Every operation that only
 *reads* text actually lives here, and `string` delegates to it.
@@ -309,7 +309,7 @@ buffer is the thing the copy-on-write gate exists to prevent.
 ## Reading a string
 
 All of it byte-for-byte. No normalization, no case folding, no encoding validation. Case conversion
-lives next door in [`str::upper`](/stdlib/str#upper--lower--ucfirst--lcfirst) and friends; the type
+lives next door in [`str::upper`](/stdlib/str#case) and friends; the type
 itself still compares and slices as bytes.
 
 ```echo
@@ -351,7 +351,7 @@ echo $a->find('o', 5);          // 7, the second o
 echo $a->find('world', 7);      // 11
 ```
 
-## size() and chars() are different questions
+## size() and chars()
 
 `size()` is bytes and is O(1). `chars()` walks the string counting UTF-8 codepoints. That the two
 disagree is the point, not an oversight:
@@ -373,7 +373,7 @@ editor would rather not show you.
 Every index into a string is a **byte** index. `chars()` is a count, not a validator: invalid UTF-8 is
 counted rather than rejected.
 
-## == is a declared operator, not syntax
+## Equality
 
 Comparing two strings is an ordinary operator declared in the standard library, and both operands are
 borrows, so a comparison costs no reference count at all:
@@ -471,7 +471,7 @@ echo "sum {$p->x + $p->y}";     // sum 7
 echo "second {$xs[1]}";         // second 20
 ```
 
-### Double quotes interpolate, single quotes do not
+### Quotes
 
 This is the one place in Echo where the two quote characters mean different things, and it is the escape
 hatch. If you want the braces to stay, use `'`:
@@ -526,7 +526,7 @@ echo "{$pi:.3e}";       // 3.142e+00
 | `f` `e` `g` | fixed, scientific, shortest |
 | `s` | text |
 
-### It is all `str::from`
+### `str::from`
 
 There is no magic here, and that's the point. `"{$x}"` becomes `str::from($x)`, and `"{$x:.2f}"` becomes
 `str::from($x, '.2f')`. So your own type joins in by declaring one function:

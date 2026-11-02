@@ -23,7 +23,7 @@ want the crash to carry the IO error in your own words.
 Listing a directory, `mkdir`, and `rmdir` live on [Directories](/stdlib/io/directories). There is
 still no path type.
 
-## A missing file is `missing()`, not a die
+## Missing
 
 ```echo
 string $text = guard std::io::readfile('definitely-missing-echo-docs-xyz') else ($e) {
@@ -219,7 +219,7 @@ bool $ok = guard std::io::remove('gate.txt') else ($e) {
 ```
 
 `seek($offset, $from)` counts from `.start`, `.current` or `.end`. `position()` is where the next read or
-write will land. `size()` is [`info()`](#what-a-path-is)'s size, asked of the open descriptor.
+write will land. `size()` is [`info()`](#paths)'s size, asked of the open descriptor.
 
 Don't `readall` on a `create()` handle. `.write` is write-only, and the kernel answers with a bad file
 descriptor rather than with the bytes you just wrote.
@@ -269,7 +269,7 @@ bool $ok = guard std::io::remove('chulak.txt') else ($e) {
 
 `remove` and `rename` answer `result<bool, ioerror>`. `ok(true)` is success.
 
-## What a path is
+## Paths
 
 `exists` says yes or no. `info` says what is there: how big, what kind, who may touch it, and when it
 last changed.
@@ -402,7 +402,7 @@ with the window empty, goes straight to the kernel, so `writefile` of a large st
 bytes have already been pulled, unflushed writes have not been pushed. Don't wrap a live file's `fd()`
 in a [`reader` or a `writer`](/stdlib/io/buffering). A `std::io::file` already has both windows.
 
-## The whole surface
+## Surface
 
 | | |
 |---|---|

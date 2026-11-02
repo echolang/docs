@@ -140,7 +140,7 @@ function shared() : int32
 echo shared();      // 42
 ```
 
-## What you can capture
+## Capture
 
 Primitives, pointers, and plain structs copy into the environment. A class handle or a `string`
 is retained. A struct with a copy constructor is copied:
@@ -179,7 +179,7 @@ echo $f();      // 42
 There is no `function[&$blob]()`. Capture does not alias a local. If the blob is a
 [class](/language/classes), capture the handle and the payload stays on the heap. If it is a
 struct, capture `&$blob` (or a `ptr<T>`) and keep the struct alive for as long as the closure
-runs. [Threads](/stdlib/thread#share-the-object-not-a-copy-of-it) is the page that puts that on
+runs. [Threads](/stdlib/thread#sharing) is the page that puts that on
 another core.
 
 A `#[unique]` type is refused, because there is nothing to copy:
@@ -259,11 +259,11 @@ echo outer();       // 5
 A named `function` between the two has no environment, so it cannot hand a capture through. Pass
 the value as an argument, or write the inner body as a closure too.
 
-## And a C function pointer is a different type
+## C function pointers
 
 `function<R(P...)>` is Echo's callable: two words, an environment, a closure. C has no spelling
 for that. When a C library wants a callback, the type is `extern function<R(P...)>`: one word,
-no environment, produced by `&name`. [C interop](/projects/c-interop#callbacks-passing-a-function-to-c)
+no environment, produced by `&name`. [C interop](/projects/c-interop#callbacks)
 has the rest, including why a closure cannot be one.
 
 ## A property
@@ -317,7 +317,7 @@ echo $steps[0](41);     // 42
 
 Indexing is the same call: `$steps[0]` is the callable, then `(41)` runs it.
 
-## Generic inference reaches through a callable
+## Inference
 
 A type parameter can be bound by the callable's own signature, which means the usual higher-order helpers
 infer cleanly:

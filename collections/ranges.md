@@ -55,7 +55,7 @@ foreach (5 ..= 5 as $d) { echo $d; }    // 5
 foreach (5 .. 6 as $e) { echo $e; }     // 5
 ```
 
-## A range is an ordinary value
+## A value
 
 It is a struct, so you can store one, pass one, and loop over it later:
 
@@ -114,7 +114,7 @@ foreach ($lo ..= 255 as $byte) {
 That's a real bug that the obvious implementation has, and it is why `range<T>` carries an `$inclusive`
 field rather than lowering `$a ..= $b` to `range($a, $b + 1)`.
 
-## The literal that decides your index type
+## Index type
 
 Here is the trap, and it will cost you an afternoon if you walk into it cold.
 
@@ -162,7 +162,7 @@ foreach (0 .. $n - 1 as $i) {
 }
 ```
 
-## Why the compiler's ignorance is the point
+## Why it is an operator
 
 There is no `#[echoc::core:]` binding on `range<T>` and there deliberately never will be. A core name exists so
 the compiler can *say* a type it mints itself, and the compiler never mints a range.

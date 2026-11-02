@@ -16,7 +16,7 @@ echo c_abs(-42);        // 42
 That's a complete program. From here it's names, types, strings, structs, and how to ship C sources inside
 a module.
 
-## The C name comes first, `as` renames it locally
+## Names
 
 ```echo
 extern {
@@ -47,7 +47,7 @@ do not.
 Two things an `extern` function may not be: it may not have a body (it ends at the `;`), and it may not be
 generic, because a single C symbol has no per-instantiation body to emit.
 
-## Types are yours to get right
+## Types
 
 Nothing checks your declaration against the real header. There is no header to check against. If C says
 `size_t` and you write `int32`, that compiles, links, and then misbehaves on the first value above two
@@ -70,13 +70,13 @@ The mapping you'll use most:
 This is the one part of Echo where the compiler can't help you at all. Get the signature right once, in one
 place, and never write it again.
 
-## C enums are integers plus leftovers
+## C enums
 
 A C `enum` is an integer with names taped on. A newer version of the library will invent codes you have
 not named. Echo's closed integer enum cannot hold those: `from` answers `T?`, and `null` is a lie or a
 crash the moment miniaudio ships `-999`.
 
-An [open integer enum](/language/enums#an-integer-enum-can-be-open) is the type you actually have:
+An [open integer enum](/language/enums#open-enums) is the type you actually have:
 
 <!-- verify: skip -->
 ```echo
@@ -98,7 +98,7 @@ is still `-999`, so you can hand it to `ma_strerror`. `match` stays exhaustive i
 Here is the catch. Do not declare the C function as returning `Error`. The layout is `{ int32 }`, which
 is not C's `int`. Wrap with `from` on the way in, unwrap with `value()` on the way out.
 
-## Gather the bindings, then wrap them
+## Bindings
 
 A C symbol may only be declared **once per module**. Two `extern` blocks naming `getenv` with signatures that
 disagree is a diagnostic, which is loud and good, but it is also a problem nobody should have to think about.
@@ -136,7 +136,7 @@ Wrap `#[if:]` around a whole block when a symbol only exists on one platform.
 [Conditional compilation](/projects/conditional-compilation) has that case in full, and it is the reason the
 feature exists.
 
-## Structs across the boundary
+## Structs
 
 Declare the struct in Echo with the same layout, and pass a pointer:
 
@@ -176,7 +176,7 @@ And this `tm` is **only ever read**. Real `struct tm` has two more fields after 
 writes through the pointer, so leaving them unspelled can't overrun anything. A binding that asked libc to
 *fill* a `tm` of ours would have to declare all of them, and get every one right.
 
-## Incomplete types: a name, no layout
+## Incomplete types
 
 A lot of C libraries never spell the struct. You get a name, a handful of functions that take a pointer to
 it, and that's the whole contract. If those were all `ptr<uint8>`, a `Handle` and a `Resource` would be the
@@ -275,7 +275,7 @@ class Owned
 `extern struct` has no body. If you know the layout, declare a plain `struct` as `tm` does above. You can
 write `struct Handle;` inside the `extern` block too, next to the functions that take it. Same thing.
 
-## Strings out: `cstr()`
+## Strings out
 
 Echo strings are not C strings, but every buffer the standard library allocates has room for one byte past
 its text and holds a `0` there, and every literal is emitted NUL-terminated too. So the common case costs
@@ -349,7 +349,7 @@ $body->commit(4);
 echo $body;         // Echo
 ```
 
-## Arrays out: the same protocol, over elements
+## Arrays out
 
 Strings were designed for C. Arrays were designed as Echo collections, and then there was no honest way
 to say "write N floats into this buffer." There is now, and it is the string sequence with a different
@@ -389,7 +389,7 @@ echo $window->data:$ != null;   // 1
 echo $window->len;              // 3
 ```
 
-## Strings in: borrow or copy
+## Strings in
 
 Everything C hands back is a bare pointer with the length implied by a terminator, so there is one seam on the
 way in and it comes in two versions.
@@ -417,7 +417,7 @@ environment variable: both live as long as the process, so copying them buys not
 Reach for `from` when they do not. A buffer you are about to free, anything behind a `setenv`, anything
 a library says it may reuse on the next call.
 
-## Shipping C sources with `#[cc:]`
+## Shipping C
 
 Sometimes a binding needs a shim: something C can say and Echo cannot, or a macro that has to be a real
 function before anything can call it. Put the C in the module and let echoc build it.
@@ -496,7 +496,7 @@ echoc run        # 42
 echoc build -o plot && ./plot
 ```
 
-## `#[cc:]` contributes objects, and nothing else
+## `#[cc:]`
 
 Here's the bit that other languages train you to expect the wrong way around. **No include
 path and no macro from `#[cc:]` reaches Echo's front end.** `PALETTE_BASE` is not a constant your Echo can
@@ -506,7 +506,7 @@ the entire contribution.
 The one loose flag, `#[cc: flag "-O0"]`, is safe untyped where a link flag was not: it reaches one known tool
 and is never re-read.
 
-## The C object cache, and the one consequence you can see
+## The object cache
 
 A C translation unit's inputs are its source **and every header it reached**, and only the compiler's own
 depfile names those. The depfile is written *by* the compile, so the cache has to be split in two: the
@@ -527,7 +527,7 @@ ecobuild/cc/
 
 So if you ever cache something on top of these, key on the content digest and not on the path.
 
-## Calling a C variadic function
+## Variadics
 
 `printf`, `snprintf`, `open`, `fcntl`: a lot of C's surface takes an argument list that does not end.
 Echo has no `...` in its own grammar, so the tail is spelled as the last parameter's **type**:
@@ -604,7 +604,7 @@ mem::free($text);
 `variadic_args` is legal in exactly one place: the last parameter of an `extern` declaration, with at
 least one parameter before it. Everywhere else is a compile error naming the position.
 
-## Callbacks: passing a function to C
+## Callbacks
 
 C libraries are mostly callback registration. GLFW's `glfwSetKeyCallback`, a signal handler, a
 `qsort` comparator: they all take a function pointer, and they all take **C's** function pointer:

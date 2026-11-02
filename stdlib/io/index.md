@@ -23,7 +23,7 @@ Files are [their own page](/stdlib/io/files). Directories are
 [another](/stdlib/io/directories). A buffered `reader` or `writer` is
 [a third](/stdlib/io/buffering). This one is printing, streams, and the line you read from stdin.
 
-## print, println, and their stderr twins
+## print and println
 
 ```echo
 std::io::print('no newline');
@@ -142,7 +142,7 @@ four
 Without the flush that prints `two`, `four`, `1`, `3` the moment output is a pipe rather than a terminal,
 which is exactly where nobody is looking.
 
-## A closed stdout ends the program
+## Closed stdout
 
 `./your-program | head -1` reads one line and closes the pipe. Your program is still writing. What now?
 

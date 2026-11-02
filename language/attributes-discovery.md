@@ -39,7 +39,7 @@ foreach (attr::of<Route>("http::get") as const &$row) {
 is the thing that reads those tags. The set is closed when you compile. Add a handler and skip
 the rebuild, and it is not in the table.
 
-## The row is a struct you write
+## The row
 
 `attr::of<Route>("http::get")` needs `Route` to have **exactly one target field**. That field
 is what the tagged declaration becomes.
@@ -103,7 +103,7 @@ foreach (attr::of<Route>("http::get") as const &$row) {
 
 A static method is the same idea when the function is not a constructor.
 
-## Payload comes from the attribute
+## Payload
 
 Every other field is filled from the value you wrote on the tag. The opening example's `$path`
 comes from `"/users"`. A record fills fields by name:
@@ -163,7 +163,7 @@ foreach (attr::of<Route>("http::get", "path") as const &$row) {
 Two handlers with the same path then refuse to compile. I would rather find that at compile
 time than ship two routes to the same URL.
 
-## What it can see
+## Visibility
 
 Public declarations in the whole program. Internal ones in the module that called `attr::of`.
 Private never. A tagged private function is an error once something collects that name, so a
@@ -171,7 +171,7 @@ route does not vanish in silence.
 
 Generics, methods with a receiver, tests, and compiler-generated members are out.
 
-## Closed at compile time
+## Compile time
 
 Collection is compile time. Using the table is runtime: `foreach`, `$row->call()`,
 `$row->path`. The backing storage is a constant. There is no registration API and no heap

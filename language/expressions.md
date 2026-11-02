@@ -141,7 +141,7 @@ I understand this is controversial. Implicit conversion has a bad reputation and
 still prefer it here, because the conversions are not semi-random: they follow the three rules above, and
 the literal cases are all resolved at compile time where nothing can go wrong at runtime.
 
-## Literals convert at compile time, variables at runtime
+## Compile time vs runtime
 
 The distinction matters, so let's make it explicit.
 
@@ -235,7 +235,7 @@ on [the list](/reference/limitations).
 
 Until then: the literal check is the only check you get.
 
-## Shifts are the odd ones out
+## Shifts
 
 Every binary operator reconciles its two sides to a common type, except `<<` and `>>`. Their right side is
 a **count**, not a second value, and it gets no vote:

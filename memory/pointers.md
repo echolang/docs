@@ -15,7 +15,7 @@ echo $locked;       // 7
 Everything else on this page applies to both. Reach for `T&` by default and for `ptr<T>` when absence is a
 real state, exactly the way you would pick between `T` and `T?`.
 
-## & takes an address, and the space matters
+## & and space
 
 `&$x` is the address of `$x`:
 
@@ -44,7 +44,7 @@ not. Unpicking it is a lexer question rather than a parser one, so it is not goi
 Type position is more forgiving. `int& $x` and `int & $x` are both a borrow, because there the type parser is
 reading rather than the expression lexer.
 
-## Reading goes through exactly one level
+## Reading
 
 A plain read of a pointer loads the pointer and then loads through it. Once. Not until it finds something
 that is not a pointer:
@@ -63,7 +63,7 @@ Reading `$pp` gave back a `ptr<int32>`, which is an address, and `echo` prints v
 to have tripped over once: the rule is one level, always, whatever the depth.
 
 There is one case that peels nothing. A pointer to an
-[incomplete type](/projects/c-interop#incomplete-types-a-name-no-layout) has no value behind it, so a read
+[incomplete type](/projects/c-interop#incomplete-types) has no value behind it, so a read
 of `ptr<Handle> $h` is the address itself. `$h == null` compares that address, no `:$` required.
 
 `->` is the other exception. It reaches through as many levels as it has to:
@@ -82,7 +82,7 @@ echo $p->destination;       // 27
 echo $pp->destination;      // 27
 ```
 
-## Writing goes through too
+## Writing
 
 Assigning to a pointer writes into the pointee, not into the pointer:
 
@@ -105,7 +105,7 @@ $p = &$b;
 // error: cannot assign 'int32&' to 'int32' - to change where a pointer points, assign to ':$'
 ```
 
-## :$ peels one level
+## Peel
 
 `:$` names the pointer itself rather than what it points at. Assigning to it re-seats the pointer:
 
@@ -137,7 +137,7 @@ echo $a:$;
 // error: ':$' expects a pointer, got 'int32'
 ```
 
-## :$ chains, and the last one is just &
+## Peel chains
 
 Peel twice and you have the address of the pointer's own slot, which is the same thing `&` would have given
 you:
@@ -154,7 +154,7 @@ echo $out == $p:$;          // 1, one read of $out is the pointer $p holds
 
 Write whichever one reads better. `&$out` is usually the clearer of the two.
 
-## Arithmetic and indexing go through the peel
+## Arithmetic
 
 Address arithmetic is arithmetic on the address, so it happens on `:$`:
 
@@ -188,13 +188,13 @@ echo $p[0];
 against another address: `$p == null` compares the *pointee*, which is a mistake with its own diagnostic. See
 [Nullability](/memory/nullability).
 
-`$h:$ + 1` on a pointer to an [incomplete type](/projects/c-interop#incomplete-types-a-name-no-layout) is
+`$h:$ + 1` on a pointer to an [incomplete type](/projects/c-interop#incomplete-types) is
 refused: the stride is not known.
 
 Pointer arithmetic is useful in the right hands and very dangerous in the wrong ones. The compiler will not
 save you from walking off the end of an allocation.
 
-## Casting a pointer needs no ceremony
+## Casting
 
 A pointer type converts to another pointer type when you write the destination. `$x as T` is the usual
 spelling. [Casts](/language/casts) is the page for every other kind of `as`. `ptr<T>(...)` is the same
@@ -230,7 +230,7 @@ echo $p;    // 5
 
 Going the other way is the narrowing, and it needs both an explicit cast and an `unsafe` block.
 
-## const sits on a level, and there are two of them
+## const
 
 `const ptr<T>` and `ptr<const T>` are different types, and reading them as "a const pointer" loses the whole
 distinction. The `const` applies to the level it is written on.
@@ -268,7 +268,7 @@ $view = 20;
 member is const too, which is what makes `const T&` a promise about the whole subtree rather than about one
 field.
 
-## A `T&` destination takes the address for you
+## `T&` destinations
 
 A `T&` parameter borrows a named value without you writing anything:
 
@@ -325,7 +325,7 @@ bump($chevrons);
 Write `bump(&$chevrons)` and it compiles. The difference is small and it is the point: a `ptr<T>` parameter is
 a signature saying "this might be nothing", and it should look different at the call.
 
-## An address must not outlive its storage
+## Lifetime
 
 There are no lifetimes in the type system, so this is enforced by refusing the shapes that are obviously
 wrong. Returning the address of a local is one:
@@ -424,7 +424,7 @@ echo $p;                    // 7
 What the compiler will not catch is a pointer that outlives its target through a variable, or one you stashed
 in a struct. Those are yours to keep straight.
 
-## Growth invalidates every pointer into a container
+## Growth
 
 This is the one that will actually bite you in real code. A growable container reallocates, and reallocating
 may move the block:

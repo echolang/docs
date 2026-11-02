@@ -39,7 +39,7 @@ They nest, and a nested region inside an arm that was **not** taken still has to
 you have to remember, it's just what happens: the untaken arm is read structurally even though none of it is
 compiled.
 
-## A condition is not an Echo expression
+## Not an expression
 
 It is its own small grammar, evaluated by the filter itself: `==`, `!=`, `&&`, `||`, `!`, and parentheses,
 with `&&` binding tighter than `||`.
@@ -88,7 +88,7 @@ echo 'quiet';
 Bare names only. There is no `--define NAME=value`, because naming a value is what a constant declaration is
 for and one way to do that beats two.
 
-## An unknown value is an error, an undefined flag is not
+## Unknown vs undefined
 
 These two rules point in opposite directions, and both of them have to.
 
@@ -116,7 +116,7 @@ echo 'this one';
 #[end]
 ```
 
-## It works everywhere, because it is not a rule in the parser
+## Why it works everywhere
 
 The filter runs on tokens. No pass knows it exists, which is why there is no list of "places a condition is
 allowed". File scope, inside a struct body, inside a function body, around an `extern` block, around a
@@ -149,7 +149,7 @@ A manifest is Echo too, so the same directives gate a source list:
 #[end]
 ```
 
-## The payoff: naming a symbol this platform does not have
+## The payoff
 
 This is the case that a runtime `if` can't cover and a smarter parser couldn't either.
 
@@ -175,7 +175,7 @@ module. Note that the arms are the entire `extern { }` block, not just its conte
 nothing but `function` declarations inside it and has no attribute plumbing at all, so there would be nowhere
 to hang a per-declaration condition. A token filter doesn't care: the block is tokens like anything else.
 
-## Three arms may declare the same function
+## Same name, three arms
 
 ```echo
 #[if: os == darwin]
@@ -193,7 +193,7 @@ As three ordinary declarations those would collide as a duplicate signature. Not
 that do not apply never reach the pass that registers declarations. This is the difference between a filter
 and an `if` the compiler evaluates later, and it is why the filter runs where it does.
 
-## Reading your file as the other platform
+## The other platform
 
 You don't need the other machine to find out which arm it takes:
 
@@ -220,7 +220,7 @@ building on Linux.
 `echoc run --target-os wasi` and `echoc test --target-os wasi` are refused: those would pick
 wasi constants and execute them on the host.
 
-## `const if` is the other one, and it is not the same
+## `const if`
 
 Echo also has `const if`, an in-body branch decided at compile time:
 

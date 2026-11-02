@@ -59,7 +59,7 @@ directory that holds the manifest, so `src/ui/window.eco` can embed `assets/icon
 
 Changing the file rebuilds. An unchanged `.eco` with a changed `help.txt` is still a miss.
 
-## One copy, or one per use
+## One copy
 
 A constant is substitution. Two uses of `HELP` are two names for the same static bytes inside one
 module, and a copy per consumer if you exported the constant from a library.

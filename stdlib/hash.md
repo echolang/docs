@@ -14,7 +14,7 @@ echo $power->get("naquadah");       // 3
 `string` already has both, so that just works. So does every primitive. Here's what happens when the
 key is a type you wrote.
 
-## Why a key requirement is not a `contract::`
+## Not a contract
 
 `contract::hashable` would read better than an overload set, and it cannot work. **A primitive cannot
 declare a conformance.** So a constrained `K` would refuse `map<int32, V>` and `map<usize, V>`, the two maps
@@ -25,7 +25,7 @@ This is the mirror image of the argument `array<T>` makes about its elements. Th
 rejected because a type that *forgets* to opt in goes back to being bit-copied in silence. Here it is
 rejected because a type that *cannot* opt in is excluded outright. Same shape, opposite failure.
 
-## The overload set, as it actually is
+## Overloads
 
 Ten integer types, `bool`, both floats, `string` and `string::view`. That's all of it, and there is
 deliberately **no generic `of<T>`** above them. When your key type is not in the set, the compiler simply
@@ -58,7 +58,7 @@ message names the missing thing exactly, so it's still the fastest error in the 
 Every overload takes `const T&`, a borrow, so hashing a key never copies it or touches a reference count.
 Yours should do the same.
 
-## Teaching a map about your own type
+## Your own type
 
 Add an overload. Nothing is registered anywhere, and nothing needs to be:
 
@@ -107,7 +107,7 @@ function of(const GateAddress& $a) : uint64
 }
 ```
 
-## Two ways to get the extension wrong, and both look like nothing happening
+## Getting the namespace wrong
 
 **A nested namespace does not extend anything.** `namespace app::hash;` is a different namespace, and inside
 that file a bare `of(...)` *hides* the real set rather than joining it, because an overload set stops at the
@@ -119,7 +119,7 @@ rather than walked outward. A function called `of` at file scope will never be f
 In both cases your overload compiles fine and the map still reports the missing candidate. If you see that
 diagnostic while looking straight at a function you just wrote, check the namespace line first.
 
-## Only the low bits of your hash are ever used
+## Low bits
 
 **A map picks its bucket from the bottom of the word and nothing else:**
 
@@ -140,7 +140,7 @@ echo hash::mix(1);      // 6238072747940578789
 
 `mix` never merges two different inputs, so passing a hash through it can only help.
 
-## An integer is hashed by value, not by width
+## Integers
 
 ```echo
 int64 $one = 1;
@@ -151,7 +151,7 @@ An `int32` 1 and an `int64` 1 hash identically. That costs you nothing, because 
 nothing inside one can tell the difference. Signedness does still separate, so `int32 -1` and
 `uint32 4294967295` land in different buckets.
 
-## combine is not commutative, on purpose
+## combine
 
 ```echo
 echo hash::combine(hash::of(1), hash::of(2));   // 14817379100790678232
@@ -165,7 +165,7 @@ transposed pairs then degenerates into a linked list.
 `bytes` and `step` are the byte-at-a-time pieces underneath. Reach for them when your type is made of
 several byte runs and you want to fold them all into one hash without going through `combine`.
 
-## bits is the one you have to ask for by name
+## bits
 
 ```echo
 struct Chevron
@@ -186,7 +186,7 @@ also wrong for a struct with padding, whose padding bytes are not defined.
 That's exactly why there is no generic `of<T>` sitting above it. A catch-all would answer for a type nobody
 thought about, silently and wrongly. Making you write `bits` is making you say you checked.
 
-## A float makes a poor key, and the library only fixes half of it
+## Floats
 
 `+0.0` and `-0.0` compare equal and do not share bytes, which would otherwise put one key in two buckets.
 The float overloads handle that for you:
@@ -203,7 +203,7 @@ The other half of IEEE-754 has no fix available. **A NaN is never equal to itsel
 stored and then never found again, whatever its hash is. Nothing here can help with that, and it's the
 reason a float is a poor key in general.
 
-## These numbers are not a format
+## Not a format
 
 Not cryptographic, not stable across architectures, and not a serialization format. This is an in-memory
 bucket index and nothing else. Don't write one to a file and expect the next build to agree with it, and
@@ -214,7 +214,7 @@ same key to different buckets. That is the point: an attacker who chooses keys c
 `ECHO_HASH_SEED=<decimal>` pins the seed. `--fixed-hash-seed` makes it the constant `0`, which pins map
 iteration order too.
 
-## The whole surface
+## Surface
 
 | Signature | What it does |
 |---|---|

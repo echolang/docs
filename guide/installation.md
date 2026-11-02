@@ -67,7 +67,7 @@ That's the whole list. **No Intel Mac, no Windows on ARM.** The install script d
 tells you there is no build for your machine and stops. On those machines you build from source,
 which is a real option but not a five-second one.
 
-## One extra thing for native builds
+## Native builds
 
 `echoc run` needs nothing but `echoc`. It compiles in memory and executes. No linker involved.
 

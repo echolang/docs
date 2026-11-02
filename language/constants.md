@@ -17,7 +17,7 @@ const usize $max = 100;     // a const variable. has storage, lives in a scope
 const usize MAX = 100;      // a constant. has no storage at all
 ```
 
-## A constant has no value, it has an expression
+## An expression, not a value
 
 This is the one idea. **A constant is not evaluated. Its expression is cloned into every place
 the name appears**, before anything else in the compiler runs.
@@ -76,7 +76,7 @@ There is deliberately no constant evaluator. Building one would mean a second in
 compiler that has to agree with codegen about every operation, forever, and the two would drift. Copying an
 expression can't drift, because there's only ever one implementation of what the expression means.
 
-## Where a constant may be written
+## Where they live
 
 **File scope**, which is where most of them go:
 
@@ -150,7 +150,7 @@ echo GREETING;
 An untyped constant takes the type its expression produces at each use site, following the ordinary rules in
 [Expressions](/language/expressions).
 
-## Publishing a value from a library
+## Publishing
 
 Here's a reason to care that isn't obvious: **a constant is the only way a library module can export a
 named value.**
@@ -169,7 +169,7 @@ echo std::math::PI_F32;     // 3.141593
 An untyped constant would have taken its type from each use site, which for a mathematical constant is more
 surprise than convenience.
 
-## What a constant cannot reference
+## What they cannot name
 
 **A variable.** A constant is expanded before any storage exists, so there's nothing to read:
 
@@ -185,7 +185,7 @@ echo BAD;
 
 **Itself, directly or through a chain.** Cycles are detected and reported rather than expanded forever.
 
-## Why a conditional-compilation condition cannot name one
+## Not in `#[if:]`
 
 ```
 #[if: MAX > 10]     // not a thing
@@ -199,7 +199,7 @@ everywhere, including around code that names symbols this platform doesn't have.
 What a condition can test is the target and the `--define` flags. See
 [Conditional compilation](/projects/conditional-compilation).
 
-## const if is a third thing
+## const if
 
 Three features share the word. Here's the split:
 

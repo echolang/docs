@@ -31,7 +31,7 @@ Leave the `else` off when a failure should stop the program. Write one when you 
 There is no recursive walk. One directory, its children, and if you want a tree you recurse. That is
 a different type and it is not this one.
 
-## A missing directory is `missing()`, not a die
+## Missing
 
 ```echo
 std::io::dir $d = guard std::io::opendir('definitely-missing-echo-docs-dir-xyz') else ($e) {
@@ -85,7 +85,7 @@ bool $rd = guard std::io::rmdir('chulak-dir');
 ```
 
 `is_file()` and `is_directory()` read what the listing already knew. They do not `stat`. `kind()` is a
-`std::io::filekind`, the same enum [`info`](/stdlib/io/files#what-a-path-is) answers with. A symlink is
+`std::io::filekind`, the same enum [`info`](/stdlib/io/files#paths) answers with. A symlink is
 `.symlink`, the link itself and not what it points at. `std::io::info($ent->path())` follows it. A network
 filesystem that declines to say is `.unknown`: both predicates are false, and `kind()` is how you tell that
 from a socket or a device, which are `.other`. Order is the filesystem's. Do not golden-test the sequence.
@@ -119,7 +119,7 @@ directory.
 
 There is no `mkdir_p`, and no `remove_all`. Walk it yourself, or don't.
 
-## When a listing fails after it started
+## Listing failures
 
 Opening is the fallible step. A `readdir` that fails later stops the loop and leaves the reason on
 the handle:
@@ -139,7 +139,7 @@ bool $rd = guard std::io::rmdir('error-dir');
 End of the directory is not an error. `error()` stays null. Check it if the loop ended sooner than
 the directory you thought you had.
 
-## The whole surface
+## Surface
 
 | | |
 |---|---|

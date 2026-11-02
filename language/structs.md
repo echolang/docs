@@ -20,7 +20,7 @@ Two things to notice.
 **A struct is a value.** It lives where you put it, exactly like an `int32` does. That single fact drives
 everything else.
 
-## A struct is copied, not shared
+## Copied, not shared
 
 Assigning a struct copies it. The two names are two separate addresses:
 
@@ -46,7 +46,7 @@ pass around without worrying who else is holding it, this is it.
 Passing a struct to a function copies it too, unless the parameter asks for a borrow with `&`. See
 [Functions](/language/functions).
 
-## The constructor you get for free
+## Free constructor
 
 Declare properties and you get a constructor that takes them in order, at no cost:
 
@@ -104,7 +104,7 @@ A default is an ordinary expression: a literal, a call, another constructor. It 
 another instance property. Those do not exist yet. It is a recipe, cloned into each constructor that wants
 it, not a live initializer sitting on the field.
 
-### Writing a constructor deletes the free one
+### User constructors
 
 I used to leave the memberwise constructor around when yours took different arguments. Scrap that. It meant
 every type had two ways in, and you had to remember which one you were calling. Writing any `constructor`
@@ -129,7 +129,7 @@ echo $a->symbol;            // 6
 // Chevron(7, 4) is an error: the memberwise constructor is gone
 ```
 
-### Field defaults still run in a handwritten body
+### Field defaults
 
 The recipe still runs first in a constructor you wrote, so a field you did not mention is seated from its
 default:
@@ -186,7 +186,7 @@ echo $backup->id;           // 1, bump did not fire
 echo DialCount::$n;         // 1
 ```
 
-### Private is omitted, not a third case
+### Private fields
 
 A `private` property is not a public argument. It is omitted from the free constructor. Give it a default
 and the type is still constructible; the hidden field is seated from inside:
@@ -211,7 +211,7 @@ Write a constructor, give the field a default, or assign it in `init`.
 An `internal` property stays an implicit parameter. [Visibility](/language/visibility) is the rest of
 `private`.
 
-## `init` runs after every successful construction
+## init
 
 Some fields are not arguments. They are computed from the ones that are. `init` is that computation, and it
 runs at the end of every constructor that actually returns: the implicit one and every one you write. A
@@ -244,7 +244,7 @@ Both arms of an `if` count. Assign `$encoded` in the `then` and forget the `else
 by construction. A handwritten `constructor()` that never writes `$symbol` cannot then have `init` read
 `$this->symbol`.
 
-## A copy is not a construction
+## Copy vs construction
 
 A copy copies every field, derived ones included. The copy equals its original, and a field you wrote
 after construction stays written. That holds whether the compiler copied the value or moved it, which
@@ -451,7 +451,7 @@ $sealed->drain(500);
 Mark a method `const` whenever it only reads. It costs nothing, and it's what makes your type usable in a
 `const` position, including inside somebody else's `const` method.
 
-## A static belongs to the type, not to a value
+## Statics
 
 Everything so far needs a value to exist. A method needs one to be called on, a property lives inside each
 one. Sometimes what you want belongs to the type itself, and `static` is how you say so.
@@ -507,7 +507,7 @@ echo GateAddress::unknown();            // 0
 echo GateAddress(27)->unknown();        // 27
 ```
 
-## A static property is one value the whole type shares
+## Static properties
 
 ```echo
 struct Chevron
@@ -616,7 +616,7 @@ echo Box<bool>::$made;      // 1
 `static` is a member modifier, so it only means something inside a type. On a free function or a local
 variable there is no type to do the owning, and the compiler says so.
 
-## The leading dot lets the destination name the type
+## Leading dot
 
 Writing the type twice gets tiring where it's already obvious:
 
@@ -790,7 +790,7 @@ There is no separate `copy` keyword. A constructor taking `Manifest&` or `const 
 constructor, and the `+1` above is how you can see it fire.
 
 Field defaults do not run on this path. The constructor fills from `$other`, and running the defaults first
-would fire them on every copy. [Field defaults still run in a handwritten body](#field-defaults-still-run-in-a-handwritten-body)
+would fire them on every copy. [Field defaults still run in a handwritten body](#field-defaults)
 is the catch.
 
 Prefer `const Manifest&` where you can. A copy constructor taking a mutable borrow can't be used to copy out

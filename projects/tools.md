@@ -11,7 +11,7 @@ dependency's tool can be run two ways:
 - by hand, with `epm run <tool>`
 - before every build, with a `#[hook:]` in your manifest
 
-Both rest on one rule, the same one [targets](/projects/modules#more-than-one-program) already follow:
+Both rest on one rule, the same one [targets](/projects/modules#several-programs) already follow:
 **a dependency's programs are its own.** Your `echoc run` never compiles a dependency's targets. A tool is
 the exception you ask for by name, and only if the dependency offered it.
 
@@ -62,7 +62,7 @@ epm run resttransformer:restgen
 A tool two levels down is that dependency's business.
 
 An unchanged tool isn't rebuilt. `epm run` is `echoc build -m vendor/resttransformer --target restgen`, and
-that build [skips when nothing moved](#it-isnt-rebuilt-every-time). `epm update` then the next `epm run`
+that build [skips when nothing moved](#rebuilds). `epm update` then the next `epm run`
 rebuilds, because the sources changed.
 
 ## Running one before every build
@@ -83,7 +83,7 @@ generator first:
 `echoc run`, `build`, `test` and `install` all run that command **before** they expand `#[sources:]`, so a
 fresh clone with an empty `src/api/` still matches the pattern. `before_build` is the only moment today.
 
-### A dependency only the tool needs
+### Tool-only dependencies
 
 The `{ ... }` after a hook holds `#[requires:]` and `#[depends:]` and nothing else. Those are vendored and
 built with the tool, and compiled into nothing you ship.
@@ -91,7 +91,7 @@ built with the tool, and compiled into nothing you ship.
 If the program also uses the library at runtime, a top-level `#[requires:]` is enough. The hook finds the
 tool through that one too.
 
-### The tool decides what is stale
+### Stale
 
 echoc does not know what a generator is. It runs the tool on every build, and the tool decides whether to
 write. Compare before writing, and keep state in the directory echoc gives you:
@@ -123,12 +123,12 @@ Hooks run in written order. The first non-zero exit stops the build, at its own 
   hook 'restgen' failed: 'restgen' exited with 2.
 ```
 
-### Commit what it generates
+### Commit the output
 
 Generated code lives in your source tree and goes into git. You see it in review, the editor can navigate
 it, and `--no-hooks` still compiles a program.
 
-### Only the root runs hooks
+### Only the root
 
 When `petshop` is the project you're building, its hooks run. When it is a library somebody else depends
 on, they don't. A library that generates its own code commits the result; consumers compile what was
@@ -141,7 +141,7 @@ echoc build --no-hooks
 Builds whatever is on disk. echoc also passes `--no-hooks` when it builds the tool itself, so the
 tool's own hooks don't run.
 
-## It isn't rebuilt every time
+## Rebuilds
 
 A hook runs before every `echoc run`, so it had better be cheap when there's nothing to do. The tool can
 no-op, as above. Building the tool itself is free when nothing changed: echoc stamps each binary, and an
@@ -157,10 +157,10 @@ echoc build --explain cache
 ```
 
 Delete the binary, edit a source, or ask for a `-p` dump, and it does the work. Same skip for every
-`echoc build` and `echoc install`, not only hooks. [The cache](/projects/modules#the-cache-keys-on-your-sources-never-on-your-consumers)
+`echoc build` and `echoc install`, not only hooks. [The cache](/projects/modules#cache-keys)
 is the rest.
 
-## The catches
+## Catches
 
 **A hook's output goes to stderr.** All of it, including the tool's stdout. `echoc run > out.txt` is your
 program's output. Under `--diagnostics=json` the tool's output is captured, and shows up inside the

@@ -76,7 +76,7 @@ module.eco:7: the package "libcurl" is not in 'vendor/'.
        note: run `epm install`
 ```
 
-## What epm writes, and what it does not
+## What epm writes
 
 epm reads a manifest through `echoc -p manifest`, so the grammar has one implementation. The lock is
 JSON. epm writes Echo attribute syntax in two places, and they are different jobs. `epm init` writes

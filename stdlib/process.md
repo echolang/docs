@@ -54,7 +54,7 @@ std::process::exit_status $s = guard $server->wait() else ($e) { die("wait: {$e}
 Every one of them answers `result<..., std::io::ioerror>`, the same type a file open gives you. A
 program that is not there is `$e->missing()`. One you are not allowed to run is `$e->denied()`.
 
-## The name is looked up on the child's PATH
+## PATH
 
 A bare name like `git` is searched on the `PATH` **the child will have**. That is the inherited one,
 unless you set a different one with `env('PATH', ...)`. The current directory is never searched.
@@ -223,7 +223,7 @@ echo "{$s}";               // exit 3
 `code()` is `null` when a signal stopped the child, and then `signal()` says which one. Windows has
 no signals, so there `signal()` is always `null`.
 
-## A pipe whose reader went away
+## Broken pipes
 
 A child you started with `.piped` can close its end. `pipe_writer::write` then fails with `EPIPE`
 as an ordinary `ioerror`, and you handle it.
@@ -233,7 +233,7 @@ if your program ignored it, `yes | head` started from here would never stop. A c
 back at its default.
 
 Your own stdout is the other case.
-[Input and Output](/stdlib/io/#a-closed-stdout-ends-the-program) owns that: a failed write to
+[Input and Output](/stdlib/io/#closed-stdout) owns that: a failed write to
 stdout or stderr ends the program with status 141.
 
 Windows has no SIGPIPE. A write there just fails. A library leaves SIGPIPE alone too: it runs

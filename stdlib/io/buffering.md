@@ -42,7 +42,7 @@ hits the kernel when the line crosses a fill.
 If you wrap stdout, `flush` before `echo`. `echo` goes through printf, the writer through `write(2)`,
 and an unflushed window is a third place for output to sit.
 
-## They do not own the descriptor
+## No ownership
 
 A `reader` or `writer` copies the fd out of the stream and forgets the stream. Closing stdin because a
 `reader` went out of scope would be a hell of a surprise, so they don't. A
@@ -52,7 +52,7 @@ The last `writer` does flush. A `reader` does nothing on the way out: unread byt
 simply dropped, and the next reader of that descriptor will not see them. That's the cost of having
 stolen them from the kernel in the first place.
 
-## Do not wrap a live file
+## Live files
 
 A `std::io::file` already has both windows. Wrapping its `fd()` in a `reader` or a `writer` would steal
 bytes from the file's own window, and the two would disagree about where you are. If you have a
@@ -74,9 +74,9 @@ seeks. A pipe has no position, which is why these are their own types rather tha
 
 A write into a pipe whose reader is gone fails with `EPIPE` as an ordinary `ioerror`. Stdout is the
 other case: that ends the program, see
-[Input and Output](/stdlib/io/#a-closed-stdout-ends-the-program).
+[Input and Output](/stdlib/io/#closed-stdout).
 
-## The whole surface
+## Surface
 
 | | |
 |---|---|

@@ -48,7 +48,7 @@ looking at. `MIN_INT64` is `-MAX_INT64 - 1`, so the magnitude never has to be a 
 hold. `isize` / `usize` twins sit beside them; today they match `int64` / `uint64` because the pointer
 width is 8.
 
-## Every function comes in two, and the argument picks
+## Two widths
 
 There is a `float` overload and a `float64` overload of everything, and they are a plain overload set:
 
@@ -77,7 +77,7 @@ echo std::math::log2(1024.0);       // 10.000000
 What is *not* there yet: `fmod`, `hypot`, `cbrt`, `signbit`, `isnan`. They are on
 [the list](/reference/limitations).
 
-## Rounding, and the two functions that disagree about 2.5
+## Rounding
 
 ```echo
 echo std::math::floor(2.7);         // 2.000000
@@ -92,7 +92,7 @@ nearest even number, and on 2.5 that is the difference between 3 and 2. If you'r
 values and care about drift, `roundeven` is the one you want. There is also `rint`, which rounds according
 to the current rounding mode.
 
-## min and max spell out their integer overloads
+## min and max
 
 Beside the two float overloads, `min` and `max` each carry four integer ones: `int32`, `int64`, `uint32`,
 `uint64`.
@@ -122,7 +122,7 @@ choosing which of your two values gets reinterpreted, and it would be wrong abou
 There are no `int8` or `int16` overloads, which means a `min` over two `uint8`s widens. That costs nothing
 in practice and it's still a gap.
 
-## abs takes any number you give it
+## abs
 
 ```echo
 echo std::math::abs(-3);        // 3
@@ -160,7 +160,7 @@ echo std::math::clamp(11, 0, 5);
 missing integer `clamp` is a gap in the library rather than in the language, and it is on
 [the list](/reference/limitations).
 
-## A constant is not a compile-time number
+## Constants
 
 This is the one that surprises people, and it's not a `std::math` rule at all:
 
@@ -176,7 +176,7 @@ const if (std::math::PI > 3.0) {
 the tree, so the compiler refuses to answer rather than answering with the host's idea of the result. Use an
 ordinary `if`. It is one branch, and any optimizer will fold it for the target that actually matters.
 
-## The whole surface
+## Surface
 
 | Group | Functions | Notes |
 |---|---|---|

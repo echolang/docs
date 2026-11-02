@@ -20,7 +20,7 @@ Here is the catch: integers cannot tell the two apart, so `sort()` on an `array<
 unstable kernel and skips a merge you would never observe. A float stays on the stable path,
 because `-0.0 == 0.0`.
 
-## What can be sorted
+## What sorts
 
 The element type has to be `contract::comparable<T>`. That is one requirement: `operator <`.
 Integers, floats and pointers already have one, so they just work. `string` does too, byte
@@ -68,7 +68,7 @@ $gates->sort();
 `array<Gate>` itself is fine. You can still push, pop, iterate. The methods that need an order
 are the ones that say so.
 
-## A different order: `by:` and `key:`
+## `by:` and `key:`
 
 Sometimes the natural `<` is not the order you want. `by:` takes a comparator, `key:` takes a
 function that picks the thing to compare. Neither needs the element type to be comparable.
@@ -129,7 +129,7 @@ type does for a natural sort.
 operator, the same trick [`..`](/language/operators) is. PHP readers know the symbol. Compile
 without the library and it is not there.
 
-## A window, not a copy
+## A window
 
 `sub()` hands you a [`slice<T>`](/collections/slices). Sorting the slice writes through into the
 array. Everything outside the window stays put:
@@ -163,7 +163,7 @@ echo sort::is_sorted($mixed->data(), $mixed->count());  // 0
 I left it off the collection because it is a twelve-line walk, not a kernel. `arr::merge` is not
 `array::merge` for the same reason.
 
-## Floats, and the catch
+## Floats
 
 `float32` and `float64` have `<`, so they sort. Here is the catch: that is "has a `<`", not "is a
 total order". NaN is unordered with everything, including itself, and `-0.0 == 0.0`. I still
@@ -177,7 +177,7 @@ $n->sort();
 echo $n[0];     // -0.500000
 ```
 
-## What a broken comparator does
+## A broken comparator
 
 If your `compare` lies (it says `$a < $b` and also `$b < $a`), the result is some permutation of
 the input. Elements are not lost, not duplicated, not freed twice. A debug build may `assert`

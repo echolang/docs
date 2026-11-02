@@ -18,9 +18,9 @@ if ($unit == DistanceUnit::kilometer) {
 ```
 
 Three names, three values, and the compiler can check you handled all of them. A case can also carry data,
-and [`match`](#match-reads-which-case-you-are-holding) is how you read it back.
+and [`match`](#match) is how you read it back.
 
-## Why not an int32 and a comment
+## Why an enum
 
 Because that's what you end up writing otherwise, and it holds until the day somebody passes `7`. Or until
 you add a fourth unit and forget one of the four places that switch on it, which is worse, because nothing
@@ -29,7 +29,7 @@ tells you.
 An enum closes both holes. `DistanceUnit` has exactly three values, they have names, and the compiler can
 check that you handled all of them.
 
-## Cases are the only way to build one
+## Construction
 
 A case is a static function on the enum, so `DistanceUnit::meter` is a call. It is spelled without
 parentheses when it takes nothing:
@@ -58,13 +58,13 @@ echo describe(.meter);             // 1, the parameter named it
 ```
 
 That's the same shorthand
-[static functions](/language/structs#the-leading-dot-lets-the-destination-name-the-type) use, and the same
+[static functions](/language/structs#leading-dot) use, and the same
 machinery underneath. A case is not a special kind of thing, which is a theme here.
 
 `==` and `!=` compare which case a value is holding, because that's all an enum's identity ever is. Nobody
 declares that operator and nobody can write one that disagrees.
 
-## A case can carry a backing value
+## Backing values
 
 Two different things get called "an enum with values", so let's be precise about which is which.
 
@@ -128,7 +128,7 @@ echo HttpStatus::from(999) == null;     // 1
 
 That's the honest answer for HTTP. `999` is not a status, and `null` says so.
 
-## A named map is a second view of the same cases
+## Named maps
 
 Backing is one encoding, and it is the enum's own. Sometimes you need another: the DHD's glyph
 indices, two C libraries that disagree on the numbers. None of those is what the enum *is*. Write
@@ -232,7 +232,7 @@ declaration of this module, so `public` is what a library writes to export it. L
 only this module can name the methods. An in-body map stays as reachable as the enum. There is
 still no modifier to write there.
 
-## An integer enum can be open
+## Open enums
 
 Sometimes the set is not actually closed. C error codes are a known handful of integers, plus whatever a
 newer library version invented. You want names and `match` for the ones you know, and you want `-999` to
@@ -330,7 +330,7 @@ out. An open `Error` is still `{ int32 }` in memory, which is not C's `int`, so 
 function as returning `Error`. Pass `$e->value()` back. [C interop](/projects/c-interop) is the wrapping
 in context.
 
-## A case can carry a payload instead
+## Payloads
 
 The other thing people mean by "an enum with values" is a **payload**: data that differs per instance
 rather than per case.
@@ -356,7 +356,7 @@ all of its cases.
 
 Reading a payload back needs `match`. That's the next section, and it's what holds the rest of this together.
 
-## A case can live on the heap
+## indirect
 
 An enum's size is the tag plus the widest case. That is the right default until a case contains the enum
 itself, or until a fat case is making every slot in an array as wide as the rare payload.
@@ -394,7 +394,7 @@ times length; `mem::size` shows it.
 
 A cycle through an inline case will not compile. `indirect` is the spelling that breaks the cycle.
 
-## match reads which case you are holding
+## match
 
 `match` is an expression, so its arms produce a value:
 
@@ -476,7 +476,7 @@ $n = match ($s) {
 // error: this 'match' already covers every case of 'Side', so its 'else' arm can never run.
 ```
 
-### An arm can be a block instead of a value
+### Block arms
 
 Write an arm as a block and it produces nothing, which makes the whole `match` a statement:
 
@@ -543,7 +543,7 @@ function must(const slot& $s) : int32
 echo must(.blank());
 ```
 
-### The binding borrows, it does not copy
+### Bindings
 
 A payload binding points into the value being matched. Nothing is copied, so a `match` over an enum holding
 a `string` allocates nothing:
@@ -623,7 +623,7 @@ The subject has to be storage the program already holds, because the borrow poin
 inside a method is the shape that matters and it qualifies; a `match` over a call result does not, and
 says so. See [What is missing](/reference/limitations).
 
-## An enum owns what its live case holds
+## Ownership
 
 A case with an owning payload is torn down properly, and only the case actually being held is touched:
 
@@ -649,7 +649,7 @@ echo "done";          // done
 You write none of that. The compiler synthesizes one teardown and one copy per enum, each branching on the
 case, the same way it does for a struct that owns something.
 
-## An enum body holds cases and functions, nothing else
+## The body
 
 Cases, methods, static functions, operators and static properties:
 
@@ -689,7 +689,7 @@ that is none of the cases. `init` is a struct and class word for the same reason
 yours to derive. A constant is refused for a duller reason: `Side::left` already names a case, so
 `Side::LIMIT` would make one spelling mean two things.
 
-## Type parameters work as they do everywhere else
+## Generics
 
 ```echo
 enum Slot<T>
@@ -710,7 +710,7 @@ echo unwrap_or(.filled(9), 0);      // 9
 echo unwrap_or(.empty(), -1);       // -1
 ```
 
-## An enum is how you say what went wrong
+## Errors
 
 This is what payload cases are for. The enum states what can fail as a closed set, and `match` makes the
 compiler check that your handling covers it:
@@ -739,7 +739,7 @@ The library ships the type that carries one of these back to a caller alongside 
 [`result<T, E>`](/stdlib/result). It is an enum, written in ordinary Echo, and `guard` reads it through two
 interfaces that any enum of yours can declare.
 
-## What an enum is, underneath
+## Layout
 
 A discriminant, plus the payload of whichever case you are holding:
 
@@ -764,7 +764,7 @@ The layout is otherwise unspecified. Don't `mem::bit_cast` an enum and expect a 
 
 ## Next
 
-- [Structs](/language/structs#a-static-belongs-to-the-type-not-to-a-value) for the static functions and the
+- [Structs](/language/structs#statics) for the static functions and the
   leading-dot shorthand that an enum's cases reuse.
 - [Control flow](/language/control-flow) for `guard`, which reads a value that may not be there.
 - [Errors and panics](/language/errors-and-panics) for where an enum fits among Echo's failure answers.

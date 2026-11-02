@@ -31,7 +31,7 @@ a given type can usually only do one of them.**
 Both are useful. They have different costs and different rules, and keeping them apart is deliberate rather
 than an accident waiting to be tidied up.
 
-## What an interface may contain
+## What it may contain
 
 Function signatures, operator requirements, and associated types. A signature ends in a
 semicolon, or in a body that is its [default](#default-bodies). That's all:
@@ -138,9 +138,7 @@ a direct call to `Abydos::address`. No dispatch in between.
 And since an interface has no properties, a default can only combine what the conformer already
 provides. It never touches state.
 
-### Writing the method yourself wins
-
-Matched by name, every time:
+Writing the method yourself wins, matched by name, every time:
 
 ```echo
 interface Gate
@@ -186,10 +184,8 @@ class Chulak : Gate
 //        declares is 'const Chulak::dial(int32)'.
 ```
 
-### Defaults can call each other
-
-A call from a default to another requirement goes to the conformer's version. Its own, if it
-wrote one:
+Defaults can call each other. A call from a default to another requirement goes to the
+conformer's version. Its own, if it wrote one:
 
 ```echo
 interface Sized
@@ -240,9 +236,7 @@ All three ways of calling reach the same body: a direct call, a constrained gene
 stored interface value. For a class that wrote nothing, the stored value's slot holds the
 default.
 
-### What a default can't do
-
-It cannot reach anything the interface does not require. There is no telling what a conformer
+Two things a default can't do. It cannot reach anything the interface does not require. There is no telling what a conformer
 will have. Today that's caught per conformer, when the default is instantiated for it:
 
 <!-- verify: skip -->
@@ -288,7 +282,7 @@ class Alkesh : Dialer, Cloaking
 A static requirement cannot have a default. Neither can an `extern interface`: those bodies are
 the calls the compiler writes through a plugin's table.
 
-## Job one: constraining a type parameter
+## Job one: constraints
 
 This is the one to reach for by default. Put the interface on a type parameter and the compiler generates a
 separate copy of the function for each concrete type:
@@ -328,7 +322,7 @@ interface exists only to check, at compile time, that the type has what the body
 Structs work fine in this role, which is the point: **this is the only way a struct participates in an
 interface.**
 
-## Job two: an interface as a stored type
+## Job two: stored values
 
 A class can be stored as its interface. The concrete type disappears from the type system:
 
@@ -394,7 +388,7 @@ echo $held->contains(1);        // 1
 Two instantiations in one `array<Store>` dispatch independently, which is the thing a constrained
 generic cannot say: `function f<T: Store>(T& $s)` is one `T` per instantiation.
 
-### Why a struct cannot do this
+### Why not a struct
 
 Try it and the compiler explains itself:
 
@@ -525,7 +519,7 @@ exist.
 
 An interface with an operator requirement can't be a stored type. There is no vtable slot for `<`.
 
-## A primitive can answer an operator-only interface
+## Primitives
 
 `int32` cannot write `: contract::comparable<int32>`. There is no declaration to hang a
 conformance on. For an interface whose requirements are all operators, that is fine: the
@@ -633,8 +627,6 @@ echo total(GateAddress());      // 6
 `GateAddress` never writes `type Iter = symbol_cursor`. The compiler infers it from the return type of
 `iterate()` and then checks that `symbol_cursor` really does conform to `Stepper<int32>`.
 
-### Associated types can constrain each other
-
 A constraint can name the associated type itself, or another one the same interface declares.
 The order they are written in does not matter: they are checked once every associated type is
 bound.
@@ -689,7 +681,7 @@ and the compiler knows those three interfaces and nothing else about iteration. 
 as `array<T>` does because there is no arm anywhere that knows what an array is. See
 [Iteration](/collections/iteration).
 
-## There is no Self
+## No Self
 
 Some languages let a requirement name the implementing type. Echo doesn't have `Self`. Where you need it,
 make the interface generic and pass the type in, as `Comparable<Naquadah>` does above. A default can't

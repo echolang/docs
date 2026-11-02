@@ -18,7 +18,7 @@ The `as` here is the binding. `$x as T` is a cast, a different job. [Casts](/lan
 
 The catch is the copy you don't pay for, and that a type of yours loops the same way.
 
-## Keys, when the source has them
+## Keys
 
 ```echo
 array<int32> $numbers = [10, 20, 30];
@@ -38,7 +38,7 @@ foreach ($plain as $k => $v) { }
 // error: its cursor declares no key contract - so there is no '$k' to bind
 ```
 
-## Three ways to bind the element
+## Binding
 
 By value is the default. `$value` is a copy, and writing it leaves the collection alone:
 
@@ -96,7 +96,7 @@ foreach ($items as const &$item) {
 The mode is decided at the loop rather than by the collection, and that's deliberate: the same array is
 read in one loop and written through in the next, and only the loop knows which.
 
-## The copy you do not pay for
+## Copy elision
 
 **A by-value binding that nothing in the body writes is silently bound `const V&` instead.** You write the
 obvious thing and you get the borrow anyway:
@@ -145,7 +145,7 @@ you are iterating it.** Nothing checks it. Growing a container during a loop re-
 cursor is still pointing at the old one, so it is the [slice](/collections/slices) lifetime rule wearing a
 different hat. Collect what you want to change and apply it after the loop.
 
-## A const collection is a different contract
+## const collections
 
 A `const` collection reaches a **second** interface, `contract::const_iterable`, and gets a cursor over
 elements it may only read:
@@ -183,7 +183,7 @@ mutable one, and vice versa. Being able to iterate a value nobody may write is a
 capability from being able to iterate one you own, so it is a different contract.
 [Interfaces](/language/interfaces) has the general rule.
 
-## Your type loops the same way
+## Your own type
 
 Two pieces. A **cursor** conforming to `contract::iterator<V>`, which knows how to step and what it is
 looking at:

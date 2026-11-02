@@ -22,7 +22,7 @@ Here's the thing that actually matters: **Echo monomorphizes.** Each set of type
 produces a separate, fully concrete copy of the function. `largest(3, 7)` compiles down to a function taking
 two `int32`s. There is no boxing, no type erasure and no runtime cost for the generality.
 
-## Inference at the call site
+## Inference
 
 You normally don't write the type arguments. The compiler works them out from what you passed:
 
@@ -72,7 +72,7 @@ backwards from the call. Write it out.
 
 A prefix is enough when some parameters are named and the rest sit in the arguments. For
 "construct `T` from whatever the call wrote", that is a
-[`construct`](/language/functions#construct-in-place) parameter, not a type parameter per
+[`construct`](/language/functions#construct) parameter, not a type parameter per
 constructor argument:
 
 ```echo
@@ -122,7 +122,7 @@ unrelated types that happen to share a template. A bay rigged for naquadah is no
 
 The name without arguments is the template, not a type. A local, a field, or a map value has to be
 `CargoBay<int32>`. A map of mixed contents is a different thing, and that value is
-[`erased`](#type-identity-and-a-map-of-instances).
+[`erased`](#type-identity).
 
 Methods can have their own type parameters on top of the type's:
 
@@ -187,7 +187,7 @@ echo pair(1, 2.5);      // 1
 An unconstrained `T` can hold anything, which means the body can do almost nothing with it. A constraint
 says what `T` must be able to do.
 
-### The built-in shorthands
+### Shorthands
 
 Five names cover the numeric cases, and they are not interfaces, just built-in vocabulary:
 
@@ -242,7 +242,7 @@ echo id(1);
 // error: Type parameter 'T' of 'id' is constrained to 'class' but was given 'int32'
 ```
 
-## Constructing through a type parameter
+## Constructing `T`
 
 Inside a generic body, `T` is a type. You can construct it, and you can call a static on it, the same
 way you would if you had written the bound type by name:
@@ -310,7 +310,7 @@ with the arguments you passed. `rc<YetAnotherOne>` is a class. The key, if you p
 `type_id<rc<YetAnotherOne>>()`, distinct from any other `rc<U>`. [Classes](/language/classes) is
 that wrapper.
 
-## Type identity, and a map of instances
+## Type identity
 
 `type_id<T>()` is a value: the identity of `T`, something you can store, hash and compare. It is
 not reflection. It does not name constructors or fields. Two calls with the same `T` are the same
@@ -483,7 +483,7 @@ echo $b->lighter(Gate(2));
 
 A function may still be named `where`. The keyword is recognised only after a return type.
 
-## What monomorphization means for you
+## Monomorphization
 
 Two consequences, one good and one to keep an eye on.
 
@@ -502,7 +502,7 @@ echoc run -p instances program.eco
 That prints every instance the compiler minted and what each type parameter was bound to, which is the first
 thing to reach for when a generic call doesn't resolve the way you expected.
 
-## Asking about a type parameter
+## Type queries
 
 Inside a generic body, `T` is concrete by the time code is generated, so the compiler can answer questions
 about it:
@@ -526,7 +526,7 @@ Three of these come up constantly when writing containers:
 | `mem::needs_destruction<T>()` | whether `T` owns something that has to be given back |
 | `mem::is_integer<T>()` | whether `T` is an integer primitive, including `usize` / `isize` |
 
-## Branching on the answer
+## Branching
 
 The queries get genuinely useful next to `const if`, which picks an arm at compile time and discards the
 other one before it is even type checked:
@@ -552,7 +552,7 @@ knows what a container is**.
 `mem::size` and `mem::align` fold too, so a `const if` can pick an arm on the target's stride.
 See [Control flow](/language/control-flow).
 
-## Generic operators and methods
+## Operators and methods
 
 Operators can be generic too. The type parameters go right after the keyword:
 

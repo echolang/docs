@@ -10,7 +10,7 @@ echo str::from(true);       // true
 echo str::from(1.5);        // 1.5
 ```
 
-## `str::buf` is the shared block behind every string
+## `str::buf`
 
 A `string` is a window onto a `str::buf`, which owns the actual bytes. The buffer is **shared and reference
 counted**, so two strings holding the same text usually hold one buffer between them, and the bytes are
@@ -26,7 +26,7 @@ The type is public. The mutators are private. Don't construct one. See
 You'll meet the name in two places: in a debugger, and in `mem::refs<str::buf>` if you want to see
 the sharing for yourself.
 
-## `str::text` is the unique buffer you build into
+## `str::text`
 
 `string` is the value you pass around. Every `append` on it first asks whether this value uniquely
 owns the buffer. That is the right question for a shared window, and the wrong one for a loop that
@@ -35,7 +35,7 @@ only ever writes.
 `str::text` skips the question: copying is refused, growth doubles, `take()` plants a `string` once.
 [Building a string](/collections/strings#building-a-string) is the choice.
 
-## A literal allocates nothing, which is why the count starts at zero
+## Literals
 
 <!-- verify: track-allocations -->
 ```echo
@@ -87,7 +87,7 @@ variables. That's why [Environment](/stdlib/env) hands back views rather than st
 Note: `string::view` has a `$size` **property** rather than a `size()` method, so it is `$v->size` with no
 parentheses. `string` has the method. That inconsistency is real and will catch you once.
 
-## `str::from` turns a value into text
+## `str::from`
 
 ```echo
 echo str::from(42);         // 42
@@ -164,7 +164,7 @@ Note the extra variable on that last line. A hole opens on `{$` and nothing else
 `ltrim` and `rtrim` do one side each. All three answer a **window** rather than a copy, so trimming
 is free. Call `->clone()` on the result if you want the parent's buffer released.
 
-## lines, and a split that stops
+## lines
 
 `foreach` over a file yields one string per line, newline gone. `str::lines` is that cut over a
 string you already have:
@@ -244,7 +244,7 @@ echo str::uint('-1') == null;            // 1
 `str::float` goes through C's `strtod` and requires the whole text to be consumed, which is the
 difference between it and calling `strtod` yourself.
 
-## upper / lower / ucfirst / lcfirst
+## Case
 
 ```echo
 echo str::upper('straße');      // STRASSE
@@ -266,10 +266,10 @@ Already-cased text is the same string, sharing its buffer. `str::upper('HELLO')`
 Changing case always allocates; leaving it alone never does. That's [trim](#split--join--trim)'s
 bargain, and the reason the parameter is a `string` rather than a view.
 
-Invalid UTF-8 is copied, not rejected. [chars()](/collections/strings#size-and-chars-are-different-questions)
+Invalid UTF-8 is copied, not rejected. [chars()](/collections/strings#size-and-chars)
 already counts it rather than validating, and these four do not invent a stricter contract.
 
-## iequals is ASCII, and allocates nothing
+## iequals
 
 `str::lower($a) == str::lower($b)` is the Unicode answer, and it's two buffers. A header name, an
 HTTP token, a hex digit is none of that: the protocol said "case-insensitive" and meant A-Z.
@@ -283,7 +283,7 @@ echo str::iequals('straße', 'STRASSE');                 // 0, ß is not SS here
 A `string` reaches it without a cast. The parameters are views, so a comparison costs no allocation
 and no reference count, which is what a scan over thirty headers needs.
 
-## The whole surface
+## Surface
 
 | Signature | What it does |
 |---|---|

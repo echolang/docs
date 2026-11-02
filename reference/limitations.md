@@ -13,7 +13,7 @@ into a project. Everything here is known. Most of it is being worked on. None of
 Two things this page is not: it is not a roadmap with dates, and it is not exhaustive at the level of
 individual compiler bugs. It is the set of holes big enough to change what you would build.
 
-## Language features that do not exist
+## Missing language
 
 **Variadic functions.** There is no `...`, and there is deliberately not going to be one: overload
 resolution matches arity exactly, and that is what lets a call with one surviving candidate resolve without
@@ -22,10 +22,10 @@ consulting types at all.
 The three things you would reach for it are covered elsewhere. String formatting is
 [interpolation](/collections/strings#interpolation), where every hole is a *one-argument* call.
 A C variadic function is reachable through
-[`variadic_args`](/projects/c-interop#calling-a-c-variadic-function), which spells the tail as
+[`variadic_args`](/projects/c-interop#variadics), which spells the tail as
 the last parameter's type and takes a written list at the call site, so the call still has
 exactly the declared arity. Constructing a value at a typed parameter is
-[`construct M $value`](/language/functions#construct-in-place): the function still takes one
+[`construct M $value`](/language/functions#construct): the function still takes one
 `M`, the call site writes the constructor arguments.
 
 **Multiple return values.** Not implemented. Return a struct.
@@ -53,7 +53,7 @@ type is not const, so the field is write-once only through its own name. And a g
 the module rung (it has to be, or `map<K, V>` could not call your `hash::of`), so a call routed through a
 generic can reach another module's internals. See [Visibility](/language/visibility).
 
-## Things that compile and are wrong
+## Silent bugs
 
 These are the dangerous ones, because there is no diagnostic. Read this section even if you skip the rest.
 
@@ -76,18 +76,18 @@ int32 $small = $big;
 echo $small;            // 705032704
 ```
 
-## Things that crash the compiler
+## Crashes
 
 A crash is at least loud. Open an issue if you hit one; the old list (untyped parameters, duplicate
 constants, generic statics, huge literals, a bare `null`) is located errors now.
 
-## Correct code that is rejected
+## False refusals
 
 **`mv` on an element, or on a borrow that is not `$this`.** `$x = mv $items[0]` is refused: the
 index is runtime. So is `mv $s` when `$s` is a foreach `&$s`, a match binding, or a borrow
 parameter. A field of a local is fine when the holder has no user destructor.
 `return mv $this->item` consumes that field at the call. Copy a borrow, or drain the array.
-[Ownership](/memory/ownership#mv-can-take-a-field-of-a-local) is the chapter.
+[Ownership](/memory/ownership#moving-a-field) is the chapter.
 
 **A borrow-returning call kept past its statement.** `$r->header('a: 1')->header('b: 2');` chains fine:
 the statement throws its value away, so nothing can dangle. But `Request& $held = $r->header('a: 1');` is
@@ -199,7 +199,7 @@ The Windows archive is a toolchain. clang, lld-link and a sysroot sit next to `e
 
 A default Linux binary uses this machine's libc. `echoc build --target-libc musl` is a static
 command that runs on Linux 3.2 and newer. `echoc` itself is built on Ubuntu 22.04.
-[Linking](/projects/linking#a-linux-binary-and-this-machines-libc) is the chapter.
+[Linking](/projects/linking#musl) is the chapter.
 
 Related, on linking: there is still no pkg-config. A library whose flags come out of
 `pkg-config --libs` is written by hand. Static versus dynamic is
@@ -213,7 +213,7 @@ not. WASI preview 1 has no OS threads: `std::thread` is not compiled there, and 
 plain loads and stores for reference counts.
 
 **No async, no `future`, no `select`.** A value comes back through a `mutex`, a `task<T>`, or a
-[`channel`](/stdlib/thread#a-stream-of-values-is-a-channel). There is no type named `future` and no
+[`channel`](/stdlib/thread#channels). There is no type named `future` and no
 function named `async`. Waiting on several channels at once is not a type.
 
 **No `rwlock`.** `once` re-entry on the same object still waits for itself.
@@ -228,7 +228,7 @@ ordering is a claim about two accesses and nothing in the language can check it.
 across threads is a data race. [`#[atomic]`](/memory/atomics) is the opt-in, and it covers the
 count, not the fields. There is no race detector. Echo will not stop you.
 
-## Found something not on this list?
+## Not listed?
 
 Open an issue at [github.com/echolang/echo](https://github.com/echolang/echo). Compiler crashes and silently
 wrong output are the most useful things to report, in that order.

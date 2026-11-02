@@ -15,7 +15,7 @@ echo $window[0];            // 2
 Here is the catch, and it is a real one: a slice does not keep its array alive, and nothing in the
 compiler checks that you noticed.
 
-## Take one with sub()
+## sub()
 
 `sub()` with no arguments is the whole array. `sub($from, $count)` is a window into it:
 
@@ -48,7 +48,7 @@ echo $middle->count();  // 2
 One asymmetry: `slice<T>` has no zero-argument `sub()`. An array has one because "all of it" is a useful
 thing to ask an owner for. A slice already is a window, so narrowing it always says how far.
 
-## A slice shares storage, so writes go both ways
+## Shared storage
 
 This is the point of the type, not a caveat:
 
@@ -63,7 +63,7 @@ echo $numbers[2];   // 30
 
 There is no copy anywhere in that program. The slice named the array's own storage and wrote into it.
 
-## The surface
+## Surface
 
 <!-- verify: skip -->
 ```echo
@@ -94,7 +94,7 @@ $window[] = 2;
 
 If you want to append, go back to the array.
 
-## A slice is copied by copying two words
+## Copy
 
 `slice<T>` declares no constructor, no destructor and no copy constructor, and that's the design rather
 than an omission. It owns nothing, so a shallow copy is the *correct* copy:
@@ -112,7 +112,7 @@ echo $a[0];                 // 9
 Passing one to a function costs the same nothing. No reference count, no allocation, no destructor at the
 other end.
 
-## The const goes inside the angle brackets
+## const
 
 `slice<const T>` and `const slice<T>` are different types, and the difference is which thing is read-only.
 
@@ -158,7 +158,7 @@ echo count_of($source->sub());  // 3
 One function, written once, taking both. [Generics](/language/generics) covers what that costs at compile
 time.
 
-## Take a slice, not a const array borrow
+## Prefer a slice
 
 This is the signature advice the type exists for. A function that only reads elements should not care who
 owns them:
@@ -190,7 +190,7 @@ Written as `const array<int32>&` instead, that second call is impossible: there 
 the last two elements, and making one means copying them. The slice version takes a window as happily as it
 takes a whole array.
 
-## A slice does not keep its array alive
+## Lifetime
 
 Here is the catch, and it is a real one: **nothing enforces the lifetime rule.** Echo has no borrow
 checker. A slice is a raw address and a count, and the compiler will not stop you from outliving what it
@@ -230,7 +230,7 @@ I would rather have this checked than documented, and that is on [the list](/ref
 then it is a rule you keep, not one you are held to. [Pointers and references](/memory/pointers) has the
 same discussion for the rest of the borrowing machinery.
 
-## Sorting a window
+## Sorting
 
 The sort methods live here, and they write through into whatever the slice covers. An array's
 `$a->sort()` is `$a->sub()->sort()`. Sort a middle and the outside stays put.

@@ -51,7 +51,7 @@ a struct called `array` that happens to be in scope.
 
 A trailing comma is legal in both a list and a record. Record keys keep the order you wrote them in.
 
-### Anywhere one value is accepted, a list of them is
+### Lists
 
 These three say the same thing:
 
@@ -335,7 +335,7 @@ echo host_now_ms() > -1.0;
 function, it does not attach to that function. The payload is closed: `memory`.
 [WebAssembly](/projects/webassembly) is the chapter.
 
-### `echoc::` is reserved
+### `echoc::`
 
 The standard library talks to the compiler through three names a program cannot write:
 `#[echoc::core: array]`, `#[echoc::builtin: size_of]`, `#[echoc::intrinsic: "llvm.sin"]`. They bind
@@ -368,7 +368,7 @@ this is the value shapes.
 Declaring one of the three no-repeat attributes twice gets you `'module' is declared twice.` and the same
 sentence for `version` and `build_dir`.
 
-### A target's scope
+### Target scopes
 
 `#[target: ...]` and `#[hook: ...]` may each be followed by a `{ ... }`. What is inside a target's
 scope belongs to that target rather than to the module, and takes effect only for a program that
@@ -403,7 +403,7 @@ The four refusals:
 A scope on a target is the one thing in a manifest that changes a module's cache key per target, and it does
 so for the module that declares it and for no other module in the build.
 
-### #[cc:] in full, because nothing else tabulates it
+### `#[cc:]`
 
 | Tag | Value | Means |
 |---|---|---|
@@ -424,7 +424,7 @@ None of this reaches Echo's front end. A `#[cc: define]` macro is visible to the
 `flag` is safe as untyped free text where a link flag would not be, because it reaches one known tool and is
 never read again. [Linking](/projects/linking) has the `#[link:]` half and the reasoning behind the tag.
 
-## The medium is part of the name
+## The medium
 
 A declaration name belongs in a `.eco` file. A manifest name belongs in a `module.eco`. Writing
 `#[depends:]` on a function used to compile and do nothing. It is now an error:
@@ -441,7 +441,7 @@ on a function. echoc does not own the namespace, so it carries the attribute rat
 `-p manifest` emits the manifest ones. `-p decls` emits the source ones. `echoc::` is reserved in
 both files. [Packages](/projects/packages) is why the manifest grew this first.
 
-## When the name is wrong
+## Wrong name
 
 ```
 unknown attribute 'bultin', expected one of: inline, implicit, unique, atomic, group, tests, export, wasm
@@ -463,7 +463,7 @@ A manifest says it differently, because its list is different:
 module.eco:4: unknown manifest attribute 'source', expected one of: module, version, depends, sources, target, link, cc, build_dir, requires, hook
 ```
 
-## When the shape is wrong
+## Wrong shape
 
 A consumer says which shape it wanted, in nouns rather than grammar terms:
 
@@ -486,7 +486,7 @@ shape refusals:
 Recovery is the balanced `[ ... ]`, not the next statement, so one broken attribute costs you one error and
 the file keeps parsing.
 
-## The conditional directives are not attributes
+## Not attributes
 
 `#[if:]`, `#[elif:]`, `#[else]` and `#[end]` are missing from the known-attribute list on purpose. They are
 consumed by a token filter that runs between lexing and the first parse pass, so by the time the attribute
@@ -498,7 +498,7 @@ around an `extern` block, around a `namespace`. No pass had to be taught about t
 [Conditional compilation](/projects/conditional-compilation) is the chapter. What follows is the grammar and
 the message lookup.
 
-### The condition grammar
+### Condition grammar
 
 ```
 or    := and ( '||' and )*
@@ -509,7 +509,7 @@ unary := '!' unary | '(' or ')' | axis '==' name | axis '!=' name | name
 `&&` binds tighter than `||`, as you would expect. A condition is not an Echo expression and shares no code
 with one.
 
-### What a condition can see
+### What a condition sees
 
 | Axis | Values |
 |---|---|
@@ -539,7 +539,7 @@ simply false and the `#[else]` arm runs.
 Note: the condition is evaluated even inside a region that is being skipped, so a typo in another platform's
 arm is still caught on your machine.
 
-### Every conditional error
+### Conditional errors
 
 | Case | Message |
 |---|---|

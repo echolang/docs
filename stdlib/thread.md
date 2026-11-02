@@ -51,7 +51,7 @@ word. An unmarked class with a plain `int32` would compile. It would also be a d
 `use std::thread;` binds the prefix, so you write `thread::spawn`. Same shape as `use std::math;`
 and `math::sqrt`.
 
-## Join is the default
+## Join
 
 Last drop of the handle joins. Forgetting the handle is still a join, not a leak of a running
 thread:
@@ -101,7 +101,7 @@ $w->detach();
 
 A second `join` or `detach` on the same handle is a no-op. The first one wins.
 
-## A value comes back as a task
+## Tasks
 
 `spawn(function<T()>)` is the other overload. It returns `result<task<T>, error>`. `wait()` joins,
 then copies the slot:
@@ -156,7 +156,7 @@ thread::task<string> $t = guard thread::spawn(function() : string {
 That program prints nothing and still joins. The string is destroyed after the worker has seated
 it, not while it is being written.
 
-## A stream of values is a channel
+## Channels
 
 `task<T>` is one shot. For several values, `produce` starts a worker with a sender as a parameter.
 When the worker returns the sender drops, the stream closes, and `recv` returns `null`:
@@ -215,10 +215,10 @@ while (true) {
 `channel<T>($cap)` is bounded. `send` waits while the queue is full. Capacity `0` is refused
 rather than becoming a rendezvous.
 
-`try_recv()` answers a [`poll<T>`](/stdlib/thread#a-stream-of-values-is-a-channel): `.item($v)`,
+`try_recv()` answers a [`poll<T>`](/stdlib/thread#channels): `.item($v)`,
 `.empty`, or `.closed`. Blocking `recv` never returns empty, so `T?` is enough there.
 
-## The value lives inside the lock
+## Locks
 
 `mutex<T>` keeps `T` inside the object. There is no way to name it without going through `lock()`.
 `$held->value` is a `T&`: a place, a method receiver, an index. An array behind a mutex is still
@@ -257,7 +257,7 @@ echo $g->value;        // 7
 ```
 
 The inner block unlocks when `$g` drops. Unlock is the destructor. `locked<T>` is
-[`#[unique]`](/memory/copying#unique-for-a-type-only-one-value-may-ever-name) so it cannot be
+[`#[unique]`](/memory/copying#unique) so it cannot be
 copied: that would unlock twice.
 
 Why would `lock()` be `const`? Because the mutex is how you write `T`. The object you called it
@@ -324,7 +324,7 @@ thread::locked<int32>? $again = $m->try_lock();
 echo $again == null;        // 1
 ```
 
-## once runs the function once
+## once
 
 Every caller waits, losers included. `$work` runs with the gate dropped, so it may take other
 locks:
@@ -357,7 +357,7 @@ echo $cell->n;        // 1
 
 It must not call `run` on this same `once`. That waits for itself.
 
-## Waiters sleep on a condition
+## Conditions
 
 `condition` is the primitive a channel is built on. `wait` takes the guard, releases the mutex,
 sleeps, and reacquires. A wakeup is not a promise that the predicate is true. Loop on it:
@@ -390,12 +390,12 @@ $w->join();
 Calling `wait` without holding is the same class of rule as reading `$held->value` after the guard
 dies. The type will not stop you.
 
-## Share the object, not a copy of it
+## Sharing
 
 You have a blob. A second thread should look at it. You do not want to copy the bytes, and you do
 not want to `mv` them away so this thread cannot name them.
 
-There is no `function[&$blob]()`. [Capture copies the variable](/language/closures#what-you-can-capture).
+There is no `function[&$blob]()`. [Capture copies the variable](/language/closures#capture).
 For a [class](/language/classes), that variable is a handle: capturing it retains. The payload
 stays on the heap. Both threads name the same object:
 
@@ -433,7 +433,7 @@ $w->join();
 ```
 
 `$blob` is still alive on this thread after spawn. Nothing was moved. `#[atomic]` is the
-[count, not the fields](/memory/atomics#the-count-not-the-payload). Two threads writing `$words`
+[count, not the fields](/memory/atomics#the-count). Two threads writing `$words`
 without a lock still race. Read-only analysis while the parent does not mutate is the contract
 you are making. Echo will not check it. There is no race detector.
 
@@ -473,7 +473,7 @@ A [`#[unique]`](/language/closures) value still needs `function[mv $x]()`: there
 copy. `atomic<T>` is unique too. Put the word on a marked class, as the first example on this
 page does, and capture the handle. Or `mv` it into the closure.
 
-## The rest of the namespace
+## The rest
 
 `thread::id` is an identifier, not a handle. You cannot join yourself. `current()` is this
 thread. `==` compares two:
@@ -515,7 +515,7 @@ thread::handle $w = guard start() else ($e) {
 $w->join();
 ```
 
-## What this is not
+## What it is not
 
 No async. No `future`. No `select`. No `rwlock`. No `thread_local`.
 [What is missing](/reference/limitations) keeps the list.

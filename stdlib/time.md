@@ -17,7 +17,7 @@ echo $start->elapsed() >= time::duration::zero();        // 1
 wall clock, a signed duration since 1970-01-01T00:00:00Z. Use the first one to measure. Use the
 second one to talk to the rest of the world.
 
-## Durations are a length, not a moment
+## Durations
 
 A `duration` is how long something is. Factories, not suffixes: there is no `5s` or `250ms`. The
 leading-dot shorthand fills the type in from the destination, which is why `sleep(.millis(50))`
@@ -54,7 +54,7 @@ echo $a > $b;                    // 1
 only meaningful within about plus or minus 292 years, the same bound as `as_nanos()`. Past that the
 nanosecond count wraps, because it is an `int64`.
 
-## Negative durations floor, they do not truncate toward zero
+## Negative durations
 
 Here is the catch, and it is the whole representation paying off. A duration is two words, matching
 C's `timespec`: `$secs` and `$nanos`. `$nanos` is always in `[0, 999999999]`. `$secs` carries the
@@ -130,7 +130,7 @@ print or the minutes are nonzero, seconds always. Trailing zeros on the fraction
 There is no `str::from(instant)` and no `str::from(timestamp)`. An instant's origin is opaque. A
 timestamp's human form is a calendar, which this module does not have.
 
-## Measuring: `instant`, not `timestamp`
+## instant
 
 `instant::now()` is the monotonic clock. It never steps. NTP may slew it. Subtract two, or ask
 `elapsed()`, and you have a duration:
@@ -152,7 +152,7 @@ Do not benchmark against `timestamp`. The wall clock jumps when the user sets it
 it, when a VM is restored. The number will look like a duration and be a lie. `instant` is the one
 that only goes forward.
 
-## The wall clock is a Unix number
+## The wall clock
 
 `timestamp` is a signed duration since 1970-01-01T00:00:00Z. `now()` reads the realtime clock.
 `from_unix_secs` / `from_unix_millis` build one. `unix_secs` / `unix_millis` / `unix_nanos` read it

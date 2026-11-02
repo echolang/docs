@@ -17,7 +17,7 @@ requirement travels with the module that declares it**, so whoever depends on th
 
 That's a module that knows it needs `libpalette`. Nothing downstream of it has to know.
 
-## Four kinds, and the tag is not optional
+## Four kinds
 
 <!-- verify: skip -->
 ```echo
@@ -67,7 +67,7 @@ on from anywhere. Both are checked when the manifest is read, rather than much l
 module.eco:2: the search path '/no/such/dir' resolves to '/no/such/dir', which is not a directory.
 ```
 
-## The consumer says nothing
+## The consumer
 
 Two modules. `geometry` needs `libpalette` and says so. `plotter` uses `geometry`:
 
@@ -97,7 +97,7 @@ echoc build -o plot
 This is the property the whole design exists for. If you have ever propagated `-lfoo` up through three
 makefiles by hand you already know what it is worth.
 
-## Where a library lives is a fact about your machine
+## Where a library lives
 
 There's a split here I want to be deliberate about. **What** a module needs belongs in the manifest.
 **Where** it happens to be installed on this particular computer usually does not:
@@ -122,7 +122,7 @@ checked into the repository being the usual case, then put it in the manifest an
 #[link: search "../vendor"]
 ```
 
-## `framework` is Darwin only, and is refused at the manifest
+## `framework`
 
 ```
 module.eco:2: 'framework "OpenGL"' is a Darwin framework and this build targets linux. Gate it with '#[if: os == darwin]' and name the platform's own library in the other arm.
@@ -144,7 +144,7 @@ provide, with nothing anywhere saying the line was never applied. [Conditional
 compilation](/projects/conditional-compilation) is the mechanism, and a manifest is Echo, so it works here
 with no manifest-specific syntax.
 
-## What `run` can open, and what it cannot
+## `run`
 
 `echoc run` has no linker. The JIT resolves symbols out of the running process and `dlopen`s what it needs
 first, so `lib` and `search` and `framework` all work under `run` exactly as they do under `build`:
@@ -172,7 +172,7 @@ linker. A `-lpalette` passthrough can be linked and can never be `dlopen`ed, and
 argv words meaning one thing. A passthrough design does not make `run` inelegant, it makes it
 unimplementable.
 
-## When the linker says no
+## Linker errors
 
 Two failures worth recognising, because they look similar and are not.
 
@@ -201,7 +201,7 @@ ld: symbol(s) not found for architecture arm64
 Either way echoc lists every requirement that went into the link and says who asked for each one, which is
 the question you actually have in that moment.
 
-## A Linux binary and this machine's libc
+## musl
 
 A default `echoc build` on Linux links against the libc on this machine. That binary expects
 the same glibc, or a newer one, wherever it runs.

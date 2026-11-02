@@ -15,7 +15,7 @@ foreach ($gates as $name) {
 That loop resolved against an interface `array<T>` declares in ordinary Echo. Your own type conforms
 exactly the same way and loops exactly as well.
 
-## The iteration interfaces, in full
+## Iteration
 
 <!-- verify: skip -->
 ```echo
@@ -51,7 +51,7 @@ That's all of them. No properties, no bodies, no default implementations. An int
 capability and has no storage and no behaviour of its own, which is what keeps conformance from being
 inheritance. See [Interfaces](/language/interfaces).
 
-## advance() first, current() after, and that ordering is the contract
+## advance then current
 
 An `iterator<V>` is a cursor. It knows how to step, and it knows what it is looking at:
 
@@ -68,7 +68,7 @@ element.
 
 `current()` returns `V&`, a borrow, so a loop over an owning element type copies nothing.
 
-## `Iter` is an associated type, and you never write it
+## `Iter`
 
 `iterable<V>` is anything that can hand you a fresh cursor:
 
@@ -86,7 +86,7 @@ interface iterable<V>
 or name it anywhere: **the compiler reads it off the return type of your `iterate()`.** If that return type
 does not conform to `iterator<V>`, the conformance is refused at your declaration rather than at the loop.
 
-## Writing a cursor of your own, end to end
+## Your own cursor
 
 Two types. The cursor holds the state, and the thing being iterated hands one out:
 
@@ -146,7 +146,7 @@ Note that `advance()` moves *and* reports. The cursor starts positioned before t
 first `advance()` is what makes element zero current. Getting that off by one is the usual mistake, and it
 shows up as a missing first element or a phantom last one.
 
-## `const_iterable` is a second interface, not an overload
+## `const_iterable`
 
 A container declares both:
 
@@ -183,7 +183,7 @@ const element type, `const_iterable<const T>`, and a const receiver hands out a 
 not write. `foreach` picks between the two by whether the value it was given is const, and the const-ness
 travels all the way to the loop variable.
 
-## `keyed<K>` is orthogonal on purpose
+## `keyed<K>`
 
 It's what makes the two-variable form spellable:
 
@@ -202,7 +202,7 @@ set grow. A future `reversible` or `random_access<V>` is another interface next 
 declares the ones it can honour. A cursor that cannot say where it is simply does not declare `keyed<K>`,
 and the `$k => $v` form is then refused for it.
 
-## When a conformance does not hold, you hear about it at the declaration
+## Unmet requirements
 
 ```echo
 struct bad_cursor : contract::iterator<int32>
@@ -222,7 +222,7 @@ The error is on line one of the struct, not at some far-away `foreach`. That's t
 being declared rather than inferred: the type either says it can do this or it doesn't, and the compiler
 checks the claim where the claim is made.
 
-## unwrappable, checkable, and failable
+## unwrappable
 
 The other three are what `guard` resolves against. Same idea as iteration: no special case anywhere.
 [`result<T, E>`](/stdlib/result) declares `unwrappable` and `failable`. [`status<E>`](/stdlib/status)
@@ -279,7 +279,7 @@ int32 $port = guard $p else { die('no port'); }
 echo $port;    // 8080
 ```
 
-### failable is separate on purpose
+### failable
 
 `failable<E>` is what makes `else ($e)` spellable, and it's a **second** interface rather than a second
 method on the first. That's not tidiness. A type that means "maybe a value" often has nothing to say about
@@ -287,7 +287,7 @@ why, and a `T?` is exactly that: it records that a value is absent and nothing a
 subject that does not declare `failable<E>` has no reason to bind, and writing `else ($e)` against one is a
 compile error at the `$e` rather than a hole in the protocol.
 
-Declare both and the `else` block can name the reason. [Nullability](/memory/nullability#your-own-types-can-be-guarded-too)
+Declare both and the `else` block can name the reason. [Nullability](/memory/nullability#your-own-types)
 walks a full worked example, and [`result<T, E>`](/stdlib/result) is the one the library ships.
 
 Note: `T?` does not conform to `unwrappable<V>` and cannot. Over a pointer or a class handle it is a
@@ -295,7 +295,7 @@ per-level flag with no declaration anywhere, and the tagged form is a layout the
 compiler answers for `T?` directly, before these interfaces are consulted at all, which is why `guard` over a
 `T?` still works with `--no-stdlib`.
 
-## Ordering is the same shape as iteration
+## Ordering
 
 `comparable<T>` is to `sort` what `iterable<V>` is to `foreach`: one capability, declared, and
 the library methods that need it are constrained with `where`. Only `<`, because a primitive can
@@ -316,7 +316,7 @@ it already has a `<`. Having the operator is not the opt-in. [Sorting](/collecti
 `comparator<T>` is the other half, a `compare` that returns `ordering`. That is what
 `sort(by: $c)` takes when the natural order is not the one you want.
 
-## The protocol is genuinely open
+## Open protocol
 
 Your own type loops as well as `array<T>` does, and that's not generosity. It's because `array<T>` never
 had a shortcut available to it either: it declares these interfaces, and so do you. Anything the library can
@@ -325,7 +325,7 @@ iterate, you can build.
 The other side of that is what [`--no-stdlib`](/stdlib/) takes away. These interfaces are library code, so a
 program compiled without the library has no iteration protocol and `foreach` says so.
 
-## The whole surface
+## Surface
 
 | Interface | Requirement | Answered by |
 |---|---|---|

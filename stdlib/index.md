@@ -15,7 +15,7 @@ foreach ($ships as $name) {
 
 The array, the append, and the `foreach` are all library code.
 
-## Three tiers, and the spelling tells you which
+## Three tiers
 
 Where a name lives is visible in how you write it. No lookup table.
 
@@ -131,7 +131,7 @@ echo $c->bump(2);       // 2
 echo $c->bump(5);       // 7
 ```
 
-## The whole surface
+## Surface
 
 | Namespace | Holds | Page |
 |---|---|---|

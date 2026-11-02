@@ -50,7 +50,7 @@ operator (Naquadah $a) = (Naquadah $b) : void
 // error: operator '=' returns void. An operator is an expression, so it has to return something.
 ```
 
-## You cannot redefine what is already built in
+## Built-in meaning
 
 If the language already spells a meaning for a symbol over those operand types, that meaning wins:
 
@@ -158,7 +158,7 @@ echo $dropped->raised;  // 0
 echo -5;                // -5, the built-in negation is untouched
 ```
 
-## Suffix operators, and the units trick
+## Suffix operators
 
 A suffix operator takes its operand on the left and has nothing on the right. This is my favourite bit of
 the whole feature, because it gives you typed literals:

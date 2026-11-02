@@ -23,7 +23,7 @@ echo $n;        // 42
 The return type says the call can fail. The compiler won't let you read the value without dealing with
 that. `guard` is how you usually deal with it.
 
-## T? when there is nothing to say
+## `T?`
 
 A missing value with no story behind it is still a `T?`. A key that is not in a map, `std::env::var` when
 the name is unset. There is no reason to invent one.
@@ -172,10 +172,10 @@ The binding `guard` hands you is a **copy** of the payload, taken out of storage
 That's why an owning `T` is safe here: nothing is moved out of a value that is about to be destroyed, and
 nothing is aliased into storage that is about to go away.
 
-[Nullability](/memory/nullability#guard-binds-it-once) has the rest of `guard`, including the rule that
+[Nullability](/memory/nullability#guard) has the rest of `guard`, including the rule that
 the `else` has to leave.
 
-### A fallback, when you have one
+### Fallbacks
 
 `or` is the const read. It copies the value out, or the fallback you passed:
 
@@ -196,7 +196,7 @@ echo status(0)->or(-1);    // -1
 That works on a temporary, because a copy doesn't need the result to outlive the statement. `unwrap()`
 is a borrow, and that's the next section.
 
-### match, when both arms do work
+### match
 
 It's an enum. Nothing stops you treating it as one, and the leading-dot shorthand works in a pattern too
 once the subject has named the type:
@@ -266,7 +266,7 @@ That's deliberate. The protocol asks `has_value()` first, so by the time `guard`
 test is already done and there is nothing left to re-check. A call you write by hand can get the order
 wrong, and then stopping is the only honest answer: the error arm has no `T` to hand back.
 
-### unwrap() is a borrow into the result
+### unwrap()
 
 `unwrap() : T&` returns a reference, not a copy. A write through it lands in the result itself:
 
@@ -305,7 +305,7 @@ echo $n;    // 5
 
 That's the same split a fluent chain lives under. A `T&` you stash past the result is yours to keep
 straight. See [Pointers and references](/memory/pointers) and
-[Ownership and moving](/memory/ownership#a-chain-on-a-temporary-moves-too).
+[Ownership and moving](/memory/ownership#temporary-chains).
 
 `or` is the copy, and that's why it's the one that works on a `const` result. `unwrap()` cannot be
 `const`. Handing a writable borrow out of a read-only value would be a lie.
@@ -354,22 +354,22 @@ echo describe('70000');     // out of range
 `.error(.empty)` is the destination shorthand twice: the return type names `result<int32, ParseError>`,
 and that names `ParseError` for the argument. [Enums](/language/enums) is the chapter for the cases.
 
-## Nothing in the compiler knows what a result is
+## No compiler arm
 
 `result<T, E>` is ordinary Echo in `stdlib/core/result.eco`. There is no `#[echoc::core:]` binding on it, no
 node for it, no pass that mentions it. `guard` reaches it through two interfaces any type of yours can
 declare, and `.ok(...)` / `.error(...)` are the same
-[static shorthand](/language/structs#a-static-belongs-to-the-type-not-to-a-value) every enum's cases get.
+[static shorthand](/language/structs#statics) every enum's cases get.
 
 So you can write your own. `result<T, E>` is not a privileged type. It's the one the library happens to
-ship. [Contracts](/stdlib/contract#unwrappable-and-failable) is the two interfaces, and
-[Nullability](/memory/nullability#your-own-types-can-be-guarded-too) walks a type that declares them.
+ship. [Contracts](/stdlib/contract#unwrappable) is the two interfaces, and
+[Nullability](/memory/nullability#your-own-types) walks a type that declares them.
 
 I prefer it this way. A language feature would have been a second `T?` with a payload bolted on, and then
 every rule about `T?` would have needed a twin. An enum in the library means `match` already works, `guard`
 already works, and a type of yours that answers the same two questions guards exactly as well.
 
-## Why an enum, not a struct with a flag
+## Why an enum
 
 A struct could do this. Hold a `bool $ok` beside a `T` and an `E`, and every function above is writable.
 
@@ -401,14 +401,14 @@ echo mem::size<int32>();                   // 4
 16 is not 8 + 4. The tag is one byte, `int64` wants 8-byte alignment, and the `int32` sits in the same
 eight bytes the `int64` uses. A layout that sat the two payloads side by side would be 24.
 
-[Enums](/language/enums#what-an-enum-is-underneath) is the rest of the shape: the slots are still
+[Enums](/language/enums#layout) is the rest of the shape: the slots are still
 ordinary properties, which is what keeps copy and teardown per case with no special rule for this type.
 
 A result you produce and immediately `guard` is usually inlined down to a test of the tag, so the width
 never becomes a copy you pay for. A result you store, put in an array, or hand across a function that
 does not inline is the 16-byte value above.
 
-## The whole surface
+## Surface
 
 | Function | Answers | Valid when |
 |---|---|---|
@@ -426,6 +426,6 @@ two are the whole of what `guard` needs.
 ## Next
 
 - [Nullability](/memory/nullability) for `T?`, `guard`, and writing a type `guard` accepts.
-- [Contracts](/stdlib/contract#unwrappable-and-failable) for the two interfaces, in full.
+- [Contracts](/stdlib/contract#unwrappable) for the two interfaces, in full.
 - [Enums](/language/enums) for cases, payloads, `match`, and the layout.
 - [Errors and panics](/language/errors-and-panics) for where a result sits among `assert` and `die`.

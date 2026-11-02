@@ -147,7 +147,7 @@ You can infer the type of a `const` too:
 const $limit = 42;      // const int32
 ```
 
-### const is not the same as a constant
+### const vs constant
 
 Echo also has **constants**, and they are a different thing with a confusingly similar name. The difference
 is the `$`:

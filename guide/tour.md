@@ -18,7 +18,7 @@ statements run top to bottom.
 When a program grows into several files, they run in **filename order**. In practice you keep the statements
 in one file and never think about it again.
 
-## Variables have one type, forever
+## Variables
 
 ```echo
 $count = 3;         // int32, inferred
@@ -42,7 +42,7 @@ $max = 200;         // error: cannot assign to '$max' - it is declared const
 
 More in [Variables](/language/variables).
 
-## Numbers are specific about their width
+## Numbers
 
 ```echo
 int32 $a = 42;
@@ -63,7 +63,7 @@ float $x = 3.14;    // warning: the literal '3.14' is stored in 32bit float
 
 [Types](/language/types) and [Expressions](/language/expressions).
 
-## Functions always declare a return type
+## Functions
 
 ```echo
 function add(int32 $a, int32 $b) : int32
@@ -93,7 +93,7 @@ describe("x");      // 2
 
 [Functions](/language/functions).
 
-## Structs are values
+## Structs
 
 ```echo
 struct Point
@@ -138,7 +138,7 @@ methods.
 
 [Structs](/language/structs).
 
-## Classes are the other half
+## Classes
 
 Same declaration syntax, opposite behaviour.
 
@@ -183,7 +183,7 @@ which is why `Account` writes one out.
 
 [Classes](/language/classes).
 
-## Arrays hold one type
+## Arrays
 
 ```echo
 array<int32> $numbers = [1, 2, 3];
@@ -201,7 +201,7 @@ An array is an object, so the operations live on it: `count`, `push`, `pop`, `re
 
 [Arrays](/collections/arrays).
 
-## Maps need a hashable key
+## Maps
 
 ```echo
 map<string, int32> $ages = [
@@ -219,7 +219,7 @@ that extra promise.
 
 [Maps](/collections/maps).
 
-## foreach, over anything that says it can be iterated
+## foreach
 
 ```echo
 array<int32> $numbers = [1, 2, 3];
@@ -251,7 +251,7 @@ your own types can be iterated the exact same way by conforming to `contract::it
 
 [Iteration](/collections/iteration).
 
-## Interfaces do two jobs
+## Interfaces
 
 Job one: a constraint a generic can name.
 
@@ -380,7 +380,7 @@ echo apply($double, 10);    // 20
 
 [Closures](/language/closures).
 
-## Ownership, and the word mv
+## Ownership
 
 This is the part that is genuinely new, so it gets a little more room.
 
@@ -445,7 +445,7 @@ echo $nums->count();        // 4
 
 [Ownership and moving](/memory/ownership) is the real chapter. Read it before you write anything large.
 
-## Null is a type, not a value
+## Null
 
 A type is non-nullable unless you say otherwise with `?`:
 
@@ -525,7 +525,7 @@ echo halveOr(-4, 0);    // 0
 
 [Nullability](/memory/nullability).
 
-## Pointers, when you want them
+## Pointers
 
 ```echo
 int32 $x = 5;
@@ -541,7 +541,7 @@ drill.
 
 [Pointers and references](/memory/pointers).
 
-## Operators are declarations
+## Operators
 
 You can overload the built-in ones for your own types, and you can declare entirely new ones with their own
 precedence. Suffix operators are my favourite bit:
@@ -589,7 +589,7 @@ standard library is organised this way: `std::math::sqrt`, `std::env::args`, `me
 
 [Namespaces](/language/namespaces).
 
-## Failing loudly
+## Failure
 
 ```echo
 int32 $count = 1;
@@ -610,7 +610,7 @@ There are no exceptions. There is no `try`/`catch`.
 
 [Errors and panics](/language/errors-and-panics).
 
-## Where to go from here
+## Next steps
 
 You can now read Echo. Pick whichever of these is the reason you are here:
 

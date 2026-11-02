@@ -20,7 +20,7 @@ first entry decides: `$ages = ['mario' => 34]` is a `map<string, int32>`. Write 
 `ordered_map` (`ordered_map<string, int32> $m = ['a' => 1]`) or an empty one (`map<string, int32> $m = []`).
 Pick `map` unless you need the order, and read the cost section before you pick `ordered_map`.
 
-## What a key type owes
+## Keys
 
 Exactly two things: an overload of `hash::of`, and an `operator ==`. Every primitive and `string` already
 has both, so `map<string, V>`, `map<int32, V>` and friends need nothing from you.
@@ -67,7 +67,7 @@ Two ways to get the namespace wrong, both silent: `namespace app::hash;` is a di
 One honest warning: a key type missing either half reports a diagnostic pointing **inside `map.eco`**,
 once `K` is bound, rather than at your own code. That's not good and it is known.
 
-## The bracket that reads and the bracket that writes are two declarations
+## Two brackets
 
 `$m[$k] = $v` is not an assignment to a place. It is literally a call to an index-**write** operator, and
 that's what makes insertion possible: a map asked for a key it does not have has no slot to hand back, and
@@ -102,7 +102,7 @@ and a write for the same arity.
 There is deliberately no append form. A map has no end to append to, so `$m[] = $v` is an ordinary "no
 overload accepts these arguments".
 
-## The surface
+## Surface
 
 <!-- verify: skip -->
 ```echo
@@ -167,7 +167,7 @@ echo $sum;      // 300
 
 Note that both are eager: they allocate an array every time you call them.
 
-## capacity() is slots, not entries
+## capacity()
 
 A fresh map allocates nothing, so its capacity is zero:
 
@@ -186,7 +186,7 @@ power-of-two number of slots, growing when live entries plus tombstones pass sev
 `capacity()` reports slots, which is always larger than the entry count and is not a number to do
 arithmetic against.
 
-## Every insert may invalidate every borrow
+## Inserts invalidate borrows
 
 This is the rule that matters in practice. Growth re-seats the whole table, so a `V&` handed out by `at()`
 or bound by a `foreach` **is valid until the next insert and no further**:
@@ -204,7 +204,7 @@ $slot = 5;              // may write into the old table
 leaves your borrows alone. Same shape of rule as an [array](/collections/arrays) growing under a slice, and
 nothing enforces either.
 
-## A map owns its keys and its values
+## Ownership
 
 Both, and both are destroyed exactly once. Two moments to name: a replace, where the old value
 has to end because nothing else will, and a copy, where the value has to be retained rather than bit-copied:
@@ -257,7 +257,7 @@ rule to remember: **a key in a target position must be a variable, not a literal
 and an `&` operand both refuse to give a temporary storage. Reading is free, so `echo $m['a']` is fine
 either way.
 
-## ordered_map remembers insertion order
+## ordered_map
 
 Same surface, one guarantee. Re-writing an existing key does **not** move it to the back; a removed and
 re-inserted key goes last, because as far as the order is concerned it is a new arrival:
@@ -285,7 +285,7 @@ foreach ($m as $k => $v) {
 
 `keys()` is the order array itself, so it is the one method cheaper here than on a plain map.
 
-### What ordered_map costs
+### Cost
 
 Four things, and they are the reason it is not the default:
 
@@ -299,7 +299,7 @@ Four things, and they are the reason it is not the default:
 
 It also has no `shrink`. Everything else on `map`'s surface is here.
 
-## Writing to a const map, or to a temporary
+## const and temporaries
 
 Both are refused. The messages look like this:
 

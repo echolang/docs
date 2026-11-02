@@ -53,7 +53,7 @@ echo $typed[0];             // 1
 ```
 
 A `const array<T>` field on a struct is the same fill: write the literal at the call.
-[Structs](/language/structs#the-constructor-you-get-for-free) is that shape.
+[Structs](/language/structs#free-constructor) is that shape.
 
 Or `arr::room`, when you already know how many elements are coming:
 
@@ -67,7 +67,7 @@ echo $numbers->capacity();  // 64
 Note what is *not* on that list: there is no `array<int32>(5)`. A single number could mean "five slots" or
 "one element", and I would rather not guess. `arr::room` says which one you meant.
 
-## A literal takes its type from its destination
+## Literal type
 
 Write the type and the elements are checked against it:
 
@@ -112,7 +112,7 @@ array<int32> $empty = [];   // fine
 echo $empty->count();       // 0
 ```
 
-## The two brackets do different jobs
+## Two brackets
 
 `$a[$i]` names an existing element. `$a[]` names the slot one past the end, so assigning to it appends:
 
@@ -138,7 +138,7 @@ echo $numbers[];
 // error: names the slot after the last one, so there is nothing there to read
 ```
 
-## The methods and the brackets are the same code
+## Methods and brackets
 
 `push` is `$this[] = mv $value` and `at` is `&$this[$index]`. That's not a coincidence to remember, it is
 literally how they are written, so the two spellings can never drift apart:
@@ -199,7 +199,7 @@ const function clone() : array<T>
 Every index is a `usize`, and every one of them is bounds-checked with `assert`. `echoc build` drops those
 checks, which is the same bargain C's `assert` makes. See [Errors and panics](/language/errors-and-panics).
 
-## Growth is doubling, with a floor
+## Growth
 
 `reserve` doubles the capacity, and doubling from zero is zero, so the first allocation gets a floor
 instead. The floor depends on the element size, because the smaller the element the more of them fit in the
@@ -233,7 +233,7 @@ $tight->fit(3);
 echo $tight->capacity();    // 3
 ```
 
-## Growth invalidates every borrow into the array
+## Growth invalidates borrows
 
 This is the rule that bites, and nothing enforces it. There is no borrow checker. When an array grows it
 may move its buffer, and every `slice<T>` and every `&$a[$i]` you were holding points at the old one:
@@ -252,7 +252,7 @@ Reserve up front and the problem goes away, because there is no reallocation lef
 A [`stable_array<T>`](/collections/stable-arrays) is the other way out: growth takes another block
 and leaves the seats you already have alone.
 
-## slot appends without building a value first
+## slot
 
 Sometimes you want to write into the new element rather than construct one and copy it in. `slot()`
 hands back a borrow of the fresh slot, and `&$a[]` is the same thing spelled with brackets:
@@ -320,7 +320,7 @@ echo $b->count();   // 3
 
 [Ownership and moving](/memory/ownership) is the full story.
 
-## The removal methods are not interchangeable
+## Removal
 
 `pop()` **hands the element over** rather than copying it. The array stops owning it at the same moment
 the caller starts:
@@ -365,7 +365,7 @@ echo $numbers->count();     // 0
 echo $numbers->capacity();  // 4
 ```
 
-## An array cannot extend itself
+## Self-extend
 
 `extend` borrows its source and writes into its receiver, and those two accesses cannot name one array:
 
@@ -402,7 +402,7 @@ echo $a->count();           // 3
 `merge` reserves the total up front, so the whole result is one allocation, and both inputs are `const`
 borrows so neither is consumed.
 
-## take_from moves
+## take_from
 
 `extend` copies every element. When the source is a batch you are done with, you want the
 elements, not a second copy of them. `take_from` moves them across and leaves the source empty:
@@ -422,12 +422,12 @@ A `T` that cannot be copied still travels, because nothing is duplicated. Nested
 with the element: an `array<string>` field is the same handle, not a second buffer.
 
 One element is still `$a[] = mv $x` or `push(mv $x)`. `$a[] = mv $s` on a foreach `&$s` is
-refused: `$s` is a borrow of a slot. [Ownership](/memory/ownership#an-element-is-not-a-field)
+refused: `$s` is a borrow of a slot. [Ownership](/memory/ownership#moving-a-field)
 is that catch. Drain the array instead.
 
 `$a->take_from($a)` is the same conflict `extend` names, with both sides `inout`.
 
-## An element is a destination like any other
+## Element writes
 
 Writing into an element destroys what was there and stores the new value, exactly as writing into a
 field does. `$at` is not evaluated twice:
@@ -465,7 +465,7 @@ The same goes for a literal inside the brackets, since `[1, 2.5]` is those appen
 Note that the element type comes from the **first** element, so `[2.5, 1]` is an `array<float64>` holding
 `2.5` and `1.0`. That ordering rule is deliberate.
 
-## Letting C write into one
+## C buffers
 
 Strings already had this: reserve, `spare()`, `commit()`. Arrays were missing it, which is how you ended
 up allocating a sidecar, copying sample by sample, and freeing by hand. The sequence is the same one,
@@ -515,7 +515,7 @@ $n->sort();
 echo $n[0];     // 1
 ```
 
-## One thing that compiles and is wrong
+## A silent bug
 
 It is real, it is silent, and it is on [the list](/reference/limitations).
 

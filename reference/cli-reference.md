@@ -32,7 +32,7 @@ echoc profile [options] <file>
 |---|---|---|
 | `run` | compile and run through the JIT. Nothing is written beside your sources | `--debug` |
 | `build` | compile and link a native executable. Needs `clang`: bundled on Windows, otherwise the one on your PATH | `--release` |
-| `install` | `build` every exe target a manifest declares, then copy each binary into `~/.echo/bin`. See [Putting one on your PATH](/projects/modules#putting-one-on-your-path) | `--release` |
+| `install` | `build` every exe target a manifest declares, then copy each binary into `~/.echo/bin`. See [Putting one on your PATH](/projects/modules#on-your-path) | `--release` |
 | `test` | compile and run the `test` blocks, one process each, through the JIT | `--debug` |
 | `clean` | remove what a build produced. Parses no source and runs no pass | n/a |
 | `lsp` | speak the Language Server Protocol over stdin and stdout | `--debug` |
@@ -187,7 +187,7 @@ echoc build --help g
 
 There are exactly seven short options: `-h`, `-v`, `-o`, `-m`, `-p`, `-g`, `-n`.
 
-## Value vocabularies
+## Vocabularies
 
 | Option | Value | Means |
 |---|---|---|
@@ -217,7 +217,7 @@ There are exactly seven short options: `-h`, `-v`, `-o`, `-m`, `-p`, `-g`, `-n`.
 
 `--explain memory` is the odd one: it changes the emitted program rather than reporting on the compile.
 
-## The mask is per value, not just per option
+## The mask
 
 A subcommand can accept an option and still refuse one of its values. Exactly one value is narrower than its
 option today, because only the JIT prunes, and it is narrower to the *two* commands that do:
@@ -264,7 +264,7 @@ only thing that goes to stdout.
 That last one is trying to tell you to write `-o out` and prints the word you typed instead. It is a bug in
 the message, not in the rule.
 
-## Retired spellings
+## Retired
 
 An old spelling is **refused with the sentence naming its replacement**, never quietly accepted and never
 warned about. A deprecation warning would be new output on stderr, and the end-to-end corpus byte-compares

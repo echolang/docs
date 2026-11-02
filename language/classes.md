@@ -38,7 +38,7 @@ echo $a->value;     // 99, because there is only one object
 That's the whole decision: **one owner and a copy, or many owners and a shared object.** Everything below
 follows from it.
 
-## Putting a struct on the heap
+## On the heap
 
 A class is a struct on the heap. If the payload is already a struct, wrap it:
 
@@ -99,7 +99,7 @@ echo $root->left?->get()->n ?? -1;     // 1
 `Node $left` would be a Node inside a Node, which has no size. A class field would work and pay the header.
 This field is one pointer.
 
-## Which one should you reach for
+## Which one
 
 Reach for a `struct` by default. It's cheaper, it has no allocation, and a value you can't accidentally
 share is a value you can't accidentally corrupt.
@@ -136,7 +136,7 @@ echo mem::refs($a);        // 2
 `mem::refs` and `mem::weaks` exist for exactly this: understanding what your program is actually
 doing. They are not something to build logic on.
 
-## The count is cheap until you share it
+## The count
 
 The default retain is a load, an add and a store. That is correct for every program that never
 shares a handle across threads, and cheaper. Mark the class when a handle will be copied onto
@@ -159,7 +159,7 @@ the word in an [`atomic<T>`](/memory/atomics), or put the object behind a
 
 [Atomics](/memory/atomics) is the chapter. [Threads](/stdlib/thread) is why you would mark one.
 
-## When the destructor runs
+## Destructors
 
 Not at the closing brace. When the **last** reference goes away:
 
@@ -191,7 +191,7 @@ going out of scope dropped it to zero, which is the moment the destructor ran.
 This is the practical difference from a struct, where the destructor runs at a brace you can point at. With
 a class, teardown happens wherever the last holder happens to be.
 
-## A class is not nullable by default
+## Nullability
 
 Declaring a `Stargate` promises there is a gate there:
 
@@ -232,11 +232,11 @@ short-circuit a chain.
 Note: `Stargate $sgc;` with no initializer currently compiles and hands you a null handle, which slips past
 this rule. That's a hole, not a feature, and it's on [the list](/reference/limitations).
 
-## Statics work here on exactly the struct's terms
+## Statics
 
 A `static function` called on the type, a `static` property the type owns one of, the leading-dot shorthand,
 all of it. The rules don't change for a class, so they're written up once, on
-[the struct page](/language/structs#a-static-belongs-to-the-type-not-to-a-value).
+[the struct page](/language/structs#statics).
 
 The one extra thing a class adds: a `static` property holding a class handle owns a
 reference like any other and gives it back when the program ends, so a class parked in a static stays alive
@@ -284,7 +284,7 @@ echo $sensorContact instanceof Hatak;      // 0
 
 It does **not** work on a struct. A struct has no header and no type pointer, so there is nothing to ask.
 
-## Interfaces, and the vtable
+## Interfaces
 
 A class is the half of the language that can be stored *as* an interface:
 
@@ -327,7 +327,7 @@ vtable pointer and an indirect call.
 That's the job a struct can't do, and [Interfaces](/language/interfaces) explains why the split is
 deliberate rather than a gap waiting to be filled.
 
-## Reference cycles leak
+## Cycles
 
 Reference counting has one well-known failure and Echo doesn't paper over it. If two objects hold strong
 references to each other, neither count ever reaches zero.
@@ -421,7 +421,7 @@ Both destructors run. The forward edge owns, the backward edge watches, and the 
 Note the `&` on `$outbound->origin = &$sgc`. The destination decides that this is a weak reference, and the
 `&` is how you write taking a reference to something you don't intend to own.
 
-### Using a weak reference
+### Using one
 
 A weak reference can't be read directly, because the object may be gone. Upgrade it with `strong()`, which
 gives you a `T?`:

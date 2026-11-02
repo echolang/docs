@@ -15,7 +15,7 @@ greet("Echo");      // Echo
 Six words in that program and two of them are reserved. Below is the full list, the words that look
 reserved and aren't, and every token that means something on its own.
 
-## The reserved words
+## Reserved
 
 Reserved means the lexer takes the word before anything else gets a look at it, so it can't be a function
 name, a struct name or a member name. Variables are safe either way, because a variable always carries a `$`.
@@ -83,7 +83,7 @@ identifiers, and nothing about them collides with `for`, `class`, `enum`, `null`
 | `echo` | print one value and a newline. A statement, not a function | [Your first program](/guide/first-program) |
 | `unsafe` | open a block where raw storage may be promoted to a typed borrow | [Unsafe](/memory/unsafe) |
 
-## Words that look reserved and are not
+## Not reserved
 
 `die`, `assert`, `dprint` and `exit` read like keywords and are ordinary functions. They are declared in
 Echo, in the standard library, and the compiler answers them at the call site instead of emitting a call:
@@ -125,7 +125,7 @@ A few more words are contextual in the same way, recognised only in one position
 everywhere else:
 
 - `type`, inside an interface body declaring an associated type, and at file or namespace scope
-  declaring a type alias (`type Name = ...;`). [Types](/language/types#naming-a-type) is the
+  declaring a type alias (`type Name = ...;`). [Types](/language/types#aliases) is the
   chapter.
 - `map`, inside an enum body, or at file scope as `map dhd : int32 for Glyph { ... }`. It names a
   second encoding of the cases. `map<K, V>` is still the stdlib type. [Enums](/language/enums) is
@@ -139,9 +139,9 @@ everywhere else:
   (`function sort() : void where T : contract::comparable<T>`). A function may still be named `where`.
 - `construct`, on the last parameter of a function: `construct M $value` gathers constructor
   arguments at the call. A type named `construct` is still a type.
-  [Functions](/language/functions#construct-in-place) is the chapter.
+  [Functions](/language/functions#construct) is the chapter.
 
-## Primitive type names are not keywords either
+## Type names
 
 `int32`, `usize`, `bool` and the rest are plain identifiers that the type parser matches by string. That's
 why they can never be shadowed (the primitive is checked first) and also why they don't appear in the tables
@@ -193,7 +193,7 @@ foreach (0 .. 3 as $i) {
 way it does for any symbol a user declares. That's not a trick played for ranges. Declare `<=>` yourself and
 it goes through the identical path.
 
-## & is the one place whitespace changes meaning
+## & and space
 
 `&` glued to what follows is a reference. `&` with a space after it is the bitwise operator:
 
@@ -214,7 +214,7 @@ around a binary `&`.
 Unpicking this would be a lexer change, not a parser one, and it would change what `&$a[$i]` means
 everywhere. I'd rather write the space.
 
-## Two more places spacing matters
+## Spacing
 
 **A binary `-` needs spaces**, because `-` glues to a following digit and becomes part of the literal:
 

@@ -27,7 +27,7 @@ go(true);       // ok
 
 There is nothing to bind. Statement [`guard`](/memory/nullability) is the form. `.ok` takes no list.
 
-## Why not result with a dummy T
+## Why not `result`
 
 `result<bool, E>` is a lie: the bool is always true. `void` is not a type argument, so there is no
 `result<void, E>` either. A boundary that never had a T names only the error.

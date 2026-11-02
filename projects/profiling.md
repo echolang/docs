@@ -27,7 +27,7 @@ work();
 You will see allocation paths through `work` and `array<int32>::push`. On a terminal the heading is
 a `PROFILE` chip. In a pipe it is `[profile]` plus the path.
 
-## What the summary is telling you
+## The summary
 
 Three parts, each a handful of rows.
 

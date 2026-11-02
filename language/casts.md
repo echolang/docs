@@ -34,7 +34,7 @@ echo 1 + 2 as int64;            // 3, which is `1 + (2 as int64)`
 
 Same keyword as `foreach ($xs as $x)`. Different job. [Iteration](/collections/iteration) owns the binding.
 
-## A typed slot still converts without it
+## Typed slots
 
 ```echo
 float64 $precise = 3.9;

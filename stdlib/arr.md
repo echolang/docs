@@ -14,7 +14,7 @@ echo $all->count();     // 3
 echo $all->get(2);      // 3
 ```
 
-## merge does not belong on either argument
+## merge
 
 `merge` takes two arrays and gives you a third. It's a free function rather than a method because it
 touches a property of neither argument: both come in as `const array<T>&`, nothing is consumed, and nothing
@@ -33,7 +33,7 @@ The elements are **copied** by the ordinary rules, so an element type whose copy
 one here too. See [Copying](/memory/copying). It allocates once for the result and no more, so merging two
 large arrays doesn't thrash.
 
-## `room` is a function because a constructor would lie
+## `room`
 
 ```echo
 array<int32> $chevrons = arr::room<int32>(7);
@@ -53,7 +53,7 @@ time you're filling an array in a loop.
 `$a->room()` is a different question: how much of that capacity is still spare. [Arrays](/collections/arrays)
 is where `spare` / `commit` live.
 
-## `extend_from` takes a pointer and a count
+## `extend_from`
 
 ```echo
 array<int32> $dialed = [5, 8, 13, 21];
@@ -73,7 +73,7 @@ copies element by element, so a `string` keeps its retain.
 
 The pointer is your promise: `$count` live elements, and not into the array you are growing.
 
-## The whole surface
+## Surface
 
 | Signature | What it does |
 |---|---|

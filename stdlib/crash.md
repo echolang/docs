@@ -133,7 +133,7 @@ die("chevron seven will not lock");
 quiet: chevron seven will not lock
 ```
 
-## The hook is a C function pointer, not a closure
+## The hook
 
 This one catches people, so it gets its own section. The parameter type is
 `extern function<void(const crash::info&)>`, which is a raw C function pointer, and `&name` on a free
@@ -260,7 +260,7 @@ shutting the gate down
 
 That exits with status 3 and the hook is never called.
 
-## Two things to know before you ship
+## Before you ship
 
 **A release build has fewer stops to report.** `echoc build` defaults to `--release`, which compiles out your
 `assert`s, the array bounds check and the null narrowing check. `die` survives, and so does an elseless
@@ -307,7 +307,7 @@ atomic, so `set_hook` races safely against another thread's `set_hook`. The stea
 two threads crashing in the same instant can both end up inside the hook. Install once during start-up and
 neither is something you have to think about.
 
-## The surface
+## Surface
 
 #### `crash::set_hook(extern function<void(const crash::info&)> $hook)`
 

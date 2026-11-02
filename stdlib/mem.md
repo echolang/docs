@@ -33,7 +33,7 @@ are the byte-level allocator underneath all of this, and they are `private` to t
 So calling one is a located error rather than one more thing to remember not to write. The typed functions
 above hand you the same memory with the arithmetic already done.
 
-## alloc hands back a pointer, and that is the point
+## alloc
 
 `mem::alloc<T>` returns `ptr<T>` and not `T&`, and it returns `null` when the allocator refuses:
 
@@ -66,7 +66,7 @@ int32& $slot = &$p:$[0];
 [Unsafe](/memory/unsafe) is the page about that promise. Writing through the pointer, as the first example
 does, needs nothing.
 
-## realloc may move the block, so keep the address it gives you
+## realloc
 
 ```echo
 ptr<int32> $p = mem::alloc<int32>(2);
@@ -86,7 +86,7 @@ long as you are lucky.
 `mem::realloc` over `null` allocates, and `mem::free` over `null` is a no-op. That's why a container needs
 no separate "not allocated yet" state: empty and unallocated are the same thing.
 
-## copy promises the regions do not overlap. move does not
+## copy and move
 
 ```echo
 ptr<int32> $n = mem::alloc<int32>(5);
@@ -115,7 +115,7 @@ that owns something, with no branch on `T` at all.
 `mem::zero<T>` fills `$count` elements with zero bytes. `mem::fill_bytes` is the same call when the
 fill is a byte other than 0.
 
-## Questions you can ask about a type
+## Type queries
 
 ```echo
 struct Chevron
@@ -149,7 +149,7 @@ The copy and destruction questions are the same ones the language already answer
 copies or destroys a value. Asking them out loud lets your own code branch on the answer instead of
 guessing. `is_integer` is the same idea for the numeric kind.
 
-## Those answers are constants, so a `const if` can branch on them
+## const if
 
 This is why `mem::` exists as more than an allocator:
 
@@ -174,7 +174,7 @@ reached. See [Generics](/language/generics).
 One warning: write the element-wise arm anyway. `is_trivially_copyable<T>` says a bulk copy is *allowed*,
 never that a per-element one would be wrong.
 
-## take empties a place, init fills one
+## take and init
 
 These two are the seams a container cannot be written without, and they come as a pair.
 
@@ -220,7 +220,7 @@ Initialize a place that already holds one and that value leaks.
 atomically", and only for a word. A `string` or a class handle is not one. See
 [Atomics](/memory/atomics).
 
-## Both refuse anything the compiler is already accounting for
+## Unaccounted storage
 
 You can't use them to sidestep ownership, and the refusal says so:
 
@@ -237,7 +237,7 @@ A variable, a property and a temporary are all refused, in both directions. `mv`
 variable ([Ownership and moving](/memory/ownership)), and an ordinary `=` is what you want for a place the
 compiler already knows about.
 
-## bit_cast is the safe way to reinterpret
+## bit_cast
 
 ```echo
 float32 $x = 1.0f;
@@ -257,7 +257,7 @@ Both type parameters are spelled out because Echo binds a generic's type argumen
 the one it cannot work out for you. The two types must be the same size, and a mismatch is a failed
 assertion at runtime rather than a compile error, so check yours with `mem::size` if it is not obvious.
 
-## Reading the counts on a class handle
+## Class counts
 
 ```echo
 class Wormhole
@@ -283,7 +283,7 @@ parameter would itself be one more reference, so it would answer one too high at
 Both answer 0 for a null handle, which is more useful than it sounds. A copy-on-write check asks "am I the
 only owner", and a handle holding nothing is not uniquely owned either, so one condition covers both cases.
 
-## live_allocations needs a flag, and a scope
+## live_allocations
 
 ```bash
 echoc run --track-allocations leak_test.eco
@@ -319,7 +319,7 @@ closing brace.
 Growing an existing block does not move the number, and neither does a `realloc` the allocator refused,
 because the block is still yours after a failure.
 
-## `mem::buffer<T>` is one allocation, owned by exactly one value
+## `mem::buffer`
 
 `mem::alloc<T>` hands back an address and no claim on it. Nothing says who frees it and nothing says whether
 a second value already holds it. `mem::buffer<T>` says both:
@@ -380,7 +380,7 @@ echo mem::atomic::load<int32>($n);          // 2
 Mixing a plain `$n = 0` with `add` on the same word is a data race. Discipline is on the caller,
 which is why `atomic<T>` keeps the slot private. [Atomics](/memory/atomics) is the chapter.
 
-## The whole surface
+## Surface
 
 | Signature | What it does |
 |---|---|

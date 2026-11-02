@@ -46,7 +46,7 @@ echo mem::size<bool>();      // 1
 echo mem::size<usize>();     // 8
 ```
 
-## The largest value, by name
+## Named limits
 
 You will want the top of a count more often than you want to type eighteen digits. Integer primitives
 answer `min()` and `max()` as statics, folded from the same widths the table above uses:
@@ -60,7 +60,7 @@ echo uint8::max();      // 255
 [`std::math::MAX_USIZE`](/stdlib/math) is the same number as a constant. Reach for the type form when
 you are already writing `usize`. There is no `float32::max()`: floats keep the math constants.
 
-## usize and isize are pointer width, and today that is always 8
+## usize and isize
 
 Their width is one compile-time constant, `ECO_TARGET_POINTER_SIZE`, and it's 8. There is no
 per-target logic behind it yet, so on every platform Echo currently builds for, `usize` is 64 bits.
@@ -92,7 +92,7 @@ and is not the machine word.
 don't. They are generic constraint aliases, usable only in a type parameter's constraint, never as the type of
 a variable. See [Generics](/language/generics).
 
-## What an untyped literal decides
+## Untyped literals
 
 | Literal | Type |
 |---|---|
@@ -105,7 +105,7 @@ a variable. See [Generics](/language/generics).
 
 The last row is the one that surprises people.
 
-### A radix literal picks its width from how you wrote it
+### Radix literals
 
 With no type in front, a `0x` or `0b` literal counts its digits and picks an unsigned type to fit them.
 Nothing about the value:
@@ -138,7 +138,7 @@ uint8 $x = 0xFFFF;
 
 Write hex or binary when you mean a bit pattern, and put the type in front when the width matters.
 
-### A decimal literal widens until it fits
+### Decimal literals
 
 A decimal literal tries `int32`, then `int64`, then `uint64`. The sign counts, so `-3000000000` is an
 `int64`. A number none of them holds is refused. It never wraps:
@@ -148,7 +148,7 @@ echo 18446744073709551616;
 // error: The literal '18446744073709551616' does not fit any integer type - the largest is 'uint64'.
 ```
 
-## Every literal form
+## Literal forms
 
 Exists:
 
@@ -171,7 +171,7 @@ Does not exist:
 - **Character literals.** There is no `char` type, so there is nothing for `'a'` to be. It is a one-byte
   `string`.
 
-### The minus sign glues to a digit
+### The minus sign
 
 `-` immediately followed by a digit is read as part of the number, which is what makes `-3` a literal rather
 than a negation of `3`. The cost is that a binary `-` needs spaces around it:
@@ -207,7 +207,7 @@ not a passthrough. String literals are validated as UTF-8 at compile time.
 checked at parse time against the destination, because the compiler can see the value. A variable is not
 checked at all, because it cannot.
 
-### A literal is checked
+### Literals
 
 | Case | Result |
 |---|---|
@@ -261,7 +261,7 @@ float32 $pi = 3.14;
 Yes, `effctive`. Writing `3.14f` makes the warning go away, because then the literal was a `float32` to begin
 with and no precision was lost on the way in.
 
-### A variable is not checked
+### Variables
 
 Every conversion in this table happens silently, at runtime, between variables:
 

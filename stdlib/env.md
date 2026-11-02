@@ -13,7 +13,7 @@ The platform differences that do exist, and there are a few, are handled once in
 code never sees them. See [Conditional compilation](/projects/conditional-compilation) for how that is
 written, if you need the same trick yourself.
 
-## Arguments come in three shapes, and two of them allocate nothing
+## Arguments
 
 ```echo
 // how many, including the program name at index 0
@@ -53,7 +53,7 @@ string::view $nope = std::env::arg(99);
 One caveat on the cursor: `args()` stores the current view and overwrites it on every `advance()`. A view
 taken from one step is stale on the next, so copy it if you mean to keep it.
 
-## `--` is how `run` gets argv
+## Extra argv
 
 Everything after a bare `--` belongs to your program rather than to `echoc`:
 
@@ -68,7 +68,7 @@ accepts a `--`, because only `run` has a program to hand the tail to. See
 
 Under `build` there is no separator at all. The linked binary's argv is your program's already.
 
-## Under `run`, `arg(0)` is your source and `exe()` is echoc
+## `run`
 
 This is the one trap in the module, and it bites during exactly the debugging session where you can least
 afford it.
@@ -94,7 +94,7 @@ under `run` will mislead you.
 directly: `_NSGetExecutablePath` on Darwin, `/proc/self/exe` on Linux, and `argv[0]` as the fallback
 elsewhere.
 
-## Environment variables borrow, they do not copy
+## Environment
 
 Nothing is read until you ask for it. `var` is a `getenv` call and no more, and **every answer is a
 `string::view` that borrows the environment block:**
@@ -117,7 +117,7 @@ it, a view you were holding may be pointing at bytes that have moved. Take a `cl
 is yielded twice, and `var` would have answered with the first. An entry with no `=` in it comes out as a
 key with an empty value.
 
-## has, var, and var with a fallback are three different questions
+## has and var
 
 They are not three spellings of one:
 
@@ -143,7 +143,7 @@ The fallback overload is just `var($key) ?? $fallback`. One caveat: it is not sa
 temporary built on the spot, because what comes back is a view and the temporary will not outlive the
 statement.
 
-## A sub-window is not a C string
+## Not a C string
 
 Every key goes through `cstr()` on its way to `getenv`, which needs the bytes to be NUL terminated. Every
 literal is, and so is every whole `string`. A **window into one is not**:
@@ -232,7 +232,7 @@ This is consistent across the module, and it's a design position rather than an 
 There is no error value to check anywhere, and there is no silent zero. This module uses `null`, `assert`
 and `die`. It does not return a [`result<T, E>`](/stdlib/result).
 
-## The whole surface
+## Surface
 
 | Signature | What it does |
 |---|---|

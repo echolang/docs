@@ -21,7 +21,7 @@ No framework to install, no separate test directory, no `main` to wire up. And n
 not compiled and discarded, never seen. A test costs your release build exactly nothing, and it can't end
 up in a binary by accident.
 
-## A test is a function with an unspellable name
+## A test is a function
 
 `test <name> { ... }` is a function of no arguments that returns nothing. Structurally that's all it is, so
 it gets the same type checking, the same ownership rules, the same destructor calls and the same diagnostics
@@ -80,7 +80,7 @@ function reads_it() : int32
 Put shared setup in a function and call it from each test. That's the pattern, and there is no
 `setUp` hook coming.
 
-## assert is the only way to fail
+## assert
 
 There is no `expect`, no `should`, no matcher library, and no way to catch a failure.
 
@@ -157,7 +157,7 @@ Note: `assert` is a debug-build thing. `echoc test` defaults to `--debug` for ex
 `echoc test --release` runs your suite with every assertion elided, which is a run that cannot fail. Try not
 to do that by accident.
 
-## A test is tagged by where it is, plus a group you choose
+## Tags
 
 The file and the module come for free. The group is yours:
 
@@ -224,7 +224,7 @@ and no more.
 Names only have to be unique **within a file**. Two files may each declare a `test adds_up`, which is why
 the runner reports `module/file::name` rather than just the name.
 
-## --verbose shows you the ones that passed
+## `--verbose`
 
 A plain run reports a line per test and then its failures, which is what you want from a suite you expect to
 pass. When you want the transcript instead, ask for it:
@@ -261,7 +261,7 @@ The other thing it buys you is **a passing test's own output**. Every test's str
 way you run, and normally a green one's are thrown away, so a `dprint` you left in a test that works has no
 way of reaching you. Under `--verbose` it is quoted under that test's line.
 
-## A test target is a saved filter
+## Test targets
 
 If you find yourself typing the same filters, name them in the manifest:
 
@@ -291,7 +291,7 @@ declares.** A target narrows only when you name it. So `#[target: test]` on its 
 
 [Modules](/projects/modules) covers the rest of the manifest.
 
-## Only the modules you pointed at
+## Which modules
 
 ```bash
 echoc test              # this project's tests
@@ -303,7 +303,7 @@ A library you depend on keeps its own tests to itself. They are not parsed, not 
 which is also why adding a dependency doesn't slow your test runs down. Running them is a matter of
 pointing at it instead.
 
-## Code that only exists while testing
+## Test-only code
 
 Sometimes a test needs a helper that has no business existing in your release build. `#[if: tests]` is a
 condition like any other, true exactly when the current invocation is compiling tests:
@@ -349,7 +349,7 @@ in a directory of their own:
 `public` anywhere, the default visibility being the module's own. Any other invocation does not compile the
 directory at all, and there is no catch below either: a file a build never reads does not have to lex.
 
-[Modules](/projects/modules#a-target-can-have-things-of-its-own) covers what else a scope may say, including
+[Modules](/projects/modules#target-scopes) covers what else a scope may say, including
 a `#[depends:]` only your tests need.
 
 ## The catch
@@ -379,6 +379,6 @@ Two more limits, both on [the list](/reference/limitations): a test is not run u
 ## Next
 
 - [The echoc CLI](/projects/cli) for how `test` relates to `run` and `build`.
-- [Modules](/projects/modules#a-target-can-have-things-of-its-own) for giving the test target sources of its
+- [Modules](/projects/modules#target-scopes) for giving the test target sources of its
   own.
 - [Errors and panics](/language/errors-and-panics) for why a failure ends a process rather than unwinding.

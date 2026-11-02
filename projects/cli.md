@@ -21,7 +21,7 @@ it compiles nothing to an executable.
 [Testing](/projects/testing). Everything on this page about how a program is compiled applies to it
 unchanged, because it is the same compile.
 
-## `run` is the loop, `build` is the artifact
+## run vs build
 
 `run` compiles the program and runs it through the JIT, writing no executable. It uses the same
 per-module object cache `build` does, so a second `run` after you change one file only rebuilds that
@@ -41,7 +41,7 @@ echoc build --debug -o app app.eco
 
 `install` is `build` with somewhere to go. It builds every program a project's manifest declares, in
 release, and copies each into `~/.echo/bin`, so a CLI you wrote is a command you can type from anywhere.
-It's covered with targets in [Putting one on your PATH](/projects/modules#putting-one-on-your-path).
+It's covered with targets in [Putting one on your PATH](/projects/modules#on-your-path).
 
 ## What to compile
 
@@ -84,10 +84,10 @@ echoc run --target clock
 
 `build` with no target builds all of them, each into its own binary under the module's build directory, so it
 needs no `-o` and refuses one when several targets are being built. `run` takes exactly one, since one
-invocation runs one program. [More than one program](/projects/modules#more-than-one-program) is the
+invocation runs one program. [More than one program](/projects/modules#several-programs) is the
 manifest side.
 
-## Everything after `--` belongs to your program
+## Extra argv
 
 ```bash
 echoc run app.eco -- --verbose report.txt
@@ -105,7 +105,7 @@ error: Only 'run' passes arguments to the program, so '--' means nothing to 'bui
 
 A native binary takes its own arguments directly, so there's nothing for echoc to forward.
 
-## `--debug` and `--release` decide what your program carries
+## `--debug` / `--release`
 
 This pair is about the *program*. `--debug` keeps `assert` calls and the compiler's runtime checks, including
 the bounds check on an array index and the null check on a narrowing. `--release` drops both.
@@ -113,7 +113,7 @@ the bounds check on an array index and the null check on a narrowing. `--release
 That's all it decides. It isn't an optimization level, and it doesn't change what a debugger can read.
 [Errors and panics](/language/errors-and-panics) has what each check does when it fires.
 
-## `--optimize` decides how much the optimizer may see at once
+## `--optimize`
 
 ```bash
 echoc build --optimize whole -o app app.eco
@@ -137,7 +137,7 @@ across a module boundary, mark it `#[inline]` and keep your fast rebuilds.
 Note: this used to be two flags, `-O` and `--no-optimize`. They read like opposites and were not, so writing
 both was legal and meant almost nothing. Both are refused now, by name, with the replacement in the message.
 
-## `-g` is a third axis, not a level
+## `-g`
 
 ```bash
 echoc build -g -o app app.eco
@@ -174,7 +174,7 @@ Most of the time you should need neither. A module says what it needs with `#[li
 `#[depends:]`. This flag is for the half that belongs to your machine rather than to the module, like a
 library installed somewhere nobody could have predicted. [Linking](/projects/linking) covers the four kinds.
 
-## `-p` dumps the tree
+## `-p`
 
 Repeatable, so two layers means two dumps rather than only the last one:
 
@@ -200,7 +200,7 @@ module, so what you're reading describes the `--optimize whole` build even when 
 
 Each dump writes a `[section]` header, so the output greps cleanly.
 
-## `--explain` measures
+## `--explain`
 
 ```bash
 echoc build --explain cache --explain time -o app app.eco
@@ -256,7 +256,7 @@ is the debug default. The poison is this flag.
 `--alloc-cache` is off unless you write it. Native programs then take allocations that fit in one
 16 KiB page from a per-thread page heap instead of handing every block to libc. Wasm refuses the flag.
 
-## Diagnostics, and how they are drawn
+## Diagnostics
 
 Diagnostics go to stderr in every form, so `2>` is how you capture them.
 
@@ -276,7 +276,7 @@ in one is not.
 `--silent` turns off the progress checklist and nothing else. Diagnostics, warnings and every `--print` dump
 were asked for by name, so they stay.
 
-## The help page knows more than this page
+## Help
 
 Every flag is described by `echoc` itself, and one flag can be asked about in full:
 

@@ -11,7 +11,7 @@ the verbs. The type supplies the discipline.
 They are not allowed to be one mechanism. `const` already has a meaning and it is a per-level bit.
 An `atomic` keyword would have two owners.
 
-## The count, not the payload
+## The count
 
 An unmarked class keeps a cheap retain: a load, an add and a store. That is correct for every
 program that never shares a handle across threads, and it is the default because most objects never
@@ -31,7 +31,7 @@ echo $c->hits;        // 0
 ```
 
 The count is then an atomic RMW. The fields are not. Two threads writing `$hits` still race. Put
-the word in an `atomic<T>`, or put the object behind a [`mutex`](/stdlib/thread#the-value-lives-inside-the-lock).
+the word in an `atomic<T>`, or put the object behind a [`mutex`](/stdlib/thread#locks).
 [Threads](/stdlib/thread) is the page about starting the second thread.
 
 It is refused on a struct and on an interface, where there is no count:
@@ -61,7 +61,7 @@ echo $hits->load();     // 1
 
 The slot is private. The only way in is a method that is an RMW.
 
-The type is [`#[unique]`](/memory/copying#unique-for-a-type-only-one-value-may-ever-name). A struct
+The type is [`#[unique]`](/memory/copying#unique). A struct
 copy would memcpy the word, and that copy would be a non-atomic access:
 
 ```echo
@@ -154,7 +154,7 @@ data race. Discipline is on the caller, which is why `atomic<T>` keeps the slot 
 `mem::atomic::fence()` is the seventh verb. It is a sequentially consistent fence and it takes
 nothing.
 
-## Sequentially consistent, no ordering parameter
+## Ordering
 
 Every method above is sequentially consistent. An ordering is a claim about two accesses and
 nothing in the language can check it, so there is no ordering parameter.

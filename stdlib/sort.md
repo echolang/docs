@@ -15,7 +15,7 @@ echo $n[0];     // 1
 [Sorting](/collections/sorting) is the chapter. Come here when you are writing a container and
 want the same kernels, or when you need to know what `<=>` actually returns.
 
-## `ordering` is three cases, on purpose
+## `ordering`
 
 `.less`, `.equal`, `.greater`. That is the whole answer. A comparator that returned `-1 / 0 / 1`
 as an `int32` would invite `$c < 0`, and then a function that returned `2` is a sort that walks

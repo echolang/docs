@@ -14,7 +14,7 @@ echo $quad[0];          // 9
 
 `array<T>` is the one you want by default. Reach for this when the length is a fact about the type: a matrix, a colour, a stack buffer you do not want on the heap. A [`stable_array<T>`](/collections/stable-arrays) grows without moving live slots.
 
-## `N` is a value, not a type
+## `N` is a value
 
 `const usize N` in a parameter list is a compile-time integer. Writing `4` at the use site binds it:
 
@@ -33,7 +33,7 @@ echo $a->n();       // 4
 
 A literal in that slot is typed as `usize` from the parameter. `sized<4>` and `sized<8>` intern as two types.
 
-## A literal must be exactly `N` long
+## Literal length
 
 The brackets still make a list. The destination says it is a `fixed_array`, so every element is an indexed write rather than an append, and the count has to match:
 
@@ -116,7 +116,7 @@ echo $quad[0];      // 1
 echo $quad[3];      // 4
 ```
 
-## It is already a C buffer
+## C buffers
 
 Every slot is live and `N` is the type, so there is no spare to commit. `data()` is the first
 element, or `null` when `N` is 0. Hand C that pointer and `N`.

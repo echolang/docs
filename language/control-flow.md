@@ -78,7 +78,7 @@ for (int32 $i = 0;; $i++) {
 
 An infinite loop is `while (true)`, which says what it means.
 
-### The loop variable belongs to the loop
+### Loop variable
 
 `$i` is scoped to the loop and is gone afterwards:
 
@@ -137,7 +137,7 @@ for (int32 $i = 0; $i < 6; $i++) {
 Both apply to the **innermost** loop only. There is no `break 2` and there are no loop labels, so leaving
 two loops at once means a flag or a function you can `return` from.
 
-### continue does not mean the same thing in both loops
+### continue
 
 This is the one detail people get wrong, and it's the reason `for` exists as a separate statement rather
 than as sugar over `while`.

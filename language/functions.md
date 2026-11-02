@@ -13,7 +13,7 @@ echo add(1, 2);     // 3
 
 Every parameter has a type, and so does the result. That's the whole shape of it.
 
-## void is not the default
+## void
 
 A function that returns nothing still has to say so:
 
@@ -117,7 +117,7 @@ echo wrap($b: 8);           // 18
 
 `wrap(8)` would bind 8 to `$a` and leave `$b` empty, which is an error. Name the one you mean.
 
-## Labels are part of the signature
+## Labels
 
 `$name:` is optional sugar. A **label** is not. Write it with a colon on the declaration, the same way the
 call site writes it, and the call has to use it. Not a positional, not `$name:`:
@@ -167,7 +167,7 @@ There is no `print` statement in Echo, so declaring one is fine. Unlabelled para
 `$name:` as optional sugar. Constructors are functions too, so the same three spellings work on
 `Point(...)`. [Structs](/language/structs) is that chapter.
 
-## Construct in place
+## construct
 
 Sometimes the function just wants an `M`, and you have the arguments that build one. Writing
 `M(...)` at every call is noise.
@@ -197,9 +197,7 @@ Zero extra arguments do not construct. That is how a getter `meta<M>()` can sit 
 `meta<M>(construct M)` setter without the setter eating a no-arg call. Plant a default with
 `meta<RouteMeta>(RouteMeta())`.
 
-### Named arguments bind to the constructor
-
-Not to `$m`. Leading-dot too:
+Named arguments and leading-dot bind to the constructor, not to `$m`:
 
 ```echo
 enum Method { case get; case post; }
@@ -219,9 +217,7 @@ Route $r = meta<Route>($method: .get, $path: '/hello');
 echo $r->path;                  // /hello
 ```
 
-### A prefix is ordinary parameters
-
-Remaining args build `M`:
+A prefix is ordinary parameters. Remaining args build `M`:
 
 ```echo
 struct Pair
@@ -259,9 +255,7 @@ echo $q->a;                     // 8
 echo $q->b;                     // 9
 ```
 
-### The catch
-
-`construct` is last, by value. The body cannot re-forward the raw arguments into another call.
+Here is the catch. `construct` is last, by value. The body cannot re-forward the raw arguments into another call.
 Not a borrow, not an optional, not an enum, not with `mv`. A type named `construct` is still a
 type.
 
@@ -364,7 +358,7 @@ echo $nums->count();        // error: '$nums' has been moved out of
 A signature can't quietly eat something you thought you still had. [Ownership and
 moving](/memory/ownership) is the chapter.
 
-## Which one should a parameter be?
+## Which parameter
 
 The short answer, in the order I'd try them:
 
@@ -414,7 +408,7 @@ The return type is **not** part of the signature. Two functions differing only i
 duplicate, not an overload.
 
 Labels are part of that identity. Parameter names are not. `f(int32 $a)` and `f(int32 $b)` collide.
-`f(from: int32 $a)` and `f(to: int32 $a)` do not. [Labels](#labels-are-part-of-the-signature) is the
+`f(from: int32 $a)` and `f(to: int32 $a)` do not. [Labels](#labels) is the
 section.
 
 A present value prefers `T` over `T?`. `'a'` picks `g(string)` over `g(string?)`:
@@ -490,14 +484,14 @@ echo c_abs(-5);     // 5
 [C interop](/projects/c-interop) covers linking, strings across the boundary, shipping C sources beside
 your Echo, and passing a function to C as `extern function<R(P...)>` with `&name`.
 
-## What functions cannot do yet
+## Missing
 
 A couple of things you might reach for that aren't there. Both are on [the list](/reference/limitations).
 This is just so you don't spend twenty minutes on the syntax.
 
 **Variadics.** There is no `...`, which is why there is no `printf` and no string formatting.
 Constructing a typed last parameter from the rest of the call is
-[`construct M $value`](#construct-in-place): the function still takes one `M`.
+[`construct M $value`](#construct): the function still takes one `M`.
 
 One more, and this one is a real hole rather than a missing feature: **a function that falls off the end
 without returning is not diagnosed.** It compiles and hands back whatever was in the register.

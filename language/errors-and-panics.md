@@ -125,7 +125,7 @@ assertion failed: seven chevrons required
   at program.eco:2
 ```
 
-## assert disappears in release, and that is a trap
+## assert in release
 
 Here's the part that actually matters. **`assert` is compiled out in a release build**, and a release build is
 what `echoc build` gives you by default.
