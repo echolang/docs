@@ -1,72 +1,12 @@
 # Files
 
-You have a path and you want the bytes in it, or you want to put bytes there. The answers live in
-`std::io`. A path is a `string`. There is no path type.
+You have a path and you want a stream: a line at a time, a seek, a write that is not the whole
+file. That is `std::io::file`. You open it with [`std::fs::open`](/stdlib/fs). The whole contents
+in one go is `readfile` / `writefile` on that page.
 
 ```echo
-usize $n = guard std::io::writefile('gate.txt', "chevron seven\nlocked");
-string $text = guard std::io::readfile('gate.txt');
-
-echo $text;     // chevron seven
-                // locked
-
-bool $ok = guard std::io::remove('gate.txt');
-```
-
-`writefile` creates or truncates. `readfile` is the whole contents. Both answer a
-[`result`](/stdlib/result), because a missing path is a correct program, not a bug.
-
-Leave the `else` off when you want the program to stop if the call fails. Write one when you want to
-handle the reason: `else ($e) { ... }` still has to leave. `die($e->message())` is legal when you
-want the crash to carry the IO error in your own words.
-
-Listing a directory, `mkdir`, and `rmdir` live on [Directories](/stdlib/io/directories). There is
-still no path type.
-
-## Missing
-
-```echo
-string $text = guard std::io::readfile('definitely-missing-echo-docs-xyz') else ($e) {
-    echo $e->missing();     // 1
-    return 0;
-}
-
-echo $text;
-```
-
-`$e->missing()` is "nothing of that name exists." `denied()` is "it is there and you are not allowed."
-`exists()` on the error is `EEXIST`. `"{$e}"` is `message()`, because `str::from` has an overload.
-
-## A path is a string
-
-`'gate.txt'` is fine when the current directory is the right place. Anywhere else, `std::env::join`
-puts `DS` between the directory and the name. A hardcoded `/` is the unix spelling, and Windows
-`tmp()` is a backslash path:
-
-```echo
-string $path = std::env::join(std::env::tmp(), 'gate.txt');
-echo $path->empty();        // 0
-```
-
-`cwd()`, `tmp()`, `DS`, `join`, and `file_url` are on [Environment](/stdlib/env). There is still no path type
-behind that string.
-
-## A line at a time
-
-`readfile` is the whole file in one string. When the file is large, or you want one line, open a
-`std::io::file` and `foreach` it. Newline stripped. `writefile` first, so the contents are flushed
-before anyone else opens the path:
-
-```echo
-usize $n = guard std::io::writefile('gate.txt', "Abydos\nChulak\nDakara") else ($e) {
-    std::io::eprintln($e->message());
-    return 1;
-}
-
-std::io::file $in = guard std::io::open('gate.txt', .read) else ($e) {
-    std::io::eprintln($e->message());
-    return 1;
-}
+usize $n = guard std::fs::writefile('gate.txt', "Abydos\nChulak\nDakara");
+std::io::file $in = guard std::fs::open('gate.txt', .read);
 
 foreach ($in as $i => $line) {
     echo $i;        // 0, then 1, then 2
@@ -74,30 +14,38 @@ foreach ($in as $i => $line) {
 }
 
 echo $in->error() == null;      // 1
-
-bool $ok = guard std::io::remove('gate.txt') else ($e) {
-    std::io::eprintln($e->message());
-    return 1;
-}
+bool $ok = guard std::fs::remove('gate.txt');
 ```
 
 End of file stops the loop. An empty line is an empty string, and it is still a turn. A read that
 fails stops the loop too and leaves the reason on `$in->error()`. Check it if you need to tell a
 short file from a dead disk.
 
-`readline()` is still there when you want the `result` in your own hand. Two guards, two different
-absences: the `result` failing is an IO error, `null` is end of file.
+Leave the `else` off when a failure should stop. Write one when you want the reason:
+`else ($e) { ... }` still has to leave.
+
+## Missing
 
 ```echo
-usize $n = guard std::io::writefile('gate.txt', "Abydos\nChulak") else ($e) {
-    std::io::eprintln($e->message());
-    return 1;
+std::io::file $in = guard std::fs::open('definitely-missing-echo-docs-xyz', .read) else ($e) {
+    echo $e->missing();     // 1
+    return 0;
 }
 
-std::io::file $in = guard std::io::open('gate.txt', .read) else ($e) {
-    std::io::eprintln($e->message());
-    return 1;
-}
+echo 'opened';
+```
+
+`$e->missing()` is "nothing of that name exists." `denied()` is "it is there and you are not allowed."
+`exists()` on the error is `EEXIST`. `"{$e}"` is `message()`, because `str::from` has an overload.
+
+## readline
+
+`readline()` is the `result` in your own hand. Two guards, two different absences: the `result`
+failing is an IO error, `null` is end of file.
+
+```echo
+usize $n = guard std::fs::writefile('gate.txt', "Abydos\nChulak");
+std::io::file $in = guard std::fs::open('gate.txt', .read);
 
 while (true) {
     string? $next = guard $in->readline() else ($e) {
@@ -112,57 +60,35 @@ while (true) {
     echo $line;
 }
 
-bool $ok = guard std::io::remove('gate.txt') else ($e) {
-    std::io::eprintln($e->message());
-    return 1;
-}
+bool $ok = guard std::fs::remove('gate.txt');
 ```
 
-`echo $next` will not compile. A `string?` does not become a `string` after you compared it to `null`,
-so the second `guard` is how you get a value you can print. `foreach` is the version that does not
-make you write that.
+`echo $next` will not compile. A `string?` does not become a `string` after you compared it to
+`null`, so the second `guard` is how you get a value you can print. `foreach` is the version that
+does not make you write that.
 
 ## create truncates, append extends
 
 ```echo
-usize $a = guard std::io::writefile('gate.txt', "first\n") else ($e) {
-    std::io::eprintln($e->message());
-    return 1;
-}
-
-std::io::file $log = guard std::io::append('gate.txt') else ($e) {
-    std::io::eprintln($e->message());
-    return 1;
-}
-
-usize $b = guard $log->write("second\n") else ($e) {
-    std::io::eprintln($e->message());
-    return 1;
-}
-
+usize $a = guard std::fs::writefile('gate.txt', "first\n");
+std::io::file $log = guard std::fs::append('gate.txt');
+usize $b = guard $log->write("second\n");
 $log->close();
 
-string $text = guard std::io::readfile('gate.txt') else ($e) {
-    std::io::eprintln($e->message());
-    return 1;
-}
-
+string $text = guard std::fs::readfile('gate.txt');
 echo $text;     // first
                 // second
 
-bool $ok = guard std::io::remove('gate.txt') else ($e) {
-    std::io::eprintln($e->message());
-    return 1;
-}
+bool $ok = guard std::fs::remove('gate.txt');
 ```
 
 `append($path)` is `open($path, .append)`. `create($path)` is `open($path, .write)`, and `.write`
-truncates. Call `create` on a file that already has `"first\n"` in it and you are left with whatever you
-write next.
+truncates. Call `create` on a file that already has `"first\n"` in it and you are left with
+whatever you write next.
 
-`close()` is in that example on purpose. Writes sit in an 8 KiB window. `readfile` opens the path again,
-and it will not see bytes that are still in `$log`'s window. `close` flushes, then releases the
-descriptor. Letting `$log` go out of scope does the same thing.
+`close()` is in that example on purpose. Writes sit in an 8 KiB window. `readfile` opens the path
+again, and it will not see bytes that are still in `$log`'s window. `close` flushes, then releases
+the descriptor. Letting `$log` go out of scope does the same thing.
 
 The modes:
 
@@ -172,14 +98,20 @@ The modes:
 | `.write` | create or truncate, write only. `create($path)` is this |
 | `.append` | create if needed, writes go at the end. `append($path)` is this |
 | `.readwrite` | existing file, both. does not create |
+| `.create_new` | create, fail if it exists. write only. `create_new($path)` is this |
 
-`.write` cannot read. `.read` cannot write. `.readwrite` needs the file to already be there. That last
-one is the mode for "write, then seek back, then read" on a single handle.
+`.write` cannot read. `.read` cannot write. `.readwrite` needs the file to already be there. That
+last one is the mode for "write, then seek back, then read" on a single handle.
+
+`create_new($path)` is `open($path, .create_new)`. On an open handle, `truncate` flushes and gives
+unread bytes back first, then sets the size. Growing fills with zeros. Path `truncate` lives on
+[Filesystem](/stdlib/fs). `sync()` flushes the window, then asks the kernel to put the bytes on
+disk.
 
 ## The last handle closes
 
-`std::io::file` is a class in `std::io`. Copying one is another handle to the same descriptor, and the
-last one to go runs `close`. You usually don't call it. The append example did, because something else
+`std::io::file` is a class. Copying one is another handle to the same descriptor, and the last one
+to go runs `close`. You usually don't call it. The append example did, because something else
 needed to see the bytes before the end of the scope.
 
 A [`stream`](/stdlib/io/) is the opposite: one `int32`, no destructor, it never closes anything.
@@ -189,234 +121,45 @@ A [`stream`](/stdlib/io/) is the opposite: one `int32`, no destructor, it never 
 You wrote ten bytes and you want everything after the third. Open it, seek, `readall` is the rest:
 
 ```echo
-usize $n = guard std::io::writefile('gate.txt', '0123456789') else ($e) {
-    std::io::eprintln($e->message());
-    return 1;
-}
-
-std::io::file $f = guard std::io::open('gate.txt', .read) else ($e) {
-    std::io::eprintln($e->message());
-    return 1;
-}
-
-int64 $at = guard $f->seek(3, .start) else ($e) {
-    std::io::eprintln($e->message());
-    return 1;
-}
-
-string $rest = guard $f->readall() else ($e) {
-    std::io::eprintln($e->message());
-    return 1;
-}
+usize $n = guard std::fs::writefile('gate.txt', '0123456789');
+std::io::file $f = guard std::fs::open('gate.txt', .read);
+int64 $at = guard $f->seek(3, .start);
+string $rest = guard $f->readall();
 
 echo $at;       // 3
 echo $rest;     // 3456789
 
-bool $ok = guard std::io::remove('gate.txt') else ($e) {
-    std::io::eprintln($e->message());
-    return 1;
-}
+bool $ok = guard std::fs::remove('gate.txt');
 ```
 
-`seek($offset, $from)` counts from `.start`, `.current` or `.end`. `position()` is where the next read or
-write will land. `size()` is [`info()`](#paths)'s size, asked of the open descriptor.
+`seek($offset, $from)` counts from `.start`, `.current` or `.end`. `position()` is where the next
+read or write will land. `size()` is `info()`'s size, asked of the open descriptor.
 
-Don't `readall` on a `create()` handle. `.write` is write-only, and the kernel answers with a bad file
-descriptor rather than with the bytes you just wrote.
+Don't `readall` on a `create()` handle. `.write` is write-only, and the kernel answers with a bad
+file descriptor rather than with the bytes you just wrote.
 
-## exists, remove, rename
-
-```echo
-bool $missing = guard std::io::exists('definitely-missing-echo-docs-xyz') else ($e) {
-    std::io::eprintln($e->message());
-    return 1;
-}
-
-echo $missing;      // 0
-
-usize $n = guard std::io::writefile('gate.txt', 'moved') else ($e) {
-    std::io::eprintln($e->message());
-    return 1;
-}
-
-bool $ren = guard std::io::rename('gate.txt', 'chulak.txt') else ($e) {
-    std::io::eprintln($e->message());
-    return 1;
-}
-
-string $text = guard std::io::readfile('chulak.txt') else ($e) {
-    std::io::eprintln($e->message());
-    return 1;
-}
-
-echo $text;     // moved
-
-bool $old = guard std::io::exists('gate.txt') else ($e) {
-    std::io::eprintln($e->message());
-    return 1;
-}
-
-echo $old;      // 0
-
-bool $ok = guard std::io::remove('chulak.txt') else ($e) {
-    std::io::eprintln($e->message());
-    return 1;
-}
-```
-
-`exists` is `result<bool, ioerror>`, not a bare `bool`. Missing is an answer: `ok(false)`. Denied is not
-"no". `EACCES` is a file that is there, and you are not allowed to see it, so that comes back as an error.
-
-`remove` and `rename` answer `result<bool, ioerror>`. `ok(true)` is success.
-
-## Paths
-
-`exists` says yes or no. `info` says what is there: how big, what kind, who may touch it, and when it
-last changed.
-
-```echo
-usize $n = guard std::io::writefile('gate.txt', 'chevron seven') else ($e) {
-    std::io::eprintln($e->message());
-    return 1;
-}
-
-std::io::fileinfo $i = guard std::io::info('gate.txt') else ($e) {
-    std::io::eprintln($e->message());
-    return 1;
-}
-
-echo $i->size;                                  // 13
-echo $i->kind == std::io::filekind::file;       // 1
-
-bool $ok = guard std::io::remove('gate.txt') else ($e) {
-    std::io::eprintln($e->message());
-    return 1;
-}
-```
-
-A `fileinfo` is facts, not a handle. They are true as of the call. `$kind` is `.file`, `.directory`,
-`.symlink`, or `.other`. `$size` is bytes, as an `int64`. `$perms` is below. `$modified` and
-`$accessed` are timestamps. `$created` is a `timestamp?`, and `null` where nobody kept one.
-
-`$accessed` is whatever the filesystem bothered to write down. Don't build anything on it.
-
-`info` follows a symlink, so the answer is about the file the link points at. `linkinfo` does not,
-and it is the only way to see `.symlink`. On macOS `/tmp` is a link to `/private/tmp`, so
-`linkinfo('/tmp')->kind` is `.symlink` there and `.directory` on most Linux boxes.
-
-An open `std::io::file` has `$f->info()` too. It asks the descriptor, so a rename since the open
-does not matter, and it flushes the write window first.
-
-## Permissions
-
-`fileperms` is the mode bits. Every question you ask it is a bit test. There is no octal literal, so
-`0644` is `0x1a4`:
-
-```echo
-usize $n = guard std::io::writefile('gate.txt', 'chevron seven') else ($e) {
-    std::io::eprintln($e->message());
-    return 1;
-}
-
-bool $set = guard std::io::chmod('gate.txt', std::io::fileperms(0x1a4)) else ($e) {
-    std::io::eprintln($e->message());
-    return 1;
-}
-
-std::io::fileinfo $i = guard std::io::info('gate.txt') else ($e) {
-    std::io::eprintln($e->message());
-    return 1;
-}
-
-echo $i->perms->owner_writable();       // 1
-echo $i->perms->group_writable();       // 0
-echo $i->perms->is_readonly();          // 0
-
-bool $ok = guard std::io::remove('gate.txt') else ($e) {
-    std::io::eprintln($e->message());
-    return 1;
-}
-```
-
-`owner_`, `group_` and `other_` each come with `readable()`, `writable()` and `executable()`.
-`is_readonly()` is "nobody may write it".
-
-Windows has one permission, read-only. `chmod` there only reads whether the owner may write.
-
-## copy and realpath
-
-`copy` replaces whatever was at the destination and gives it the source's permission bits. Times
-are not copied. Regular files only: a directory is `EISDIR`, and copying a tree is `opendir` and a
-loop. A symlink is followed. Copying a file onto itself is refused, because truncating the
-destination first would leave you with nothing.
-
-`realpath` asks the filesystem. The path has to exist, every symlink, `.` and `..` gets resolved,
-and the answer is absolute.
-
-```echo
-usize $n = guard std::io::writefile('gate.txt', 'chevron seven') else ($e) {
-    std::io::eprintln($e->message());
-    return 1;
-}
-
-bool $copied = guard std::io::copy('gate.txt', 'backup.txt') else ($e) {
-    std::io::eprintln($e->message());
-    return 1;
-}
-
-string $text = guard std::io::readfile('backup.txt') else ($e) {
-    std::io::eprintln($e->message());
-    return 1;
-}
-
-echo $text;     // chevron seven
-
-string $full = guard std::io::realpath('backup.txt') else ($e) {
-    std::io::eprintln($e->message());
-    return 1;
-}
-
-echo $full->starts(std::env::DS);       // 1, on POSIX
-
-bool $a = guard std::io::remove('gate.txt') else ($e) {
-    std::io::eprintln($e->message());
-    return 1;
-}
-
-bool $b = guard std::io::remove('backup.txt') else ($e) {
-    std::io::eprintln($e->message());
-    return 1;
-}
-```
+An open file has `$f->info()` too. It asks the descriptor, so a rename since the open does not
+matter, and it flushes the write window first. Path `info` is on [Filesystem](/stdlib/fs).
 
 ## The window
 
-Every `std::io::file` has an 8 KiB read window and an 8 KiB write window. That's why `readline` on a file is not
-one syscall per byte, and why [`stdin->readline()`](/stdlib/io/) is: a `stream` has nowhere to keep
-leftover bytes.
+Every `std::io::file` has an 8 KiB read window and an 8 KiB write window. That's why `readline` on
+a file is not one syscall per byte, and why [`stdin->readline()`](/stdlib/io/) is: a `stream` has
+nowhere to keep leftover bytes.
 
-Writes land on disk at `flush`, `seek`, `close`, or when the window fills. A write bigger than the window,
-with the window empty, goes straight to the kernel, so `writefile` of a large string is still one syscall.
+Writes land on disk at `flush`, `seek`, `close`, or when the window fills. A write bigger than the
+window, with the window empty, goes straight to the kernel.
 
-`fd()` is the raw descriptor. The kernel's offset may disagree with `position()` until you `flush`: unread
-bytes have already been pulled, unflushed writes have not been pushed. Don't wrap a live file's `fd()`
-in a [`reader` or a `writer`](/stdlib/io/buffering). A `std::io::file` already has both windows.
+`fd()` is the raw descriptor. The kernel's offset may disagree with `position()` until you `flush`:
+unread bytes have already been pulled, unflushed writes have not been pushed. Don't wrap a live
+file's `fd()` in a [`reader` or a `writer`](/stdlib/io/buffering). A `std::io::file` already has
+both windows.
 
 ## Surface
 
 | | |
 |---|---|
-| `open` / `create` / `append` | `result<std::io::file, ioerror>` |
-| `readfile` / `writefile` | the whole contents |
-| `exists` | `result<bool, ioerror>`. missing is `ok(false)` |
-| `remove` / `rename` | `result<bool, ioerror>`, `ok(true)` on success |
-| `info` / `linkinfo` | `result<fileinfo, ioerror>`. `info` follows a symlink, `linkinfo` does not |
-| `chmod` | `result<bool, ioerror>`, sets a `fileperms` |
-| `copy` | `result<bool, ioerror>`. replaces the destination, carries the permissions, files only |
-| `realpath` | `result<string, ioerror>`. absolute, every link resolved, the path must exist |
-| `fileinfo` | `$kind`, `$size`, `$perms`, `$modified`, `$accessed`, `$created` (nullable) |
-| `fileperms` | `mode()`, `owner_`/`group_`/`other_` × `readable`/`writable`/`executable`, `is_readonly()` |
-| `std::io::file::info` | `result<fileinfo, ioerror>`, of the descriptor, after a flush |
+| `std::fs::open` / `create` / `append` / `create_new` | `result<std::io::file, ioerror>` |
 | `std::io::file::write` | `result<usize, ioerror>`, bytes transferred |
 | `std::io::file::read` | into a pointer and a count. `0` is EOF |
 | `std::io::file::readall` | the rest of the file, as a `string` |
@@ -424,6 +167,8 @@ in a [`reader` or a `writer`](/stdlib/io/buffering). A `std::io::file` already h
 | `foreach` over a `file` | lines, newline stripped. key is the 0-based line number |
 | `std::io::file::error` | `ioerror?`. null unless a read during `foreach` failed |
 | `std::io::file::seek` / `position` / `size` | `result<int64, ioerror>` |
+| `std::io::file::info` | `result<fileinfo, ioerror>`, of the descriptor, after a flush |
+| `std::io::file::truncate` / `sync` | `status<ioerror>` |
 | `std::io::file::flush` | drain the write window |
 | `std::io::file::close` | flush, then close. void. safe twice |
 | `std::io::file::fd` | the raw descriptor |
@@ -431,10 +176,10 @@ in a [`reader` or a `writer`](/stdlib/io/buffering). A `std::io::file` already h
 
 ## Next
 
+- [Filesystem](/stdlib/fs) for `path`, `readfile`, `exists`, `copy`, `info`.
 - [Directories](/stdlib/io/directories) for `opendir`, `mkdir`, `rmdir`, and `foreach` over a directory.
 - [Input and Output](/stdlib/io/) for `print`, streams, and the unbuffered stdin line.
 - [Readers and writers](/stdlib/io/buffering) for a window over a stream you do not own.
 - [Results](/stdlib/result) for `guard ... else ($e)` and what a `result` is.
-- [Environment](/stdlib/env) for `tmp()`, `cwd()`, `join`, and `pid()`.
+- [Environment](/stdlib/env) for `tmp()`, `cwd()`, `pid()`.
 - [Time](/stdlib/time) for the `timestamp` a `fileinfo` carries.
-- [What is missing](/reference/limitations) for the path type, recursive walk, and `mkdir_p`.

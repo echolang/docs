@@ -249,12 +249,13 @@ what most projects do at first, because a `test` block is dropped before parsing
 the fixture struct, the helper, the stub. A scope is how you say the whole directory is the test target's
 business.
 
-Four attributes may go in one:
+Five attributes may go in one:
 
 | | |
 |---|---|
 | `#[sources:]` | files this target is made of, on top of the module's |
 | `#[depends:]` | a module only this target needs |
+| `#[requires:]` | a package only this target needs. [Packages](/projects/packages#only-this-target) |
 | `#[link:]` | a native library only this target links |
 | `#[cc:]` | C sources only this target ships |
 

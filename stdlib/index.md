@@ -51,7 +51,7 @@ echo std::math::sqrt(9.0);      // 3.000000
 echo std::env::argc() > 0;      // 1
 ```
 
-`std::math::`, `std::env::`, `std::io::`, `std::process::`, `std::embed::`, `std::src::`, `std::thread::`, `std::time::` and `std::dynlib::`.
+`std::math::`, `std::env::`, `std::fs::`, `std::io::`, `std::process::`, `std::embed::`, `std::src::`, `std::thread::`, `std::time::` and `std::dynlib::`.
 
 ## Nothing in the library is special-cased
 
@@ -141,19 +141,20 @@ echo $c->bump(5);       // 7
 | root | `atomic<T>` | [Atomics](/memory/atomics) |
 | `contract::` | `iterator`, `iterable`, `const_iterable`, `keyed`, `unwrappable`, `failable`, `comparable`, `comparator` | [Contracts](/stdlib/contract) |
 | `mem::` | allocation, type queries, `take` / `init`, `buffer<T>`, `mem::atomic::` | [Memory](/stdlib/mem) |
-| `hash::` | `of` and the composition primitives | [Hashing](/stdlib/hash) |
+| `hash::` | `of`, `fnv1a`, and the composition primitives | [Hashing](/stdlib/hash) |
 | `sort::` | the kernels behind `array<T>::sort` | [Sorting internals](/stdlib/sort) |
 | `simd::` | splat, load, store, select, bitmask, any, all | [SIMD](/language/simd) |
-| `str::` | `str::from` and the formatting surface, splitting, lines and joining, `replace`, case conversion, `str::buf`, `str::text`, the C string boundary | [String functions](/stdlib/str) |
+| `str::` | `str::from` and the formatting surface, splitting, lines and joining, `replace`, case conversion, `chars` / `boundary` / `is_utf8`, `hex`, `str::buf`, `str::text`, the C string boundary | [String functions](/stdlib/str) |
 | `arr::` | `merge` and `room` | [Arrays](/stdlib/arr) |
 | `crash::` | `set_hook`, `take_hook`, `default_hook`, `info` | [Crash reports](/stdlib/crash) |
+| `std::fs::` | `path`, `/`, `readfile` / `writefile`, `info` / `copy` / `realpath`, `remove_all` | [Filesystem](/stdlib/fs) |
 | `std::io::` | writing text out, streams | [Input and Output](/stdlib/io/) |
-| `std::io::` | `std::io::file`, `open` / `create` / `readfile` / `writefile`, `foreach` over lines, `info` / `copy` / `realpath` / `chmod` | [Files](/stdlib/io/files) |
-| `std::io::` | `opendir`, `dir`, `dirent`, `mkdir`, `rmdir` | [Directories](/stdlib/io/directories) |
+| `std::io::` | `std::io::file`, `foreach` over lines, seek, flush | [Files](/stdlib/io/files) |
+| `std::fs::` | `opendir`, `dir`, `dirent`, `mkdir`, `rmdir` | [Directories](/stdlib/io/directories) |
 | `std::io::` | a buffered `reader` and `writer`, and the two pipe ends `pipe_reader` / `pipe_writer` | [Readers and writers](/stdlib/io/buffering) |
 | `std::math::` | constants and the numeric functions | [Math](/stdlib/math) |
 | `std::env::` | arguments, environment, directories, `exit` | [Environment](/stdlib/env) |
-| `std::process::` | `command`, `child`, `exit_status`, `output`, `stdin` / `stdout` / `stderr` | [Processes](/stdlib/process) |
+| `std::process::` | `command`, `child`, `group` / `stop`, `exit_status`, `output`, `stdin` / `stdout` / `stderr` | [Processes](/stdlib/process) |
 | `std::thread::` | `spawn`, `handle`, `task<T>`, `mutex<T>`, `once` | [Threads](/stdlib/thread) |
 | `std::dynlib::` | `library`, `load`, `address` | [Dynamic libraries](/stdlib/dynlib) |
 | `std::time::` | `duration`, `instant`, `timestamp`, `sleep` | [Time](/stdlib/time) |

@@ -79,7 +79,8 @@ afford it.
 echo std::env::arg(0)->empty();      // 0
 
 // under `echoc run` this is the path to echoc itself
-echo std::env::exe()->empty();       // 0
+std::fs::path $exe = guard std::env::exe();
+echo $exe->string()->empty();       // 0
 ```
 
 `exe()` asks the operating system for the path of the running image, and under `run` the running image is
@@ -164,46 +165,27 @@ on a terminator is not something the compiler can know.
 ## Directories
 
 ```echo
-string $here = std::env::cwd();
-echo $here->empty();                     // 0
+std::fs::path $here = guard std::env::cwd();
+echo $here->string()->empty();                     // 0
 
-string::view $tmp = std::env::tmp();
-echo $tmp->empty();                      // 0
+std::fs::path $tmp = std::env::tmp();
+echo $tmp->string()->empty();                      // 0
 ```
 
 `cwd()` allocates, unlike almost everything else here, because there is no block to borrow from. It
-hands you an owning `string`.
+hands you an owning [`std::fs::path`](/stdlib/fs). Asking the kernel can fail, so it is a
+`result`. Same bargain as `exe()`.
 
-`home()` is `var('HOME')`, so it is **nullable**. An unset `HOME` has no honest answer, and returning
-`""` would hand you a path that resolves, to the working directory. `tmp()` is `var('TMPDIR', '/tmp')`
-on unix and `TEMP` / `TMP` on Windows, and is *not* nullable, because unlike `HOME` there is an honest
-answer when the variable is missing.
+`chdir($p)` is the other half, a `status<ioerror>`. A missing directory is a correct program.
+Restore what you saved; the test runner's cwd is shared.
 
-The separator between that directory and the rest of a path is `DS`. `/` on unix, a backslash on
-Windows. Same shape as `std::io::NEWLINE`: a string constant, one per OS, no `$`. `join` puts a
-directory and a name together with it, and does not add a second separator if the directory already
-ends in one. On Windows a trailing `/` counts, the same as `\`.
+`home()` is nullable. An unset `HOME` has no honest answer, and returning `""` would hand you a path
+that resolves, to the working directory. `tmp()` is `TMPDIR` or `/tmp` on unix and `TEMP` / `TMP` on
+Windows, and is *not* nullable, because unlike `HOME` there is an honest answer when the variable is
+missing.
 
-```echo
-string $sep = std::env::DS;
-echo $sep->size();          // 1
-
-string $path = std::env::join(std::env::tmp(), 'gate.txt');
-echo $path->empty();        // 0
-```
-
-A hole in an interpolated string has to start with `$`, so `{std::env::DS}` is those letters, not
-the separator. Bind it, or `join`.
-
-`file_url` is the other spelling of a path, the one a `file://` consumer wants. Backslashes become
-slashes, a space becomes `%20`, a drive letter keeps its colon:
-
-```echo
-echo std::env::file_url('/tmp/gate.txt');     // file:///tmp/gate.txt
-```
-
-The URL always uses `/`. `DS` is the filesystem spelling. They are not the same string on Windows,
-and that is the whole reason both exist.
+Joining a directory and a name is `/` on a [`std::fs::path`](/stdlib/fs). `tmp() / 'gate.txt'` is
+the usual spelling.
 
 ## exit is not a return
 
@@ -221,16 +203,15 @@ telling a shell what happened, not for unwinding.
 status says "this program failed". Return out of the last statement instead if you want an orderly finish
 with every destructor run. See [Errors and panics](/language/errors-and-panics).
 
-## Nothing here returns an error
+## Errors
 
-This is consistent across the module, and it's a design position rather than an oversight:
+Absence is a nullable type. `var` and `home`.
 
-- **Absence** is a nullable type. `var` and `home`.
-- **A mistake in your code** is an `assert`. `arg` past the end, a key that is not NUL terminated.
-- **A platform failure** is a `die`. `getcwd` refusing a buffer it asked for, a path over 64 KiB.
+A mistake in your code is an `assert`. `arg` past the end, a key that is not NUL terminated.
 
-There is no error value to check anywhere, and there is no silent zero. This module uses `null`, `assert`
-and `die`. It does not return a [`result<T, E>`](/stdlib/result).
+A platform failure is a [`result`](/stdlib/result) or a [`status`](/stdlib/status). `exe()`,
+`cwd()`, and `chdir`. A missing directory, a `/proc` that is not there, a path that does not
+fit: those are conditions you recover from, so they are not a `die`.
 
 ## Surface
 
@@ -240,22 +221,21 @@ and `die`. It does not return a [`result<T, E>`](/stdlib/result).
 | `arg(usize $index) : string::view` | one argument, borrowed. asserts if out of range |
 | `args() : arg_iterator` | a cursor over all of them, for `foreach`. allocates nothing |
 | `argv() : array<string>` | all of them, owned. allocates twice per argument |
-| `exe() : string` | the path of the running image. **echoc itself under `run`** |
+| `exe() : result<std::fs::path, ioerror>` | the path of the running image. **echoc itself under `run`** |
 | `pid() : int32` | the process id |
 | `exit(int32 $code) : void` | stops now. no destructors, no memory report |
 | `has(string::view $key) : bool` | is it set at all, empty or not |
 | `var(string::view $key) : string::view?` | its value, borrowed. null when unset |
 | `var(string::view $key, string::view $fallback) : string::view` | its value, or the fallback |
 | `vars() : var_iterator` | a cursor over every variable, for `foreach`. allocates nothing |
-| `cwd() : string` | the current directory, owned |
-| `home() : string::view?` | `HOME` / `USERPROFILE`, borrowed. null when unset |
-| `tmp() : string::view` | `TMPDIR` or `/tmp`; `TEMP` / `TMP` on Windows |
-| `DS` | the directory separator. `/` on unix, `\` on Windows |
-| `join(string::view $dir, string::view $name) : string` | `$dir`, then `DS` if needed, then `$name` |
-| `file_url(const string&) : string` | `$path` as a `file://` URL |
+| `cwd() : result<std::fs::path, ioerror>` | the current directory, owned |
+| `chdir(const std::fs::path&) : status<ioerror>` | set the working directory |
+| `home() : std::fs::path?` | `HOME` / `USERPROFILE`. null when unset |
+| `tmp() : std::fs::path` | `TMPDIR` or `/tmp`; `TEMP` / `TMP` on Windows |
 
 ## Next
 
+- [Filesystem](/stdlib/fs) for `path`, `/`, `readfile`.
 - [Nullability](/memory/nullability) for `guard`, `??` and what a `string::view?` is.
 - [Errors and panics](/language/errors-and-panics) for `die` and `assert`, and how `exit` differs.
 - [The echoc CLI](/projects/cli) for `--` and the difference between `run` and `build`.

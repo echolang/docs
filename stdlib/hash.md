@@ -214,16 +214,28 @@ same key to different buckets. That is the point: an attacker who chooses keys c
 `ECHO_HASH_SEED=<decimal>` pins the seed. `--fixed-hash-seed` makes it the constant `0`, which pins map
 iteration order too.
 
+**A fingerprint you write to disk cannot use `of`.** The seed would change it on the next run.
+`hash::fnv1a` is the same byte walk without the seed and without `mix`. The same text is the same
+number after a restart. `str::hex` is the sixteen-digit spelling.
+
+```echo
+echo str::hex(hash::fnv1a('hello'));    // a430d84680aabd0b
+echo str::hex(hash::fnv1a(''));         // cbf29ce484222325
+```
+
+Coverage hashes, lock files, anything you store and read later: that. Map keys stay on `of`.
+
 ## Surface
 
 | Signature | What it does |
 |---|---|
-| `of(const T& $value) : uint64` | 15 overloads: 10 integer types, `bool`, `float32`, `float64`, `string`, `string::view` |
+| `of(const T& $value) : uint64` | integers, `bool`, floats, `string`, `string::view`, `type_id`, `std::fs::path` |
 | `mix(uint64 $key) : uint64` | stirs a hash so its low bits are usable. merges nothing |
 | `combine(uint64 $seed, uint64 $value) : uint64` | folds a second hash into a first. not commutative |
 | `bytes(ptr<const uint8> $data, usize $size, uint64 $seed) : uint64` | hashes a byte run, continuing from a seed |
 | `step(uint64 $seed, uint8 $byte) : uint64` | folds one byte in |
 | `bits<T>(const T& $value) : uint64` | the raw bytes. wrong for anything holding an address |
+| `fnv1a(const string& $value) : uint64` | canonical FNV-1a 64, no seed. the fingerprint you can store |
 
 ## Next
 

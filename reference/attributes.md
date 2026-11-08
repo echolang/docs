@@ -13,7 +13,7 @@ function double(int32 $n) : int32
 echo double(21);        // 42
 ```
 
-Eighteen names in total: eight on a declaration, ten that only mean something in a `module.eco`
+Twenty names in total: ten on a declaration, ten that only mean something in a `module.eco`
 manifest. A namespaced name (`#[web::js_name:]`, `#[epm::license:]`) is not on that list. echoc
 carries it on the declaration and ignores it during codegen. `echoc::` is reserved for the compiler
 and its standard library. The four conditional directives look like attributes and are not on that
@@ -68,11 +68,12 @@ scheme with two libraries rather than two schemes.
 
 ## Declaration attributes
 
-Nine names (`wasm` has two forms):
+Ten names (`wasm` has two forms):
 
 | Attribute | Value | What it does |
 |---|---|---|
 | `#[inline]` | none | asks for the function to be emitted into every unit that calls it, so it can be inlined without a whole-program build |
+| `#[deprecated]` / `#[deprecated: g]` / `#[deprecated: "g"]` | none, a name, or a string | a call still compiles. a name or a string names what to write instead |
 | `#[caller]` | none | a `die` or `assert` inside this function names the call site, not this body. Nested `#[caller]` functions forward that site. `std::src::caller()` reads it |
 | `#[implicit]` | none | on a method, declares that its owner converts to the method's return type at an argument position. on a static of the destination, declares the reverse: a type the library does not own converts *to* this one |
 | `#[unique]` | none | on a struct, says exactly one value may name this storage. The type is moved, never copied |
@@ -92,6 +93,29 @@ travels into every unit that references it.
 It is not validated at all. On a declaration with no body of ours it is meaningless rather than wrong, which
 is a deliberate choice: refusing it would mean the attribute knows about declaration shapes it has no
 business knowing about.
+
+### #[deprecated:]
+
+A function you still want to compile against. The program runs. The call is a warning. A string is
+the replacement; without one the warning only names the function:
+
+<!-- verify: skip -->
+```echo
+#[deprecated: "g"]
+function f() : void
+{
+}
+
+#[deprecated]
+function old() : void
+{
+}
+
+f();
+old();
+```
+
+On a type it is refused. Taking the address of one warns the same way a call does.
 
 ### #[implicit]
 

@@ -62,9 +62,11 @@ A requirement in a *vendored* module uses the **root** package directory, not it
 `<root>/vendor/echolang/libjson`.
 
 A `#[requires:]` on a path module is the same lookup. The compiler never reads a `vendor/` next to
-the library. `epm install` at the program walks those path modules, treats their git requires as
-extra solve roots, and vendors into the program's `vendor/`. The path module itself stays where it
-is. You do not re-declare the library's requires, and you do not run epm inside the library.
+the library. `epm install` at the program walks those path modules, treats their **library** git
+requires (file-scope and `lib` scopes, plus a public exe of a module you named) as extra solve
+roots, and vendors into the program's `vendor/`. A test-only `#[requires:]` of that path module
+stays that module's. The path module itself stays where it is. You do not re-declare the library's
+requires, and you do not run epm inside the library.
 
 `../escape`, `foo/../bar` and `foo//bar` are refused, because those would leave `vendor/` or name a
 directory that is not a package. A slash that only nests under `vendor/` is the prefix.
@@ -75,6 +77,30 @@ A missing package is a located error that names the command:
 module.eco:7: the package "libcurl" is not in 'vendor/'.
        note: run `epm install`
 ```
+
+## Only this target
+
+A package your tests need, and your program does not, goes in the test target's `{ }`. Same
+`#[requires:]`, same grammar. The braces are what make it this project's:
+
+<!-- verify: skip -->
+```echo
+#[module: "libjson"]
+#[sources: "src/*.eco"]
+
+#[target: test] {
+    #[sources: "tests/*.eco"]
+    #[requires: "echolang/ecotest" { version: "^0.2", source: git "https://github.com/echolang/ecotest" }]
+}
+```
+
+In libjson's repo, `epm install` fetches ecotest and `echoc test` compiles it. In an app that
+requires libjson, ecotest is not fetched, not locked, not compiled. Neither are the packages
+ecotest's own public exe needs. File-scope `#[requires:]` is what every consumer gets.
+
+A public exe of a library *you* require is the other exception: those `#[requires:]` still land in
+your `vendor/`, so `epm run carbongen` can build. [Tools and hooks](/projects/tools) is that
+chapter.
 
 ## A package inside another package
 

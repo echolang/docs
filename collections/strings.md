@@ -181,6 +181,25 @@ holds.
 **A view keeps nothing alive.** Same rule as [slices](/collections/slices): it is valid only while
 whatever owns the bytes is, and growing that buffer invalidates it.
 
+`string($view)` copies. Short values stay inline; longer ones get their own buffer. The source can
+then die. `str::from($view)` and `string::from($view)` are the same copy.
+
+```echo
+function head(const string& $text) : string
+{
+    return string($text->view()->sub(0, 5));
+}
+
+function heap() : string
+{
+    string $t = '';
+    $t->append('hello from a heap buffer!!');
+    return $t;
+}
+
+echo head(heap());     // hello
+```
+
 ## Building a string
 
 `string` is the type you store, pass, and return. `append` on it is the right tool for a handful of
@@ -351,27 +370,29 @@ echo $a->find('o', 5);          // 7, the second o
 echo $a->find('world', 7);      // 11
 ```
 
-## size() and chars()
+## size() and count()
 
-`size()` is bytes and is O(1). `chars()` walks the string counting UTF-8 codepoints. That the two
-disagree is the point, not an oversight:
+`size()` is bytes and is O(1). `count()` is how many characters, a walk. That the two disagree is
+the point, not an oversight:
 
 ```echo
 $ascii = 'hello';
 $accent = "h\u{E9}llo";     // hello, with an e-acute
 
 echo $ascii->size();        // 5
-echo $ascii->chars();  // 5
+echo $ascii->count();       // 5
 
 echo $accent->size();       // 6
-echo $accent->chars(); // 5
+echo $accent->count();      // 5
 ```
 
 Five characters in six bytes. `\u{...}` takes a codepoint in hex, and is how you write a character your
 editor would rather not show you.
 
-Every index into a string is a **byte** index. `chars()` is a count, not a validator: invalid UTF-8 is
-counted rather than rejected.
+Every index into a string is a **byte** index. `count()` is a number, not a validator: invalid UTF-8 is
+counted rather than rejected. `str::chars($s)` (and `$s->chars()`) is the walk of those characters,
+`str::is_utf8($s)` is the validator, and `str::boundary($s, $at)` snaps a cut back to a character
+start. [String functions](/stdlib/str#chars) owns that half.
 
 ## Equality
 

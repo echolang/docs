@@ -209,6 +209,29 @@ your program exits.
 not an error. You still wait afterwards to collect the status. `try_wait()` never blocks, and
 answers `null` while the child is still running.
 
+## Stopping a tree
+
+`kill()` is this one pid. A shell that launched `npm` leaves the grandchild holding the port.
+`group()` before `spawn()` starts a new process group. `stop()` then signals the tree: SIGTERM,
+wait two seconds, SIGKILL, wait. Pass `grace:` to pick the wait.
+
+Default spawn stays in this process's group. Ctrl-C still reaches a `make` you started. Call
+`group()` when you are the one who will stop the tree.
+
+<!-- verify: skip -->
+```echo
+std::process::command $c = std::process::command('npm', ['start']);
+$c->group();
+std::process::child $child = guard $c->spawn() else ($e) { die("npm: {$e}"); };
+
+std::process::exit_status $s = guard $child->stop(grace: .millis(2000)) else ($e) {
+    die("stop: {$e}");
+};
+```
+
+On Windows `stop` terminates the tree at once. There is no analogue of SIGTERM that an arbitrary
+child honours, so `grace` is unused there.
+
 <!-- verify: skip -->
 ```echo
 std::process::exit_status $s = guard std::process::command('sh', ['-c', 'exit 3'])->status() else ($e) {

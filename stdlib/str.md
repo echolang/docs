@@ -267,8 +267,50 @@ Already-cased text is the same string, sharing its buffer. `str::upper('HELLO')`
 Changing case always allocates; leaving it alone never does. That's [trim](#split--join--trim)'s
 bargain, and the reason the parameter is a `string` rather than a view.
 
-Invalid UTF-8 is copied, not rejected. [chars()](/collections/strings#size-and-chars)
-already counts it rather than validating, and these four do not invent a stricter contract.
+Invalid UTF-8 is copied, not rejected. `$s->count()` already counts it rather than validating, and
+these four do not invent a stricter contract.
+
+## Chars
+
+`$s->count()` is how many characters. `$s->size()` is bytes. `str::chars($s)` (and `$s->chars()`)
+is the **walk**: each well-formed character as a window into `$s`, each invalid byte as a window
+of one. Same `parts` type `split` and `lines` hand you, so `foreach` works and `$p->owned()` is
+the list of owning strings.
+
+```echo
+echo str::join(str::chars('ä€😀'), '|');    // ä|€|😀
+echo str::chars('ä€😀')->count();           // 3
+```
+
+A byte index is still a byte index. Cutting a log line at 120 bytes can land on the second byte of
+`é`. `str::boundary($text, $at)` walks back to the start of that character, at most three bytes,
+so the cut stays a character boundary. Past the end is the end.
+
+```echo
+string $t = "naïve";
+echo str::boundary($t, 3);      // 2, the start of ï
+```
+
+`$s->count()` still counts junk. `str::is_utf8($s)` is the validator: true when every byte is part
+of a well-formed scalar. Empty is well-formed. A truncated sequence, an overlong encoding, a
+surrogate half, or a stray continuation is not.
+
+```echo
+echo str::is_utf8("naïve");     // 1
+string $bad = '';
+$bad->push(255);
+echo str::is_utf8($bad);        // 0
+```
+
+## Hex
+
+`str::hex($n)` is sixteen lowercase digits, zero-padded. `"{$n:x}"` drops the leading zeros; a
+stored fingerprint cannot. `str::hex($bytes)` is two digits per byte.
+
+```echo
+echo str::hex(hash::fnv1a('hello'));    // a430d84680aabd0b
+echo str::hex('hello');                 // 68656c6c6f
+```
 
 ## iequals
 
@@ -317,6 +359,11 @@ and no reference count, which is what a scan over thirty headers needs.
 | `str::upper` / `lower` `(const string&) : string` | Unicode uppercase / lowercase. already-cased text shares the buffer |
 | `str::ucfirst` / `lcfirst` `(const string&) : string` | titlecase / lowercase of the first codepoint |
 | `str::iequals(string::view $a, string::view $b) : bool` | same bytes, ignoring ASCII case. allocates nothing |
+| `str::boundary(const string& $t, usize $at) : usize` | `$at` moved back to the start of the character it falls in |
+| `str::is_utf8(const string& $t) : bool` | well-formed UTF-8. empty is |
+| `str::chars(const string& $t) : str::parts` | each character as a window. `$s->count()` is how many; `$s->size()` is bytes |
+| `str::hex(uint64 $n) : string` | 16 lowercase digits, zero-padded |
+| `str::hex(const string::view& $b) : string` | two lowercase digits per byte |
 
 ## Next
 

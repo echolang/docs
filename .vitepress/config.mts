@@ -100,6 +100,7 @@ const sidebar = [
       { text: 'Sorting', link: '/stdlib/sort' },
       { text: 'String functions', link: '/stdlib/str' },
       { text: 'Arrays', link: '/stdlib/arr' },
+      { text: 'Filesystem', link: '/stdlib/fs' },
       {
         text: 'Input and Output',
         collapsed: false,

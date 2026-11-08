@@ -40,6 +40,15 @@ that's why every library's `tests` target can't collide with every other library
 Put the CLI inside the target's scope. Consumers compile `src/runtime/*.eco` and nothing else. The argument
 parsing, the extra `#[requires:]`, the `main`: none of that is compiled or linked into their program.
 
+A library that needs the tool for its own tests writes the `#[requires:]` inside `#[target: test]`.
+That still offers it **to that library**: `epm install` and `epm run` in libjson's repo see
+ecotest. An app that requires libjson does not fetch ecotest, and does not compile it. `epm run`
+from the app looks at every scope of **your** direct dependencies, so a test-scoped require of
+*your* project still offers the tool.
+
+The tool's own `#[requires:]` stay inside its public exe scope. A project that requires that
+library fetches those, so `epm run restgen` can build. They are not compiled into your program.
+
 ## Running one by hand
 
 From a project that depends on `resttransformer`:

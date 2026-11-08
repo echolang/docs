@@ -125,12 +125,9 @@ arguments, and no runtime format string, since a spec is written inside a litera
 appends into one buffer. A loop of `str::concat($acc, $piece)` still copies the prefix every time;
 `$acc->append($piece)` is the tool there.
 
-**No path type, no recursive walk, no `mkdir_p`.** [Files](/stdlib/io/files) opens, reads and writes
-files. [Directories](/stdlib/io/directories) lists one directory, and `mkdir` / `rmdir` make and
-remove one. Paths are `string`s. `std::env::DS` is the separator; `std::env::join` puts two
-components together with it; `std::env::file_url` turns a native path into a `file://` URL.
-`std::io::info`, `copy` and `realpath` answer about one path at a time. There is no `mkdir_p`, no
-recursive `copy`, and nothing that walks a tree.
+**No recursive `copy`.** [Filesystem](/stdlib/fs) has a `path` type, `mkdir(..., recursive: true)`,
+and `remove_all`. [Directories](/stdlib/io/directories) lists one directory. `copy` is still one
+regular file. A tree copy is `opendir` and a loop.
 
 **`std::io::readline()` on stdin is still unbuffered.** One `read` per byte, so it cannot steal input from
 anything else on fd 0. Wrap stdin in a [`reader`](/stdlib/io/buffering) when you want the window, stdout in a

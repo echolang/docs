@@ -21,7 +21,8 @@ string that is checked when the program runs is a class of bug I would rather th
 
 Files are [their own page](/stdlib/io/files). Directories are
 [another](/stdlib/io/directories). A buffered `reader` or `writer` is
-[a third](/stdlib/io/buffering). This one is printing, streams, and the line you read from stdin.
+[a third](/stdlib/io/buffering). Paths, `readfile`, `info`, `copy` live on
+[Filesystem](/stdlib/fs). This page is printing, streams, and the line you read from stdin.
 
 ## print and println
 
@@ -92,7 +93,7 @@ A pipe, a file, and a closed fd all answer false / 0. There is no error to recov
 
 `writeline` does not hardcode `\n`. It writes `std::io::NEWLINE`, which is `\n` on Unix and `\r\n` on Windows.
 
-A Windows console is the reason. `WriteConsoleW` treats a lone LF as "down one row, same column" — the cursor never comes home. `print("foo\n")` still works because `console_write` inserts a CR in front of a bare LF; that is the compatibility path for a literal already in the string. New code that means "end this line" writes the constant.
+A Windows console is the reason. `WriteConsoleW` treats a lone LF as "down one row, same column": the cursor never comes home. `print("foo\n")` still works because `console_write` inserts a CR in front of a bare LF; that is the compatibility path for a literal already in the string. New code that means "end this line" writes the constant.
 
 `readline` accepts LF, CR, and CRLF, and never hands the terminator back. A Windows console Enter is `\r\n`; a Unix file is `\n`. Both are one line.
 

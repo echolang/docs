@@ -3,7 +3,7 @@
 `foreach` walks arrays, stable arrays, maps, strings, slices, ranges, files, and directories, and it does that without
 a single line in the compiler that knows what any of them are. **It knows three interfaces and nothing
 else**, so a type of yours loops exactly as well as the standard library's. A
-[`std::io::file`](/stdlib/io/files) yields lines. A [`std::io::dir`](/stdlib/io/directories) yields
+[`std::io::file`](/stdlib/io/files) yields lines. A [`std::fs::dir`](/stdlib/io/directories) yields
 `dirent`s.
 
 ```echo
