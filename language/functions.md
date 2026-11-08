@@ -117,6 +117,8 @@ echo wrap($b: 8);           // 18
 
 `wrap(8)` would bind 8 to `$a` and leave `$b` empty, which is an error. Name the one you mean.
 
+A constructor-call default on a generic is the same hole. `named<T>(const string& $name, map<string, string> $renames = map<string, string>())` still answers `named<int32>(name: 'n')`. `= []` works too, and is the shorter spelling when the type is already on the parameter.
+
 ## Labels
 
 `$name:` is optional sugar. A **label** is not. Write it with a colon on the declaration, the same way the
@@ -191,7 +193,8 @@ echo plant(RouteMeta('/x'));    // /x
 
 The body still sees one `RouteMeta`. `plant('/hello')` is `plant(RouteMeta('/hello'))`. One
 remaining argument that is already `M` is used as-is, which is why `plant(RouteMeta('/x'))`
-works.
+works, and why `seat<Endpoint<Show>>(Endpoint<Show>('/x'))` does too: the inner constructor
+is the value, not a list of constructor arguments.
 
 Zero extra arguments do not construct. That is how a getter `meta<M>()` can sit beside a
 `meta<M>(construct M)` setter without the setter eating a no-arg call. Plant a default with
@@ -254,6 +257,41 @@ Pair $q = bind<Pair>(once: 8, 9);
 echo $q->a;                     // 8
 echo $q->b;                     // 9
 ```
+
+Without the label, those extras are an ordinary call. A labelled construct parameter does not
+gather unlabelled arguments, which is what lets a callback overload sit beside it:
+
+```echo
+class Container
+{
+}
+
+class Service
+{
+    public int32 $n;
+
+    public constructor(int32 $n)
+    {
+        $this->n = $n;
+    }
+}
+
+function bind<T>(function<T(Container)> $make) : int32
+{
+    return $make(Container())->n;
+}
+
+function bind<T>(put: construct T $value) : int32
+{
+    return $value->n;
+}
+
+echo bind<Service>((Container $c) => Service(7));   // 7
+echo bind<Service>(put: 9);                         // 9
+```
+
+`bind<Service>((Container $c) => Service(7))` is the callback. `Service` has a one-argument
+constructor, and that is not enough to steal the call: there is no `put:`.
 
 Here is the catch. `construct` is last, by value. The body cannot re-forward the raw arguments into another call.
 Not a borrow, not an optional, not an enum, not with `mv`. A type named `construct` is still a
@@ -454,7 +492,7 @@ can be an interface you declared, or one of the built-in shorthands: `numeric`, 
 A function type is written `function<R(P...)>`, and a function literal in value position is a closure:
 
 ```echo
-function<int32(int32)> $double = function(int32 $x) : int32 { return $x * 2; };
+function<int32(int32)> $double = (int32 $x) => $x * 2;
 
 echo $double(21);           // 42
 

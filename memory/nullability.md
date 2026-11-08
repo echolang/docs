@@ -602,3 +602,4 @@ exactly as it is over a `T`, and the message names `guard` as the way to reach t
 - [Classes](/language/classes) for `weak<T>`, reference counting and cycles.
 - [Pointers and references](/memory/pointers) for `ptr<T>`, `T&` and `:$`.
 - [Control flow](/language/control-flow) for `guard` beside the rest of the branching forms.
+- [Try](/language/try) for passing a `result` failure up. A `T?` has no failure; `try` refuses it.

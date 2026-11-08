@@ -364,7 +364,7 @@ Generics are monomorphized, so each instantiation is a separate compiled functio
 ## Closures
 
 ```echo
-function<int32(int32)> $double = function(int32 $x) : int32 { return $x * 2; };
+function<int32(int32)> $double = (int32 $x) => $x * 2;
 
 echo $double(21);   // 42
 
@@ -521,7 +521,6 @@ function halveOr(int32 $n, int32 $fallback) : int32
 echo halveOr(8, 0);     // 104
 echo halveOr(-4, 0);    // 0
 ```
-```
 
 [Nullability](/memory/nullability).
 
@@ -606,9 +605,29 @@ die("something went wrong");
 `die` stops the program with a nonzero exit status. `assert` does the same when its condition is false, and
 is **compiled out entirely in a release build**, which is the default for `echoc build`.
 
-There are no exceptions. There is no `try`/`catch`.
+There are no exceptions. Echo's [`try`](/language/try) is `return .error($e)`, not a try-block:
 
-[Errors and panics](/language/errors-and-panics).
+```echo
+function parse(int32 $n) : result<int32, string>
+{
+    if ($n < 0) {
+        return .error('negative');
+    }
+
+    return .ok($n * 2);
+}
+
+function twice(int32 $n) : result<int32, string>
+{
+    int32 $v = try parse($n);
+    return .ok($v * 2);
+}
+
+echo twice(21)->or(-1);     // 84
+echo twice(-3)->or(-1);     // -1
+```
+
+[Errors and panics](/language/errors-and-panics). [Try](/language/try).
 
 ## Next steps
 

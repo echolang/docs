@@ -470,15 +470,27 @@
 							"name": "entity.name.type.eco"
 						}
 					}
+				},
+				{
+					"comment": "'extension' is contextual at file or namespace scope, like 'type' and 'map'. A case can still be named extension.",
+					"match": "^\\s*(extension)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+					"captures": {
+						"1": {
+							"name": "storage.type.eco"
+						},
+						"2": {
+							"name": "entity.name.type.eco"
+						}
+					}
 				}
 			]
 		},
 		"keywords": {
-			"comment": "The thirty-one reserved words, split by role. Matching is whole-word in the lexer too, which is why 'forward', 'classify' and 'nullable' are ordinary identifiers.",
+			"comment": "The reserved words, split by role. Matching is whole-word in the lexer too, which is why 'forward', 'classify' and 'nullable' are ordinary identifiers.",
 			"patterns": [
 				{
 					"name": "keyword.control.conditional.eco",
-					"match": "\\b(if|else|guard)\\b"
+					"match": "\\b(if|else|guard|try)\\b"
 				},
 				{
 					"name": "keyword.control.loop.eco",
@@ -720,7 +732,7 @@
 			"comment": "The other half of the snake_case problem: 'local_buf $owner;' and 'point? $p' name a type that no casing rule will recognise and that carries no type arguments either. What identifies it is the position - a name directly in front of a '$variable' is a type, because that is what a declaration looks like.\n\nThe anchor is the part that matters, and it is not decoration. A custom infix word operator has the identical shape - '$a avg $b' is also a name, a space and a variable - so without it every declared word operator in the language would be tinted as a type. Restricting to the places a declaration can begin keeps them apart, at the cost of missing a type that follows a visibility modifier on the same line.\n\nTwo details, both of which were bugs first:\n\n'(?<=[(,])' is a lookbehind rather than a consumed character, so the '(' or ',' is still there for #punctuation to scope. It also makes this rule start at the same offset as the #types rule for a parameter like 'int32 $a', and a tie on offset goes to whichever pattern is listed first - which is #types. That is the whole reason a primitive keeps its own scope in the first parameter position.\n\nThe '^\\s*' alternative has no such protection: it starts at column zero and therefore outranks every rule that would match the word itself further along the line. Hence the exclusion list - without it an indented 'echo $x;' would have 'echo' coloured as a type, and so would every reserved word and primitive at the head of a line.",
 			"patterns": [
 				{
-					"match": "(?:^\\s*|(?<=[(,])\\s*)(?!(?:int8|int16|int32|int64|uint8|uint16|uint32|uint64|usize|isize|float32|float64|bool|void|int|uint|float|string|ptr|weak|const|public|private|internal|echo|return|mv|strong|instanceof|unsafe|guard|if|else|while|for|foreach|break|continue|as|function|struct|class|interface|enum|extern|operator|constructor|destructor|namespace|type|self|true|false|null)\\b)([a-z_][A-Za-z0-9_]*)(?=\\s*\\??\\s*&?\\s*\\$)",
+					"match": "(?:^\\s*|(?<=[(,])\\s*)(?!(?:int8|int16|int32|int64|uint8|uint16|uint32|uint64|usize|isize|float32|float64|bool|void|int|uint|float|string|ptr|weak|const|public|private|internal|echo|return|mv|strong|instanceof|unsafe|guard|try|if|else|while|for|foreach|break|continue|as|function|struct|class|interface|enum|extern|operator|constructor|destructor|namespace|type|self|true|false|null)\\b)([a-z_][A-Za-z0-9_]*)(?=\\s*\\??\\s*&?\\s*\\$)",
 					"captures": {
 						"1": {
 							"name": "entity.name.type.eco"

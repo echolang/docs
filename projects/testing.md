@@ -261,6 +261,49 @@ The other thing it buys you is **a passing test's own output**. Every test's str
 way you run, and normally a green one's are thrown away, so a `dprint` you left in a test that works has no
 way of reaching you. Under `--verbose` it is quoted under that test's line.
 
+## Coverage
+
+`echoc test --coverage` counts which lines and branches those processes actually ran, including the ones
+that `assert` and die. See [Coverage](/projects/coverage).
+
+## `--report`
+
+`--report <file>` writes the same run as JSON Lines. The listing you already know does not change.
+
+Each test is one object. A `die` or a failed `assert` also carries `failure`, parsed from the abort
+text Echo already prints:
+
+```
+{"v":2,"type":"test","id":"main/math.eco::divides","status":"fail",...,"failure":{"headline":"assertion failed","message":"nope","file":"math.eco","line":16}}
+```
+
+A pass, a timeout, and a signal omit it. A `#[tests: expects death]` test that did die still carries
+it: the status is `pass`, and the site is still there. See [Crash reports](/stdlib/crash).
+
+## What a test knows about itself
+
+Every test process starts with five variables naming the test it runs:
+
+| Variable | Holds |
+|---|---|
+| `ECHO_TEST_ID` | `module/file::name`, the same id the listing and `--report` print |
+| `ECHO_TEST_NAME` | the test's name |
+| `ECHO_TEST_FILE` | the path of the file it is written in |
+| `ECHO_TEST_MODULE` | the module |
+| `ECHO_TEST_GROUP` | its `#[group:]`, or empty |
+
+<!-- verify: test -->
+```echo
+#[group: "identity"]
+test knows_its_group
+{
+    assert(std::env::var('ECHO_TEST_GROUP', '') == 'identity');
+}
+```
+
+Libraries that sit on `test` blocks use these: a snapshot named after the test, a report joined on
+`ECHO_TEST_ID`. A test that only asserts never needs them.
+
 ## Test targets
 
 If you find yourself typing the same filters, name them in the manifest:

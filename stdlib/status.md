@@ -25,7 +25,8 @@ function go(bool $ok) : void
 go(true);       // ok
 ```
 
-There is nothing to bind. Statement [`guard`](/memory/nullability) is the form. `.ok` takes no list.
+There is nothing to bind. Statement [`guard`](/memory/nullability) is the form. [`try`](/language/try)
+returns `.error($e)` from a function that already returns a `status`. `.ok` takes no list.
 
 ## Why not `result`
 
@@ -101,5 +102,6 @@ An initializer `guard` over a status is refused: there is nothing to bind. Write
 ## Next
 
 - [Results](/stdlib/result) for when there is a `T`.
+- [Try](/language/try) for passing a status failure to the caller.
 - [Contracts](/stdlib/contract) for `checkable` and `failable`.
 - [Nullability](/memory/nullability) for statement `guard`.

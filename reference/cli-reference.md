@@ -91,6 +91,8 @@ nothing and builds nothing.
 | `--profile` | | `run`, `build` | flag | off | sample time and count allocations. Writes an `.ecoprof` and prints a short summary. See [Profiling](/projects/profiling) |
 | `--profile-calls` | | `run`, `build` | flag | off | instrument every call for exact counts. Implies `--profile` |
 | `--profile-stdlib` | | `run`, `build` | flag | off | with `--profile-calls`, instrument the standard library too. Implies `--profile` |
+| `--coverage` | | test | flag | off | count which lines and branches tests ran. See [Coverage](/projects/coverage) |
+| `--coverage-stdlib` | | test | flag | off | with `--coverage`, also count the standard library. Implies `--coverage` |
 | `--check-refcounts` | | compiling | flag | off | trap on releasing an already-dead object. Keeps every class box, poisoned |
 | `--no-stdlib` | | compiling, lsp | flag | off | compile without the standard library |
 | `--emit-stdlib-header` | | compiling | flag | off | regenerate the embedded stdlib header |
@@ -146,6 +148,7 @@ refuse it. [Linking](/projects/linking) is the portable-linux chapter.
 | `--silent` | | compiling, clean | flag | off | do not draw the progress checklist. Silences that and nothing else |
 | `--verbose` | | test | flag | off | list every test, with how long each one took |
 | `--timeout <ms>` | | test | milliseconds | none | kill a test that is still running after this many milliseconds |
+| `--report <file>` | | test | path | | write a JSON Lines result stream. A `die` or failed `assert` carries a `failure` object. The terminal listing is unchanged |
 
 `--verbose` replaces the per-test lines with a listing: every test under the file it is written in, its group
 and its duration, a count and a total per file, and whatever a test printed. That last part includes a

@@ -21,7 +21,8 @@ echo $n;        // 42
 ```
 
 The return type says the call can fail. The compiler won't let you read the value without dealing with
-that. `guard` is how you usually deal with it.
+that. `guard` is how you deal with it here. [`try`](/language/try) passes the same failure to a
+caller that also returns a result.
 
 ## `T?`
 
@@ -101,7 +102,10 @@ compile.
 an `else` when you want to handle the reason; that block has to leave: `return`, `break`, `continue` or
 `die`. That's what makes the declaration safe afterwards.
 
-When the value is not the point — the call worked, or it did not — drop the binding:
+When the else arm would have been `return .error($e)` and this function already returns a result,
+[`try`](/language/try) is that arm.
+
+When the value is not the point (the call worked, or it did not), drop the binding:
 
 ```echo
 function start(int32 $n) : result<int32, string>
@@ -426,6 +430,7 @@ two are the whole of what `guard` needs.
 ## Next
 
 - [Nullability](/memory/nullability) for `T?`, `guard`, and writing a type `guard` accepts.
+- [Try](/language/try) for passing the failure to a caller that also returns a result.
 - [Contracts](/stdlib/contract#unwrappable) for the two interfaces, in full.
 - [Enums](/language/enums) for cases, payloads, `match`, and the layout.
 - [Errors and panics](/language/errors-and-panics) for where a result sits among `assert` and `die`.

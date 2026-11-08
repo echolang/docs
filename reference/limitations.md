@@ -44,9 +44,9 @@ lanes, N a power of two, width at most 16 bytes. There is no `$v[i]`, no implici
 vector by value is refused on `extern`. A comparison answers `simd<bool, N>`, so
 `if ($a == $b)` over two vectors will not compile. See [SIMD](/language/simd).
 
-**Exceptions.** No `throw`, no `try`, no `catch`. Recoverable failure is a `T?`, or a
-[`result<T, E>`](/stdlib/result) when you need a reason. `assert` for "this should never happen", `die`
-for "no recovering from this".
+**Exceptions.** No `throw`, no `catch`, no try-blocks. Recoverable failure is a `T?`, or a
+[`result<T, E>`](/stdlib/result) when you need a reason. [`try expr;`](/language/try) passes that
+reason to the caller. `assert` for "this should never happen", `die` for "no recovering from this".
 
 **Visibility has two holes.** Assigning a whole struct copies a `const` property, because the target's own
 type is not const, so the field is write-once only through its own name. And a generic body is exempt from

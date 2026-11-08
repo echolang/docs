@@ -159,7 +159,8 @@ Beta $b = $a as Beta;
 // error: 'Alpha' cannot be read as a 'Beta'
 ```
 
-Matching fields are not a conversion. If you want one, declare it with `#[implicit]`.
+Matching fields are not a conversion. If you want one, declare it with `#[implicit]`. If you do not
+own the type, that declaration lives in an [`extension`](/language/extension) block.
 
 ## foreach still owns as
 
@@ -180,4 +181,5 @@ If `as` continued an expression the way `instanceof` does, `foreach` would never
 - [Expressions](/language/expressions) for the three rules that decide a type when you did not write `as`.
 - [Primitive types](/reference/primitive-types) for which number conversions happen at a destination.
 - [Attributes](/reference/attributes) for declaring a conversion.
+- [Extension](/language/extension) for declaring one on a type you do not own.
 - [Pointers](/memory/pointers) for the `ptr<T>(...)` spelling and the `T&` promotion.

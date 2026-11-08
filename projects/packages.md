@@ -76,6 +76,28 @@ module.eco:7: the package "libcurl" is not in 'vendor/'.
        note: run `epm install`
 ```
 
+## A package inside another package
+
+Some repos hold more than one package: a library and its drivers, say. Name the inner one by its
+directory, from the same source:
+
+<!-- verify: skip -->
+```echo
+#[requires: "echopack/carbon" { version: "^0.1.3", source: git "https://github.com/echopack/carbon" }]
+#[requires: "echopack/carbon/drivers/mysql" { version: "^0.1.3", source: git "https://github.com/echopack/carbon" }]
+```
+
+A name that extends another requirement's name by whole segments, with the same source, is that
+directory of the checkout. epm clones the repo once. Both ranges apply to the same tags. The path
+on disk is `vendor/echopack/carbon/drivers/mysql`.
+
+Require the outer package beside it in the same `module.eco`. The lock keeps one entry for the repo
+and lists the inner directories under it.
+
+An inner package can `#[depends: "../.."]` on its own repo. A `#[depends:]` that climbs out of
+`vendor/<name>` is refused: what sits beside it in your `vendor/` is not part of its release. Use a
+`#[requires:]`.
+
 ## What epm writes
 
 epm reads a manifest through `echoc -p manifest`, so the grammar has one implementation. The lock is

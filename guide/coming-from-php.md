@@ -26,7 +26,7 @@ you expected" rather than by topic.
 | `function f($a)` | `function f(int32 $a) : void` |
 | `foo(bar: 1)` | `foo($bar: 1)`. A required name is a **label**: `foo(forEvent: 1)` |
 | Trailing parameter defaults only | Defaults fill holes. A later parameter can still be named |
-| `try` / `catch` / `throw` | No exceptions. `die`, `assert`, `T?`, and `result<T, E>` |
+| `try` / `catch` / `throw` | No exceptions. Echo's [`try`](/language/try) is `return .error($e)` |
 | `require` / `use` | A `module.eco` manifest and qualified names |
 | Runs on a request, dies | Compiles to a native binary |
 | `strtoupper` / `mb_strtoupper` | `str::upper`. there is no byte-corrupting variant; Echo's is the `mb_` one |
@@ -251,15 +251,16 @@ anything. Leave the `else` off and a missing value stops the program.
 
 ## No exceptions
 
-There is no `throw`, no `try`, no `catch`.
+There is no `throw`, no `catch`, no stack to unwind. Echo's [`try`](/language/try) is not PHP's:
+it is `return .error($e)`. `try { ... }` does not parse.
 
 - For "this can fail and the caller should handle it", return a `T?`, or a
-  [`result<T, E>`](/stdlib/result) when you need a reason.
+  [`result<T, E>`](/stdlib/result) when you need a reason. [`try`](/language/try) passes that reason
+  through a function that also returns a result.
 - For "this should never happen", `assert(...)`, which is compiled out in release builds.
-- For "this happened and there is no recovering", `die("message")`, which stops the program with a nonzero
-  exit status.
+- For "this happened and there is no recovering", `die("message")`.
 
-That is a smaller toolkit than PHP's and it is deliberate. There is no stack to unwind.
+That is a smaller toolkit than PHP's and it is deliberate.
 
 ## Files and includes
 

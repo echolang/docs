@@ -348,7 +348,7 @@ type Transform = function<int32(int32)>;
 
 function apply(Transform $f, int32 $x) : int32 { return $f($x); }
 
-echo apply(function(int32 $x) : int32 { return $x * 2; }, 21);    // 42
+echo apply((int32 $x) => $x * 2, 21);    // 42
 ```
 
 ### Rules

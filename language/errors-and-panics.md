@@ -1,15 +1,17 @@
 # Errors and panics
 
-**There are no exceptions in Echo.** No `throw`, no `try`, no `catch`. Recoverable failure is a `T?`, or a
-[`result<T, E>`](/stdlib/result) when you need a reason. Bugs are `assert` and `die`.
+**There are no exceptions in Echo.** No `throw`, no `catch`, no stack to unwind. Recoverable failure is a `T?`, or a
+[`result<T, E>`](/stdlib/result) when you need a reason. [`try`](/language/try) plants `return .error($e)`.
+Bugs are `assert` and `die`.
 
-Most of what exceptions get used for splits cleanly into two cases:
+Most of what exceptions get used for splits cleanly:
 
 | The situation | What to use |
 |---|---|
 | This can fail, and the caller should deal with it | return `T?`, or `result<T, E>` |
 | This cannot fail unless something is broken | `assert`, or `die` |
-| I am not writing an arm for a value that has to be there | `guard expr;` with no `else` — a statement, or `T $x = guard expr;` if you need the value |
+| I am not writing an arm for a value that has to be there | `guard expr;` with no `else`, or `T $x = guard expr;` if you need the value |
+| This failed and I want the caller to see the same failure | [`try expr;`](/language/try) in a function that returns `result` or `status` |
 
 The line between them is whether a correct program can hit it. A gate address that will not lock is the
 first. An index past the end of an array you just built is the second.
@@ -77,6 +79,8 @@ dialling
 fatal error: chevron seven will not lock
   at program.eco:2
 ```
+
+A helper that dies for you names its own line, which is rarely what you wanted. Mark it `#[caller]` and the crash names the line that called the helper. `std::src::here()` is that site as a value you can store; `std::src::caller()` is the site a `#[caller]` function was itself invoked from.
 
 The `echo "connected"` never happens, and the exit status is 1.
 
@@ -238,6 +242,7 @@ And one rule with no exceptions: never put work inside an `assert`.
 ## Next
 
 - [Nullability](/memory/nullability) for `T?`, `guard`, `??` and `?->`.
+- [Try](/language/try) for passing a `result` or `status` failure to the caller.
 - [Control flow](/language/control-flow) for `guard` and how `die` satisfies it.
 - [Crash reports](/stdlib/crash) for replacing the report a stop prints.
 - [The echoc CLI](/projects/cli) for `--debug` and `--release`.

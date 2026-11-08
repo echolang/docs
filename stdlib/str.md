@@ -140,6 +140,7 @@ str::parts $parts = str::split('SG-1,SG-9,SG-11', ',');
 echo $parts->count();               // 3
 
 echo str::join($parts, ' / ');      // SG-1 / SG-9 / SG-11
+echo str::join(['SG-1', 'SG-9'], ' / ');  // SG-1 / SG-9
 
 string $padded = '  Chulak  ';
 string $trimmed = str::trim($padded);

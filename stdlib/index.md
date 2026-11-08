@@ -51,7 +51,7 @@ echo std::math::sqrt(9.0);      // 3.000000
 echo std::env::argc() > 0;      // 1
 ```
 
-`std::math::`, `std::env::`, `std::io::`, `std::process::`, `std::embed::`, `std::thread::`, `std::time::` and `std::dynlib::`.
+`std::math::`, `std::env::`, `std::io::`, `std::process::`, `std::embed::`, `std::src::`, `std::thread::`, `std::time::` and `std::dynlib::`.
 
 ## Nothing in the library is special-cased
 
@@ -157,6 +157,7 @@ echo $c->bump(5);       // 7
 | `std::thread::` | `spawn`, `handle`, `task<T>`, `mutex<T>`, `once` | [Threads](/stdlib/thread) |
 | `std::dynlib::` | `library`, `load`, `address` | [Dynamic libraries](/stdlib/dynlib) |
 | `std::time::` | `duration`, `instant`, `timestamp`, `sleep` | [Time](/stdlib/time) |
+| `std::src::` | `location`, `here()`, `caller()` | [Errors and panics](/language/errors-and-panics) |
 
 ## Next
 

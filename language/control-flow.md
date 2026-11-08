@@ -272,6 +272,12 @@ echo "stopped";
 Note: an ordinary `if ($x != null)` does **not** narrow the type. Only `guard` does.
 [Nullability](/memory/nullability) covers the rest of `T?`, `??` and `?->`.
 
+## try
+
+When this function already returns a [`result`](/stdlib/result) or a [`status`](/stdlib/status), the
+else arm is almost always `return .error($e)`. [`try`](/language/try) is that arm. It stands where
+`guard` stands. `try { }` does not parse. A `T?` has no failure to pass up; that is still `guard`.
+
 ## die
 
 `die` leaves for good. It prints its message, tears nothing down and exits with a failure status:
@@ -344,4 +350,5 @@ with a different spelling: `#[if: os == darwin]`. See
 
 - [Iteration](/collections/iteration) for what `foreach` can walk and how to make your own type iterable.
 - [Nullability](/memory/nullability) for `T?`, `??` and `?->` beside `guard`.
+- [Try](/language/try) for passing a result failure to the caller.
 - [Errors and panics](/language/errors-and-panics) for `die` and `assert`.

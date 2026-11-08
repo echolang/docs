@@ -9,6 +9,8 @@ fatal error: chevron seven will not lock
   at program.eco:12
 ```
 
+`echoc test --report` reads that text back into a `failure` object. See [Testing](/projects/testing).
+
 For a command line tool that is exactly the right answer. It stops being the right answer when stderr goes
 nowhere, when the crash needs to land in your own log format, or when there is a journal you would like
 flushed before the process disappears. `crash::` is the hook for that: one function, called as the last thing

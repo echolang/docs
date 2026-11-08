@@ -1,33 +1,39 @@
 # Closures
 
 Sometimes the thing you want to pass to a function is another function. A comparator, a callback, a small
-transformation that isn't worth naming. Echo has a type for that:
+transformation that isn't worth naming. Echo has a type for that, and a short way to write one:
 
 ```echo
-function<int32(int32)> $increment = function(int32 $a) : int32 { return $a + 1; };
+function<int32(int32)> $increment = (int32 $a) => $a + 1;
 
 echo $increment(41);    // 42
 ```
 
-`function<R(P...)>` is the type of a callable value, and it behaves like any other type. You can put one in
-a variable, pass it, return it, store it in a struct property, or make it a generic type argument.
+`(params) => expr` is a closure whose body is that expression, returned. `function<R(P...)>` is the type of
+a callable value, and it behaves like any other type. You can put one in a variable, pass it, return it,
+store it in a struct property, or make it a generic type argument.
 
 ## The type
 
 The type reads outside in: the return type, then the parameters in parentheses.
 
 ```echo
-function<int32(int32)> $unary = function(int32 $a) : int32 { return $a * 2; };
-function<int32(int32, int32)> $binary = function(int32 $a, int32 $b) : int32 { return $a + $b; };
+function<int32(int32)> $unary = (int32 $a) => $a * 2;
+function<int32(int32, int32)> $binary = (int32 $a, int32 $b) => $a + $b;
 function<void()> $noop = function() { };
 
 echo $unary(21);        // 42
 echo $binary(40, 2);    // 42
 ```
 
-Note the third one. In a closure literal the return type may be left off when it is `void`, which is the one
-place Echo relaxes the rule that [functions](/language/functions) must always state their return type. A
-named function still has to say `: void` out loud.
+The destination names the return type, so `(int32 $a) => $a * 2` at `function<int32(int32)>` is enough. Write
+`: T` when there is no destination: `$f = (int32 $a) : int32 => $a + 1`. Named functions still have to say
+the return type out loud, and they still use `{ }`.
+
+The third one is the braced form. Use that when the body is more than one expression, when it returns
+`void`, or when you need a capture list (`function[mv $x]()`). In a braced closure the return type may be
+left off when it is `void`, which is the one place Echo relaxes the rule that [functions](/language/functions)
+must always state their return type.
 
 ## A parameter
 
@@ -39,10 +45,49 @@ function apply(function<int32(int32)> $f, int32 $value) : int32
     return $f($value);
 }
 
-echo apply(function(int32 $a) : int32 { return $a * 2; }, 21);      // 42
+echo apply((int32 $a) => $a * 2, 21);      // 42
 ```
 
 The literal is written inline at the call site. There is nothing to declare first.
+
+The written parameter list is enough to choose between overloads that differ in those
+parameters. The omitted return dest-types from the winner, so you do not have to write `: A`:
+
+```echo
+class Container
+{
+}
+
+class Endpoint
+{
+}
+
+class Action
+{
+    public int32 $n;
+
+    public constructor(int32 $n)
+    {
+        $this->n = $n;
+    }
+}
+
+function get<A>(string $path, function<A(Container)> $make) : int32
+{
+    return $make(Container())->n;
+}
+
+function get<A>(string $path, function<A(Container, Endpoint)> $make) : int32
+{
+    return $make(Container(), Endpoint())->n + 100;
+}
+
+echo get<Action>('/x', (Container $c) => Action(1));                    // 1
+echo get<Action>('/x', (Container $c, Endpoint $e) => Action(2));       // 102
+```
+
+Two overloads that differ only in the callback's *return* still need `: T`. The destination
+cannot dest-type both.
 
 ## A return value
 
@@ -51,7 +96,7 @@ A function that returns a callable is how you build a small factory:
 ```echo
 function adder(int32 $seed) : function<int32(int32)>
 {
-    return function(int32 $x) : int32 { return $x + $seed; };
+    return (int32 $x) => $x + $seed;
 }
 
 function<int32(int32)> $add10 = adder(10);
@@ -328,7 +373,7 @@ function apply<T>(function<T(T)> $f, T $value) : T
     return $f($value);
 }
 
-echo apply(function(int32 $a) : int32 { return $a + 1; }, 41);      // 42
+echo apply((int32 $a) => $a + 1, 41);      // 42
 ```
 
 `T` is bound to `int32` by the closure literal and the argument together. See

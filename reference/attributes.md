@@ -68,11 +68,12 @@ scheme with two libraries rather than two schemes.
 
 ## Declaration attributes
 
-Eight names (`wasm` has two forms):
+Nine names (`wasm` has two forms):
 
 | Attribute | Value | What it does |
 |---|---|---|
 | `#[inline]` | none | asks for the function to be emitted into every unit that calls it, so it can be inlined without a whole-program build |
+| `#[caller]` | none | a `die` or `assert` inside this function names the call site, not this body. Nested `#[caller]` functions forward that site. `std::src::caller()` reads it |
 | `#[implicit]` | none | on a method, declares that its owner converts to the method's return type at an argument position. on a static of the destination, declares the reverse: a type the library does not own converts *to* this one |
 | `#[unique]` | none | on a struct, says exactly one value may name this storage. The type is moved, never copied |
 | `#[atomic]` | none | on a class, says the reference count is an atomic RMW, so a handle may be retained and released on more than one thread. The contents are not covered |
@@ -195,6 +196,9 @@ into an argument list the way an outbound window would.
 
 Wrong arity, a return that is not the owner, a second inbound from the same source: those are located
 errors at the declaration, same as the outbound refusals.
+
+The type you want to convert from is often not yours. [`extension`](/language/extension) is
+`#[implicit]` on a type you do not own. Same conversion, attached after the fact.
 
 Seven shapes are refused at the declaration rather than at the call site, so the slot only ever holds
 something valid. The one you are most likely to meet on the outbound side: the return type has to be a
@@ -566,6 +570,7 @@ echoc still does not read the name; the query does.
 
 ## Next
 
+- [Extension](/language/extension) for `#[implicit]` on a type you do not own.
 - [Attribute discovery](/language/attributes-discovery) for collecting tagged functions and types at compile time.
 - [Modules](/projects/modules) for what a manifest is and how a dependency resolves.
 - [Tools and hooks](/projects/tools) for `#[hook:]` and `public: true`.

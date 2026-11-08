@@ -1,7 +1,7 @@
 # Keywords
 
-Echo reserves thirty-eight words. The list is short on purpose. There is no
-`new`, no `this`, no `import`, no `switch`, no `try`, no `throw` and no `sizeof`.
+Echo reserves thirty-nine words. The list is short on purpose. There is no
+`new`, no `this`, no `import`, no `switch`, no `throw` and no `sizeof`.
 
 ```echo
 function greet(string $name) : void
@@ -57,6 +57,7 @@ identifiers, and nothing about them collides with `for`, `class`, `enum`, `null`
 | `as` | a written destination (`$x as T`), and the binding half of a `foreach` | [Casts](/language/casts), [Iteration](/collections/iteration) |
 | `break` / `continue` | leave the loop, or jump to its next step | [Control flow](/language/control-flow) |
 | `guard` | unwrap, optionally bind, or leave the scope | [Nullability](/memory/nullability) |
+| `try` | pass a failure up as `return .error($e)` | [Try](/language/try) |
 
 ### Values
 
@@ -130,6 +131,9 @@ everywhere else:
 - `map`, inside an enum body, or at file scope as `map dhd : int32 for Glyph { ... }`. It names a
   second encoding of the cases. `map<K, V>` is still the stdlib type. [Enums](/language/enums) is
   the chapter.
+- `extension`, at file or namespace scope as `extension Type { ... }`. It holds
+  [`#[implicit]`](/reference/attributes#implicit) conversions for a type you do not own. A case or
+  a struct can still be named `extension`. [Extension](/language/extension) is the chapter.
 - `indirect`, immediately before `case` in an enum body. That case's payload is a heap cell; sibling
   cases stay in the parent. [Enums](/language/enums) is the chapter.
 - `self`, in `self::NAME`, reaching a constant on the enclosing type.
@@ -159,7 +163,7 @@ above. [Primitive types](/reference/primitive-types) has the full list.
 | `?->` | member access that stops at a `null` | [Nullability](/memory/nullability) |
 | `??` | value on the left, or the right if it is absent | [Nullability](/memory/nullability) |
 | `?` | nullable suffix on a type, as in `int32?` | [Nullability](/memory/nullability) |
-| `=>` | the key half of `foreach ($m as $k => $v)` | [Maps](/collections/maps) |
+| `=>` | `foreach ($m as $k => $v)`, a map entry, a match arm, and `(params) => expr` | [Closures](/language/closures), [Maps](/collections/maps) |
 | `:` | return type, attribute value, generic constraint | [Functions](/language/functions) |
 | `:$` | reach the pointer itself rather than what it points at | [Pointers](/memory/pointers) |
 | `&` | a reference, or bitwise and. Whitespace decides, see below | [Pointers](/memory/pointers) |
