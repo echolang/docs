@@ -101,13 +101,13 @@ const sidebar = [
       { text: 'String functions', link: '/stdlib/str' },
       { text: 'Arrays', link: '/stdlib/arr' },
       { text: 'Filesystem', link: '/stdlib/fs' },
+      { text: 'Directories', link: '/stdlib/io/directories' },
       {
         text: 'Input and Output',
         collapsed: false,
         items: [
           { text: 'Printing', link: '/stdlib/io/' },
-          { text: 'Files', link: '/stdlib/io/files' },
-          { text: 'Directories', link: '/stdlib/io/directories' },
+          { text: 'File streams', link: '/stdlib/io/files' },
           { text: 'Readers and writers', link: '/stdlib/io/buffering' },
         ],
       },

@@ -455,19 +455,20 @@ never read again. [Linking](/projects/linking) has the `#[link:]` half and the r
 ## The medium
 
 A declaration name belongs in a `.eco` file. A manifest name belongs in a `module.eco`. Writing
-`#[depends:]` on a function used to compile and do nothing. It is now an error:
+`#[depends:]` on a function is an error:
 
 ```
 'depends' is a manifest attribute; it belongs in a module.eco.
 ```
 
-The other direction was already an error. `#[inline]` in a `module.eco` names the ten names a
-manifest accepts.
+`#[inline]` in a `module.eco` is the other direction: a declaration name in a manifest.
 
 A namespaced name is the escape on both sides: `#[epm::license:]` in a manifest, `#[web::js_name: "add"]`
 on a function. echoc does not own the namespace, so it carries the attribute rather than refusing it.
 `-p manifest` emits the manifest ones. `-p decls` emits the source ones. `echoc::` is reserved in
-both files. [Packages](/projects/packages) is why the manifest grew this first.
+both files. [Packages](/projects/packages) is why the manifest grew this first: license, description,
+and `#[epm::echoc:]` for the compiler the package needs. `echo` is a keyword, so that last name is
+`echoc`, not `echo`.
 
 ## Wrong name
 

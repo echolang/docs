@@ -126,7 +126,7 @@ appends into one buffer. A loop of `str::concat($acc, $piece)` still copies the 
 `$acc->append($piece)` is the tool there.
 
 **No recursive `copy`.** [Filesystem](/stdlib/fs) has a `path` type, `mkdir(..., recursive: true)`,
-and `remove_all`. [Directories](/stdlib/io/directories) lists one directory. `copy` is still one
+and `remove_all`. [Directories](/stdlib/io/directories) lists one directory. `copy` is one
 regular file. A tree copy is `opendir` and a loop.
 
 **`std::io::readline()` on stdin is still unbuffered.** One `read` per byte, so it cannot steal input from
@@ -166,7 +166,8 @@ by default, so a leak inside one does not fail it. A test that hangs is stopped 
 is off unless you ask for it. [Testing](/projects/testing) is the chapter.
 
 **`#[version:]` is recorded and resolves against nothing.** It is part of the build fingerprint and that is
-all it does.
+all it does. `#[epm::echoc:]` is the same kind of fact for the compiler the package needs: carried, not
+compared. [Packages](/projects/packages) is the spelling.
 
 **Debugger support is partial.** `echoc build -g` produces DWARF, and `tools/echo_lldb.py` renders the
 standard library's containers. A `mem::buffer<T>` shows a capacity and no elements, a `weak<T>` shows the

@@ -155,7 +155,7 @@ same way, so `| head` behaves exactly the way it always has. Nothing after that 
 
 Why ignore the signal at all, then? Because a pipe to a [child process](/stdlib/process) is the other case:
 there a closed reader is something your program wants to hear about and handle, as an `EPIPE` `ioerror`.
-Windows has no SIGPIPE, and a write to a closed stdout there just fails, like it always did.
+Windows has no SIGPIPE, and a write to a closed stdout there just fails.
 
 ## echo is not sugar for println
 
@@ -177,12 +177,13 @@ std::io::println("{$seconds}");     // 3.5
 the shortest form that reads well in a sentence. Neither one is wrong, but they are not interchangeable, and
 if the digits matter you want to pick on purpose rather than find out later.
 
-Use `echo` for a quick value. Use `std::io` when you need a destination, no newline, a file, or a function
-you can pass around.
+Use `echo` for a quick value. Use `std::io` when you need a destination, no newline, a stream, or a
+function you can pass around. Paths and `readfile` live on [Filesystem](/stdlib/fs).
 
 ## Next
 
-- [Files](/stdlib/io/files) for opening a path, `readfile` / `writefile`, `foreach` over lines, and `info` / `copy` / `realpath`.
+- [Filesystem](/stdlib/fs) for `path`, `readfile` / `writefile`, `info`, `copy`.
+- [Files](/stdlib/io/files) for the open handle: `foreach` over lines, seek, flush.
 - [Directories](/stdlib/io/directories) for `opendir`, `mkdir`, `rmdir`, and listing children.
 - [Readers and writers](/stdlib/io/buffering) for a window over a stream you do not own.
 - [String functions](/stdlib/str) for `str::from`, `split`, `join`, `trim` and the number parsers.

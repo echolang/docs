@@ -13,6 +13,7 @@ anything: when it runs a dependency's tool, echoc does the building. A released
 ```echo
 #[module: "myapp"]
 #[version: "0.3.1"]
+#[epm::echoc: ">=0.14.0"]
 #[epm::license: "MIT"]
 #[epm::description: "a thing that does a thing"]
 
@@ -138,18 +139,38 @@ echoc build -p manifest -m module.eco
 That's an answer, not a dump. It does not resolve the graph, so it works before anything is
 vendored. Combined with another `-p` value it is refused.
 
-License, description, repository, a private registry, anything a future tool invents: those are
-`#[epm::...]`. The compiler does not own those names and does not grow a keyword when epm grows a
-field.
+License, description, repository, a private registry, the compiler the package needs, anything a
+future tool invents: those are `#[epm::...]`. The compiler does not own those names and does not
+grow a keyword when epm grows a field.
 
 <!-- verify: skip -->
 ```echo
+#[epm::echoc: ">=0.14.0"]
 #[epm::license: "MIT"]
 #[epm::repository: "github.com/me/myapp"]
 #[epm::registry: "https://github.com/echolang/epm-index"]
 ```
 
 `#[license: "MIT"]` with no namespace is an unknown manifest attribute. That's the point.
+
+### The compiler it needs
+
+`#[version:]` is the package. The `echoc` that can build it is a different fact. Write it as a
+semver range, same grammar as `#[requires:]`:
+
+<!-- verify: skip -->
+```echo
+#[epm::echoc: ">=0.14.0"]
+```
+
+`>=0.14.0` is a floor. `^0.14` is 0.14.x only. `echoc -p manifest` emits it under `tools`, next to
+license and description.
+
+Here is the catch. `echo` is a keyword, so `#[epm::echo:]` is refused (`expected identifier`). The
+binary is `echoc`, and that is the name.
+
+The compiler does not compare the range to itself. It carries the attribute. A tool that cares
+reads it back.
 
 ## Running a package's tool
 
@@ -163,14 +184,13 @@ epm run restgen api/petstore.yaml src/api
 `epm install` vendors what those tools need too, for the packages you require directly. A tool that runs
 before every build is a `#[hook:]`. [Tools and hooks](/projects/tools) is the chapter.
 
-## A path dependency is unchanged
+## Path modules
 
-Splitting a large app into local `#[depends:]` modules still works exactly as it did. A vendored
-package is just another local module, ordered before the app, so its object caches like the
-stdlib's. Editing your own code does not rebuild libcurl.
+Splitting a large app into local `#[depends:]` modules works. A vendored package is just another
+local module, ordered before the app, so its object caches like the stdlib's. Editing your own
+code does not rebuild libcurl.
 
-`#[depends: git { url:, rev: }]` is the spelling that was refused before `#[requires:]` existed. It's
-still refused, and the message now points here.
+`#[depends: git { url:, rev: }]` is refused. Fetching is `#[requires:]`.
 
 ## Two versions of one package
 

@@ -25,8 +25,9 @@ echo ('/a' / '/b')->string();            // /b
 echo ('foo' / '')->string();             // foo
 ```
 
-A missing separator copies the last one already in the spelling, or `std::fs::DS`. `concat` glues a
-tail with no extra separator: `file` then `.eco` is `file.eco`.
+A missing separator copies the last one already in the spelling, or `std::fs::DS`. A slash in the
+right-hand side is a separator too, rewritten to that same one: `'vendor' / 'echolang/libcurl'` is
+one nested path. `concat` glues a tail with no extra separator: `file` then `.eco` is `file.eco`.
 
 `hash::of` takes a path, so `map<std::fs::path, V>` works. Equality is the spelling.
 

@@ -3,9 +3,10 @@
 A string literal already lives in the binary: static bytes, a length, a null owner. `std::embed` is
 that same thing, for a file you would rather not paste into the source.
 
-`std::io` reads the file when the program runs, and the file has to still be there. This reads it
-when the program is compiled. After that the bytes are in the image. You can ship a help page, a
-shader, a license, a font, without a data directory walking next to the binary.
+[`std::fs::readfile`](/stdlib/fs) reads the file when the program runs, and the file has to still
+be there. This reads it when the program is compiled. After that the bytes are in the image. You
+can ship a help page, a shader, a license, a font, without a data directory walking next to the
+binary.
 
 <!-- verify: skip -->
 ```echo

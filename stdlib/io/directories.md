@@ -1,7 +1,7 @@
 # Directories
 
 You have a path and you want the names inside it. That is `std::fs::opendir`, then `foreach`. The
-path is [`std::fs::path`](/stdlib/fs). A string literal still converts.
+path is [`std::fs::path`](/stdlib/fs). A string literal converts.
 
 ```echo
 bool $made = guard std::fs::mkdir('gate-dir');
@@ -117,8 +117,8 @@ echo $tree;     // 1
 guard std::fs::remove_all('dakar-tree');
 ```
 
-`rmdir` is empty-only. A directory that still has children fails. `remove` is still unlink-a-file;
-point it at a directory and the kernel refuses, the way it always did.
+`rmdir` is empty-only. A directory that still has children fails. `remove` unlinks a file.
+Point it at a directory and the kernel refuses.
 
 Mode on POSIX is `0777`, and the umask takes its usual cut. That is `open`'s `0666` bargain, for a
 directory. `mkdir` takes `perms:` when you care.

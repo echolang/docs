@@ -23,7 +23,9 @@ A manifest has a closed list of ten names. Misspell one and you get the list bac
 module.eco:2: unknown manifest attribute 'source', expected one of: module, version, depends, sources, target, link, cc, build_dir, requires, hook
 ```
 
-A name with a namespace the compiler doesn't own is not on that list and is not refused. `#[epm::license: "MIT"]` is carried so a tool can read it back. See [Packages](/projects/packages).
+A name with a namespace the compiler doesn't own is not on that list and is not refused.
+`#[epm::license: "MIT"]` and `#[epm::echoc: ">=0.14.0"]` are carried so a tool can read them back.
+See [Packages](/projects/packages).
 
 | | |
 |---|---|
